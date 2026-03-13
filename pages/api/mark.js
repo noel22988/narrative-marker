@@ -90,7 +90,12 @@ C6: 50-54% = 20-21 marks
 D7: 45-49% = 18-19 marks
 E8: 40-44% = 16-17 marks
 F9: 39% and below = 15 marks and below
-All feedback in Chinese (Simplified).`;
+All feedback in Chinese (Simplified).
+CRITICAL JSON RULES:
+- Do NOT use any quotation marks (", ', 「」, 『』, " ") inside JSON string values
+- Use 《》or （） instead if you need to reference text
+- Do NOT include line breaks inside JSON string values
+- Ensure all JSON strings are properly closed`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -102,7 +107,7 @@ All feedback in Chinese (Simplified).`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2500,
+        max_tokens: 4000,
         system,
         messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }]
       })
@@ -112,16 +117,33 @@ All feedback in Chinese (Simplified).`;
     if (data.error) return res.status(500).json({ error: data.error.message });
 
     const raw = data.content.find(b => b.type === 'text')?.text || '';
-    // Strip markdown fences and any text before/after the JSON object
     let clean = raw.replace(/```json|```/g, '').trim();
-    // Extract just the JSON object
     const jsonStart = clean.indexOf('{');
     const jsonEnd = clean.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) {
-      return res.status(500).json({ error: 'Could not extract JSON from response. Raw: ' + clean.substring(0, 200) });
+      return res.status(500).json({ error: 'No JSON found in response: ' + clean.substring(0, 300) });
     }
     clean = clean.substring(jsonStart, jsonEnd + 1);
-    const result = JSON.parse(clean);
+    
+    // Attempt 1: direct parse
+    let result;
+    try {
+      result = JSON.parse(clean);
+    } catch (e1) {
+      // Attempt 2: fix common issues — unescaped quotes inside strings, trailing commas
+      try {
+        // Replace Chinese left/right quotes with escaped quotes
+        let fixed = clean
+          .replace(/[“”‘’]/g, '\"')
+          // Remove trailing commas before } or ]
+          .replace(/,(\s*[}\]])/g, '$1');
+        result = JSON.parse(fixed);
+      } catch (e2) {
+        return res.status(500).json({ 
+          error: 'JSON parse failed. Please try again. Detail: ' + e1.message
+        });
+      }
+    }
     return res.status(200).json(result);
   } catch (err) {
     return res.status(500).json({ error: err.message });
