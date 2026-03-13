@@ -80,7 +80,16 @@ Return ONLY valid JSON, no markdown fences:
   ],
   "examiner_comment": "3-4 sentences as Teacher Leon, warm but honest, referencing specific parts of the essay."
 }
-Grade boundaries: A1(36-40), A2(34-35), B3(32-33), B4(30-31), C5(28-29), C6(26-27), D7(24-25), E8(22-23), F9(below 22)
+Grade boundaries (out of 40, based on percentage):
+A1: 75% and above = 30-40 marks
+A2: 70-74% = 28-29 marks
+B3: 65-69% = 26-27 marks
+B4: 60-64% = 24-25 marks
+C5: 55-59% = 22-23 marks
+C6: 50-54% = 20-21 marks
+D7: 45-49% = 18-19 marks
+E8: 40-44% = 16-17 marks
+F9: 39% and below = 15 marks and below
 All feedback in Chinese (Simplified).`;
 
   try {
