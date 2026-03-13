@@ -112,7 +112,15 @@ All feedback in Chinese (Simplified).`;
     if (data.error) return res.status(500).json({ error: data.error.message });
 
     const raw = data.content.find(b => b.type === 'text')?.text || '';
-    const clean = raw.replace(/```json|```/g, '').trim();
+    // Strip markdown fences and any text before/after the JSON object
+    let clean = raw.replace(/```json|```/g, '').trim();
+    // Extract just the JSON object
+    const jsonStart = clean.indexOf('{');
+    const jsonEnd = clean.lastIndexOf('}');
+    if (jsonStart === -1 || jsonEnd === -1) {
+      return res.status(500).json({ error: 'Could not extract JSON from response. Raw: ' + clean.substring(0, 200) });
+    }
+    clean = clean.substring(jsonStart, jsonEnd + 1);
     const result = JSON.parse(clean);
     return res.status(200).json(result);
   } catch (err) {
