@@ -1014,7 +1014,7 @@
 
   @media (max-width: 768px) {
     .lead-section { padding: 60px 24px; }
-    .lead-grid { grid-template-columns: 1fr; gap: 20px; }
+    .lead-grid { grid-template-columns: 1fr !important; gap: 20px; }
   }
 </style>
 </head>
@@ -1324,53 +1324,43 @@
 </section>
 
 
-<!-- ── LEAD MAGNET + INQUIRY ── -->
+<!-- ── GET IN TOUCH ── -->
 <section class="lead-section reveal">
   <div style="max-width:1100px;margin:0 auto;">
-    <div class="section-tag" style="color:var(--teal-mid);">Not Ready to WhatsApp Yet?</div>
-    <h2 class="section-title" style="color:white;">Two ways to take<br><em>the next step.</em></h2>
-    <div class="lead-grid">
+    <div class="section-tag" style="color:var(--teal-mid);">Get In Touch</div>
+    <h2 class="section-title" style="color:white;">Interested?<br><em>Here's how to take the next step.</em></h2>
+    <div class="lead-grid" style="grid-template-columns: repeat(3, 1fr); margin-top:40px;">
 
-      <div class="lead-card">
-        <h3>Get the free<br><em>Playbook</em></h3>
-        <p><strong style="color:white;display:block;margin-bottom:8px;">5 Reasons Your Child Is Losing Marks in O-Level Chinese (That Have Nothing to Do with Their Chinese)</strong>A straight-talking playbook from a 10-year O-Level marker. Leave your email and I'll send it over.</p>
+      <div class="lead-card" style="text-align:center;">
+        <div style="font-size:36px;margin-bottom:16px;">📋</div>
+        <h3 style="font-size:17px;margin-bottom:10px;">Get the free<br><em>Playbook</em></h3>
+        <p style="margin-bottom:20px;">5 reasons your child is losing marks in O-Level Chinese — and what can be done about each one.</p>
         <div class="lead-input-row">
           <input class="lead-input" type="text" placeholder="Your name">
           <input class="lead-input" type="email" placeholder="Your email address">
-          <button class="lead-btn" onclick="alert('Thank you! Playbook coming soon — check back after Leon sets this up.')">Send me the playbook →</button>
-          <p class="lead-fine">No spam. Just one useful email.</p>
+          <button class="lead-btn" onclick="alert('Thank you! Leon will send you the playbook shortly.')">Send me the playbook →</button>
         </div>
       </div>
 
-      <div class="lead-card" id="waitlist">
-        <h3>Join the<br><em>waitlist</em></h3>
-        <p>Slots are limited. Leave your details and Leon will be in touch to confirm availability and arrange a trial.</p>
-        <div class="lead-input-row">
-          <input class="lead-input" type="text" placeholder="Your name">
-          <input class="lead-input" type="text" placeholder="Your child's level (e.g. Sec 3)">
-          <input class="lead-input" type="text" placeholder="WhatsApp number">
-          <div class="lead-divider"><span>or</span></div>
-          <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20join%20the%20waitlist." target="_blank" class="lead-btn" style="text-decoration:none;text-align:center;display:block;">WhatsApp to join waitlist</a>
-          <p class="lead-fine"><!-- REPLACE with Tally/Google Form link when ready --></p>
-        </div>
+      <div class="lead-card" style="text-align:center;">
+        <div style="font-size:36px;margin-bottom:16px;">💬</div>
+        <h3 style="font-size:17px;margin-bottom:10px;">Ask a<br><em>question</em></h3>
+        <p style="margin-bottom:20px;">Not sure if Leon is the right fit? Have a specific situation? WhatsApp directly — no commitment, no pressure.</p>
+        <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20have%20a%20question%20about%20your%20tuition." target="_blank" class="lead-btn" style="text-decoration:none;text-align:center;display:block;">WhatsApp a question</a>
+      </div>
+
+      <div class="lead-card" style="text-align:center;">
+        <div style="font-size:36px;margin-bottom:16px;">🎯</div>
+        <h3 style="font-size:17px;margin-bottom:10px;">Arrange a<br><em>trial lesson</em></h3>
+        <p style="margin-bottom:20px;">1 hour, at standard rate. Leon assesses your child, shares a key strategy, and you both decide if it's a fit.</p>
+        <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20arrange%20a%20trial%20lesson." target="_blank" class="lead-btn" style="text-decoration:none;text-align:center;display:block;background:#25D366;box-shadow:0 4px 20px rgba(37,211,102,0.35);">WhatsApp for a trial</a>
       </div>
 
     </div>
+    <p style="text-align:center;font-size:12px;color:rgba(255,255,255,0.25);margin-top:24px;font-style:italic;">Limited slots available. 1-to-1 only. Home tuition, Boon Lay, or online.</p>
   </div>
 </section>
 
-<!-- ── RATES + CTA ── -->
-<section class="cta-section">
-  <div class="section-tag">Get In Touch</div>
-  <h2>Interested?<br><em>Get in touch.</em></h2>
-  <p class="cta-sub">WhatsApp Leon directly to find out more, ask a question, or arrange a trial lesson.</p>
-
-  <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20arrange%20a%20trial%20lesson." class="cta-big" target="_blank">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-    WhatsApp 9228 6725
-  </a>
-  <p class="cta-fine">Limited slots available. WhatsApp now to secure yours.</p>
-</section>
 
 <script>
   const observer = new IntersectionObserver((entries) => {
