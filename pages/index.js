@@ -86,10 +86,9 @@ export default function Home() {
   function easiColor(r){if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
   function barColor(p){if(p>=80)return'#1a6e40';if(p>=65)return'#1a4a70';if(p>=50)return'#a07820';return'#b83222';}
 
-  const currentGradeIdx = results ? gradeOrder.indexOf(results.grade) : -1;
-  const computedStretchGrade = currentGradeIdx >= 0 ? gradeOrder[Math.min(currentGradeIdx+2, gradeOrder.length-1)] : '';
-
   function SampleBlock({mode}) {
+    const currentGradeIdx = results ? gradeOrder.indexOf(results.grade) : -1;
+    const computedStretchGrade = currentGradeIdx >= 0 ? gradeOrder[Math.min(currentGradeIdx+2, gradeOrder.length-1)] : '';
     const isStretch = mode==='stretch';
     const stateVal = isStretch ? stretchState : sampleState;
     const essayVal = isStretch ? stretchEssay : sampleEssay;
