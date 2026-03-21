@@ -22,12 +22,27 @@ Band 3 (9-12): Adequately fluent; some errors; adequate vocabulary; simple sente
 Band 4 (5-8): Not very fluent; many errors; limited vocabulary; simple repetitive sentences
 Band 5 (1-4): Not fluent; very many errors; poor vocabulary; disorganised
 
-MARKING APPROACH — be fair and reward effort:
-- Award marks based on what the student DID well, not just what they missed
-- A student who attempts EASI techniques even imperfectly deserves credit
-- Band 2 language (13-16) is appropriate for most competent O Level students
-- Only drop to Band 3 if there are clearly many errors affecting readability
-- Essay character count: ${charCount} characters
+MARKING APPROACH — be consistent and anchor scores to the rubric:
+- You must assign scores that are STABLE — if the same essay were marked twice, scores should not vary by more than 1 mark
+- Use the character count and EASI count as objective anchors before deciding band:
+
+CONTENT SCORING ANCHORS (out of 20):
+- Essay has clear 8-paragraph structure with all key stages (开头/场景/过渡/高潮前/高潮中/高潮后/结尾): start at Band 2 (13)
+- Rich EASI across multiple paragraphs + vivid details + clear moral: Band 1 (17-18)
+- Complete story with good EASI but some thin paragraphs: Band 2 (14-15)
+- Complete story, attempts EASI, adequate detail: Band 2 (13)
+- Incomplete structure or very thin content: Band 3 (9-12)
+- Essay character count: ${charCount} characters. Essays over 400 characters with complete structure should be Band 2 minimum for content.
+
+LANGUAGE SCORING ANCHORS (out of 20):
+- 0 errors, varied vocabulary, good sentence variety: Band 1 (17-18)
+- 1-3 minor errors, appropriate vocabulary: Band 1 (16-17)
+- 4-6 minor errors OR vocabulary mostly adequate but plain: Band 2 (14-15)
+- Many errors OR very simple vocabulary: Band 2 (13) or Band 3
+- DO NOT penalise stylistic choices or minor punctuation variations
+- An essay with 1-2 minor errors should still be Band 1 (16+) for language
+
+IMPORTANT: Do not let your content score and language score drift more than 3 marks apart unless there is a very clear reason (e.g. great ideas but terrible language). Most essays should have content and language within 2 marks of each other.
 
 GRADE BOUNDARIES (out of 40):
 A1: 30-40 marks (75%+)
@@ -57,7 +72,14 @@ P8结尾: Feelings (感受) + moral/insight (启示). Check: is the moral clearl
 
 EASI — E=Expressions&Appearance外貌描写, A=Actions行动描写, S=Speech语言描写, I=Inner Thoughts&Feelings心理描写
 Ratings: good=clearly present and effective, ok=attempted but weak, weak=absent
-IMPORTANT: For "extracted" field, return a JSON ARRAY of strings — one string per example found in the essay. Find and copy ALL instances of this technique from the entire essay, not just one. If none found, return ["未发现相关描写"].
+IMPORTANT: For "extracted" field, return a JSON ARRAY of strings — one entry per distinct example.
+- For E: include the FULL description phrase, e.g. "满头白发的老奶奶，她佝偻着腰" — not just one word
+- For A: include the FULL action chain, e.g. "颤巍巍地从口袋里掏出一个旧布钱包" — must include the adverb+verb together
+- For S: include the FULL line — speech tag + quoted words, e.g. "她低声恳求道：「姑娘，我今天出门忘了多带钱」"
+- For I: include the FULL thought — mental verb + content, e.g. "我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗"
+- Search the ENTIRE essay — check every single paragraph, not just the climax
+- If none found, return ["未发现相关描写"]
+- Each entry must be a standalone, meaningful phrase — not concatenated strings
 
 LANGUAGE MARKING — be lenient with language scores:
 - Band 1 language (17-20) is appropriate for essays with only minor, isolated errors
@@ -66,11 +88,17 @@ LANGUAGE MARKING — be lenient with language scores:
 - An essay with 1-2 minor errors should still be Band 1 language
 
 ANNOTATIONS: Identify ALL notable phrases in the student essay for inline markup. For each annotation:
-- "text": copy the EXACT phrase from the essay (keep it short, 5-20 characters ideally)
+- "text": copy the EXACT phrase from the essay (keep it short, 5-25 characters ideally)
 - "type": one of "error" (language mistake), "good" (strong writing worth praising), "improve" (correct but could be better)
 - "technique": only for "good" type — which EASI technique: "E", "A", "S", "I", or "structure" for good structure
 - "comment": brief Chinese explanation (under 20 characters)
-IMPORTANT: annotate EVERY good use of EASI you find — do not limit to just a few. Also annotate every strong vocabulary choice, vivid description, or well-structured sentence. Include all genuine errors as "error" annotations. There is no cap on the number of annotations — more is better.
+IMPORTANT annotation rules:
+- Annotate EVERY good use of EASI — no limit on number of annotations
+- For S (Speech) annotations: the "text" MUST include the speech verb phrase AND the quoted words together — e.g. 她低声恳求道：「姑娘，我今天出门忘了带钱」. Never annotate just the speech tag or just the quoted words alone.
+- For I (Inner Thoughts) annotations: the "text" MUST include the mental verb AND the thought content together — e.g. 我心想：不过是三块五毛钱. Never annotate just a mental verb or just the content alone.
+- Also annotate every strong vocabulary choice, vivid description, or well-structured sentence
+- Include all genuine errors as "error" annotations
+- There is no cap — more is better
 Make sure "text" is unique enough to be found in the essay — avoid very short common phrases (under 4 characters).
 
 LANGUAGE ERRORS: Only list GENUINE errors — wrong characters, clearly wrong grammar, missing or wrong punctuation that changes meaning. Do NOT flag:
@@ -84,7 +112,7 @@ For each genuine error provide:
 - reason: brief explanation in Chinese
 
 Return ONLY valid JSON. No markdown. No text outside JSON.
-CRITICAL JSON RULES: Never use any quotation marks inside string values. Use《》or（）instead. No line breaks inside strings.
+CRITICAL JSON RULES: Never use any quotation marks (single or double) inside string values. Use "（text）" with fullwidth brackets for quoting, or rephrase to avoid quotes entirely. No line breaks inside strings.
 
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","annotations":[{"text":"exact phrase from student essay","type":"error","comment":"brief Chinese explanation of the error"},{"text":"exact phrase from student essay","type":"good","technique":"E","comment":"brief Chinese praise e.g. 外貌描写生动"},{"text":"exact phrase from student essay","type":"good","technique":"A","comment":"brief Chinese praise"},{"text":"exact phrase from student essay","type":"improve","comment":"brief Chinese suggestion for improvement"}],"framework":{"p1_opening":{"status":"pass","comment":"Chinese"},"p2_scene":{"status":"pass","comment":"Chinese"},"p3_transition":{"status":"pass","comment":"Chinese"},"p4_trigger":{"status":"pass","comment":"Chinese"},"p56_climax":{"status":"warn","comment":"Chinese"},"p7_resolution":{"status":"pass","comment":"Chinese"},"p8_conclusion":{"status":"pass","comment":"Chinese"}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1 from essay","EXACT quote 2 from essay"]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":["EXACT quote from essay"]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
 
