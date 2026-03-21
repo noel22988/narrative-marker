@@ -578,4 +578,3 @@ export default function Home() {
     </>
   );
 }}
-    .fw-right-col{display:none!important}.fw-grid{grid-template-columns:1fr!important}.fw-mobile-icon{display:inline-flex!important}
