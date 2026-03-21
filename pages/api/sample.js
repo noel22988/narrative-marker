@@ -42,13 +42,18 @@ You are an EDITOR, not a writer. Your job is to REWRITE the student's essay, not
 
 FRAMEWORK — keep the student's paragraph structure, add these labels:
 【开头】Use the same opening approach as the student (倒叙/抄题). Keep their opening idea, elevate the language. (3-4 sentences)
-【场景】Keep the student's scene. Add missing elements from: Time+People+Place+Activity+Environment. Must be vivid and sensory. (4-5 sentences)
+【场景】Keep the student's scene. MUST include ALL 5 elements: Time（时间）+ People（人物）+ Place（地点）+ Activity（做什么）+ Environment（环境描写，use sensory details — sight, sound, smell, temperature）. Each element must be clearly present. (4-5 sentences)
 【过渡】This paragraph bridges the scene to the HIGH POINT. It should be 3-4 sentences. Use the student's original content: describe what the narrator was doing (e.g. queuing, walking, waiting) and end with their attention being drawn to a specific figure or detail nearby. Do NOT include the trigger event here. Do NOT have the old lady discover her money problem here. End with a sentence like: 就在这时，我的注意力被前方一个身影深深吸引了。
 【高潮前】IMPORTANT: This paragraph is the TRIGGER — the specific event that causes the main conflict. Copy the student's content: the old lady is described in detail (appearance using E), then the moment she realises she doesn't have enough money. This is NOT part of the transition. Write 3-5 sentences. Include at least one E (外貌描写) here. End with the conflict beginning (e.g. cashier says there's not enough money).
 【高潮中一】Keep the student's main event. Add EASI: E=外貌(specific facial features showing emotion), A=行动(adjective+action chain sequence), S=语言(action chain + dialogue, not just 他说), I=心理(specific mental verbs: 心头一紧/不禁愣住/百感交集/心里七上八下). (5-7 sentences)
 【高潮中二】Continue the student's story. More EASI. Escalate emotion. Turning point or decision. (5-7 sentences)
 【高潮后】Keep the student's resolution. Improve language. (3-4 sentences)
-【结尾】Keep the student's feelings and moral. Elevate the expression. (3-4 sentences)
+【结尾】MUST follow this exact 4-part formula strictly:
+1. 感受 FEELINGS: State the emotional feeling(s) — e.g. 经历过这件事情，我感到____（既……又……）
+2. 为什么 WHY: Explain WHY those feelings — e.g. 心酸的是……；温暖的是……
+3. 启示 MORAL/INSIGHT: What the narrator learned — e.g. 这也让我意识到……（the lesson from the experience）
+4. 应用到社会 APPLY TO SOCIETY: How this applies to society or the world — e.g. 在这个……的社会里，我们都应该……
+Keep the student's specific feelings and moral — only elevate the language. All 4 parts must be present. (4-5 sentences)
 
 TARGET QUALITY for ${targetGrade}: ${gradeDescriptions[targetGrade]}
 Total length: 600-700 Chinese characters. Simplified Chinese only.
