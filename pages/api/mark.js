@@ -52,18 +52,36 @@ P8结尾: Feelings+moral
 
 EASI — E=Expressions&Appearance外貌描写, A=Actions行动描写, S=Speech语言描写, I=Inner Thoughts&Feelings心理描写
 Ratings: good=clearly present and effective, ok=attempted but weak, weak=absent
-IMPORTANT: For "extracted" field, copy the EXACT sentence(s) from the student essay that show this technique. Do not paraphrase. If none found write 未发现相关描写.
+IMPORTANT: For "extracted" field, find and copy ALL instances of this technique from the entire essay, not just one. Separate multiple examples with ｜. If none found write 未发现相关描写.
 
-LANGUAGE ERRORS: List ALL errors found. For each error you MUST provide:
-- label: type of error in Chinese (e.g. 标点符号错误, 错别字, 用词不当, 语法错误)
-- original: the EXACT wrong text from the essay (copy it directly)
-- correction: the corrected version
-- reason: brief explanation in Chinese why it is wrong
+LANGUAGE MARKING — be lenient with language scores:
+- Band 1 language (17-20) is appropriate for essays with only minor, isolated errors
+- Do NOT penalise students for stylistic choices or minor punctuation variations
+- Only mark as errors things that are genuinely wrong, not things that are merely different from your preference
+- An essay with 1-2 minor errors should still be Band 1 language
+
+ANNOTATIONS: Identify key phrases directly in the student essay for inline markup. For each annotation:
+- "text": copy the EXACT phrase from the essay (keep it short, 5-20 characters ideally)
+- "type": one of "error" (language mistake), "good" (strong writing worth praising), "improve" (correct but could be better)
+- "technique": only for "good" type — which EASI technique: "E", "A", "S", "I", or "structure" for good structure
+- "comment": brief Chinese explanation (under 20 characters)
+Include 3-6 "good" annotations highlighting strong EASI or language, and all genuine errors as "error" annotations.
+Make sure "text" is unique enough to be found in the essay — avoid very short common phrases.
+
+LANGUAGE ERRORS: Only list GENUINE errors — wrong characters, clearly wrong grammar, missing or wrong punctuation that changes meaning. Do NOT flag:
+- correct but alternative punctuation styles
+- stylistic choices
+- things that are actually correct
+For each genuine error provide:
+- label: error type in Chinese (标点符号错误, 错别字, 用词不当, 语法错误)
+- original: EXACT wrong text copied from essay
+- correction: corrected version
+- reason: brief explanation in Chinese
 
 Return ONLY valid JSON. No markdown. No text outside JSON.
 CRITICAL JSON RULES: Never use any quotation marks inside string values. Use《》or（）instead. No line breaks inside strings.
 
-{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","framework":{"p1_opening":{"status":"pass","comment":"Chinese"},"p2_scene":{"status":"pass","comment":"Chinese"},"p3_transition":{"status":"pass","comment":"Chinese"},"p4_trigger":{"status":"pass","comment":"Chinese"},"p56_climax":{"status":"warn","comment":"Chinese"},"p7_resolution":{"status":"pass","comment":"Chinese"},"p8_conclusion":{"status":"pass","comment":"Chinese"}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":"EXACT quote from student essay"},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":"EXACT quote from student essay or 未发现相关描写"},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":"EXACT quote from student essay"},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":"EXACT quote from student essay"}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
+{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","annotations":[{"text":"exact phrase from student essay","type":"error","comment":"brief Chinese explanation of the error"},{"text":"exact phrase from student essay","type":"good","technique":"E","comment":"brief Chinese praise e.g. 外貌描写生动"},{"text":"exact phrase from student essay","type":"good","technique":"A","comment":"brief Chinese praise"},{"text":"exact phrase from student essay","type":"improve","comment":"brief Chinese suggestion for improvement"}],"framework":{"p1_opening":{"status":"pass","comment":"Chinese"},"p2_scene":{"status":"pass","comment":"Chinese"},"p3_transition":{"status":"pass","comment":"Chinese"},"p4_trigger":{"status":"pass","comment":"Chinese"},"p56_climax":{"status":"warn","comment":"Chinese"},"p7_resolution":{"status":"pass","comment":"Chinese"},"p8_conclusion":{"status":"pass","comment":"Chinese"}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":"EXACT quote from student essay"},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":"EXACT quote from student essay or 未发现相关描写"},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":"EXACT quote from student essay"},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":"EXACT quote from student essay"}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
