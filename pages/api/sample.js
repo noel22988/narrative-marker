@@ -41,14 +41,14 @@ You are an EDITOR, not a writer. Your job is to REWRITE the student's essay, not
 - Think of it as: take the student's skeleton and add flesh — do not build a new skeleton
 
 FRAMEWORK — keep the student's paragraph structure, add these labels:
-【开头】Use the same opening approach as the student (倒叙/抄题). Keep their opening idea, elevate the language.
-【场景】Keep the student's scene. Add missing elements from: Time+People+Place+Activity+Environment.
-【过渡】Keep or improve the student's transition.
-【高潮前】Keep the student's trigger event exactly. Improve language only.
-【高潮中一】Keep the student's main event. Add EASI: E=外貌(specific facial features showing emotion), A=行动(adjective+action chain sequence), S=语言(action chain + dialogue, not just 他说), I=心理(specific mental verbs: 心头一紧/不禁愣住/百感交集/心里七上八下)
-【高潮中二】Continue the student's story. More EASI. Escalate emotion naturally.
-【高潮后】Keep the student's resolution. Improve language.
-【结尾】Keep the student's feelings and moral. Elevate the expression.
+【开头】Use the same opening approach as the student (倒叙/抄题). Keep their opening idea, elevate the language. (3-4 sentences)
+【场景】Keep the student's scene. Add missing elements from: Time+People+Place+Activity+Environment. Must be vivid and sensory. (4-5 sentences)
+【过渡】This paragraph bridges the scene to the HIGH POINT. It should be 3-4 sentences — describe what the narrator was doing just before they noticed the incident. Do NOT put the trigger event here. End with the narrator's attention being drawn to something.
+【高潮前】IMPORTANT: The trigger incident is the event that CAUSES the main conflict to happen. For example: the old lady discovers she doesn't have enough money — THIS is the trigger. Write 3-4 sentences setting up the incident that leads to the main event.
+【高潮中一】Keep the student's main event. Add EASI: E=外貌(specific facial features showing emotion), A=行动(adjective+action chain sequence), S=语言(action chain + dialogue, not just 他说), I=心理(specific mental verbs: 心头一紧/不禁愣住/百感交集/心里七上八下). (5-7 sentences)
+【高潮中二】Continue the student's story. More EASI. Escalate emotion. Turning point or decision. (5-7 sentences)
+【高潮后】Keep the student's resolution. Improve language. (3-4 sentences)
+【结尾】Keep the student's feelings and moral. Elevate the expression. (3-4 sentences)
 
 TARGET QUALITY for ${targetGrade}: ${gradeDescriptions[targetGrade]}
 Total length: 600-700 Chinese characters. Simplified Chinese only.
