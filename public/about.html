@@ -904,23 +904,118 @@
     font-style: italic;
   }
 
+  .lead-section {
+    background: var(--ink);
+    padding: 80px 56px;
+  }
 
+  .lead-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 900px;
+    margin: 48px auto 0;
+    align-items: start;
+  }
 
+  .lead-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 36px;
+  }
 
+  .lead-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
 
+  .lead-card h3 em { color: var(--teal-mid); font-style: italic; }
 
+  .lead-card p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.7;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
 
+  .lead-input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 
+  .lead-input {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: white;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
 
+  .lead-input::placeholder { color: rgba(255,255,255,0.3); }
+  .lead-input:focus { border-color: var(--teal-mid); }
 
+  .lead-btn {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 13px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
 
+  .lead-btn:hover { background: var(--teal-mid); transform: translateY(-1px); }
 
+  .lead-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0;
+  }
 
+  .lead-divider span {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
 
+  .lead-divider::before, .lead-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+  }
 
+  .lead-fine {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+  }
 
   @media (max-width: 768px) {
-      }
+    .lead-section { padding: 60px 24px; }
+    .lead-grid { grid-template-columns: 1fr; gap: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -928,7 +1023,7 @@
 <!-- ── HERO ── -->
 <div class="waitlist-banner">
   <span class="dot"></span>
-  Limited slots available — <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20find%20out%20more%20about%20tuition." target="_blank">WhatsApp Leon now to secure yours</a>
+  Limited slots available — <a href="#waitlist">WhatsApp Leon now to secure yours</a>
 </div>
 <section class="hero">
   <div class="hero-text">
@@ -1217,38 +1312,64 @@
       </div>
       <div class="pricing-includes">
         <h4>What's included</h4>
-        <div class="pricing-item">1-to-1 weekly sessions at a fixed recurring timeslot</div>
-        <div class="pricing-item">Bilingual digital notes — updated and tailored to your child</div>
-        <div class="pricing-item">Proprietary O-Level guidebook and practice workbooks</div>
-        <div class="pricing-item">Customised digital copy of all materials for 1-to-1 students</div>
+        <div class="pricing-item">1-to-1 weekly sessions at a fixed recurring timeslot, taught bilingually</div>
         <div class="pricing-item">WhatsApp accessibility between sessions for quick questions</div>
+        <div class="pricing-item">Proprietary O-Level guidebook and practice workbooks</div>
+        <div class="pricing-item">All materials customised digitally for your child's specific weak areas</div>
       </div>
-      <div class="pricing-note">All materials are included in the hourly rate — no extras, no packages required.</div>
+      <div class="pricing-note">All materials included in the hourly rate — no extras, no packages required.</div>
     </div>
     <p class="pricing-other">Other levels also available — P6 from $75 · JC H1 from $100 · assessed case by case</p>
   </div>
 </section>
 
 
+<!-- ── LEAD MAGNET + INQUIRY ── -->
+<section class="lead-section reveal">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="section-tag" style="color:var(--teal-mid);">Not Ready to WhatsApp Yet?</div>
+    <h2 class="section-title" style="color:white;">Two ways to take<br><em>the next step.</em></h2>
+    <div class="lead-grid">
+
+      <div class="lead-card">
+        <h3>Get the free<br><em>Playbook</em></h3>
+        <p><strong style="color:white;display:block;margin-bottom:8px;">5 Reasons Your Child Is Losing Marks in O-Level Chinese (That Have Nothing to Do with Their Chinese)</strong>A straight-talking playbook from a 10-year O-Level marker. Leave your email and I'll send it over.</p>
+        <div class="lead-input-row">
+          <input class="lead-input" type="text" placeholder="Your name">
+          <input class="lead-input" type="email" placeholder="Your email address">
+          <button class="lead-btn" onclick="alert('Thank you! Playbook coming soon — check back after Leon sets this up.')">Send me the playbook →</button>
+          <p class="lead-fine">No spam. Just one useful email.</p>
+        </div>
+      </div>
+
+      <div class="lead-card" id="waitlist">
+        <h3>Join the<br><em>waitlist</em></h3>
+        <p>Slots are limited. Leave your details and Leon will be in touch to confirm availability and arrange a trial.</p>
+        <div class="lead-input-row">
+          <input class="lead-input" type="text" placeholder="Your name">
+          <input class="lead-input" type="text" placeholder="Your child's level (e.g. Sec 3)">
+          <input class="lead-input" type="text" placeholder="WhatsApp number">
+          <div class="lead-divider"><span>or</span></div>
+          <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20join%20the%20waitlist." target="_blank" class="lead-btn" style="text-decoration:none;text-align:center;display:block;">WhatsApp to join waitlist</a>
+          <p class="lead-fine"><!-- REPLACE with Tally/Google Form link when ready --></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 <!-- ── RATES + CTA ── -->
 <section class="cta-section">
-  <div class="section-tag">Get Started</div>
+  <div class="section-tag">Get In Touch</div>
   <h2>Interested?<br><em>Get in touch.</em></h2>
   <p class="cta-sub">WhatsApp Leon directly to find out more, ask a question, or arrange a trial lesson.</p>
-  <div class="rates-row">
-    <div class="rate-pill" style="border-color:rgba(26,154,173,0.5);background:rgba(26,154,173,0.15);">
-      <div class="rate-level" style="color:var(--teal-mid);">Upper Secondary</div>
-      <div class="rate-price" style="font-size:36px;">$95</div>
-      <div class="rate-unit">/ hour</div>
-    </div>
-  </div>
-  <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:36px;font-style:italic;">Other levels also available — P6 from $75 &nbsp;·&nbsp; JC H1 from $100 &nbsp;·&nbsp; case by case basis</p>
-  <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20find%20out%20more%20about%20tuition." class="cta-big" target="_blank">
+
+  <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20arrange%20a%20trial%20lesson." class="cta-big" target="_blank">
     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
     WhatsApp 9228 6725
   </a>
-  <p class="cta-fine">WhatsApp is the fastest way to get a response.</p>
+  <p class="cta-fine">Limited slots available. WhatsApp now to secure yours.</p>
 </section>
 
 <script>
