@@ -162,7 +162,7 @@ export default function Home() {
       <div class="hdr-eye">TEACHER LEON'S BILINGUAL ACADEMY · 专属批改工具</div>
       <h1>记叙文智能批改</h1>
       <div class="hdr-sub">Narrative Composition Marker · 依据 SEAB 1160 评分指引 · 结合林老师记叙文框架</div>
-      ${title?`<div style="margin-top:10px;font-size:13px;font-family:'Noto Serif SC',serif;color:#3d3020">题目：${title}</div>`:''}
+      ${title?'<div style="margin-top:10px;font-size:13px;font-family:\'Noto Serif SC\',serif;color:#3d3020">题目：'+title+'</div>':''}
     </div>
 
     <div class="grade-banner">
@@ -219,12 +219,12 @@ export default function Home() {
       <div class="sec" style="margin-bottom:0">
         <h2>🏗 结构与表达<span class="sec-sub-label">STRUCTURE & STYLE</span></h2>
         ${(results.structure_notes||[]).length
-          ? (results.structure_notes||[]).map(e=>`<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #1a4a70;background:#eaf2fb;margin-bottom:8px;font-size:12px"><div style="font-weight:700;font-size:10px;color:#1a4a70;margin-bottom:3px">${e.label||'结构优点'}</div>${e.text}</div>`).join('')
+          ? (results.structure_notes||[]).map(e=>'<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #1a4a70;background:#eaf2fb;margin-bottom:8px;font-size:12px"><div style="font-weight:700;font-size:10px;color:#1a4a70;margin-bottom:3px">'+(e.label||'结构优点')+'</div>'+e.text+'</div>').join('')
           : '<p style="color:#1a6e40;font-style:italic;font-size:12px">结构整体良好。✓</p>'}
       </div>
       <div class="sec" style="margin-bottom:0">
         <h2>🌱 改进建议<span class="sec-sub-label">HOW TO IMPROVE</span></h2>
-        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">${(results.improvements||[]).map(i=>`<li style="display:flex;gap:8px;align-items:flex-start;font-size:12px"><span style="color:#1a6e40;flex-shrink:0;font-weight:700">✦</span><span>${i}</span></li>`).join('')}</ul>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">${(results.improvements||[]).map(i=>'<li style="display:flex;gap:8px;align-items:flex-start;font-size:12px"><span style="color:#1a6e40;flex-shrink:0;font-weight:700">✦</span><span>'+i+'</span></li>').join('')}</ul>
       </div>
     </div>
 
@@ -330,7 +330,7 @@ export default function Home() {
                     }}>
                       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'6px'}}>
                         <span style={{fontWeight:700, fontSize:'.75rem', color:st.color}}>
-                          {st.icon} {FW_LABELS[fwKeys[assignFw(pIdx,paragraphs.length)?fwKeys.indexOf(fwKeys[Math.min(Math.round((pIdx/Math.max(paragraphs.length-1,1))*(fwKeys.length-1)),fwKeys.length-1)]):0]]?.label}
+                          {st.icon} {info?.label||''}
                         </span>
                         <span style={{fontSize:'.72rem', color:st.color, background:'white', padding:'1px 7px', borderRadius:99, border:`1px solid ${st.border}`}}>{st.label}</span>
                       </div>
