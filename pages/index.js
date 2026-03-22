@@ -108,12 +108,64 @@ export default function Home() {
         </div>`).join('')
       : '<p style="color:#1a6e40;font-style:italic;font-size:12px">语言运用良好，未发现明显错误。✓</p>';
 
-    // ── Annotation legend
-    const annLegend = (results.annotations||[]).length
-      ? `<div style="margin-top:10px;font-size:11px;line-height:1.8">${(results.annotations||[]).map(a=>{
-          const dot = a.type==='error'?'🔴':a.type==='good'?'🟢':'🟡';
-          return `${dot} "${a.text}" — ${a.comment}${a.technique?' ['+a.technique+']':''}`;
-        }).join('<br/>')}</div>` : '';
+    // ── No annotation legend in PDF — inline dots only, matching screen
+
+    // ── Annotated essay with framework cards (paragraph by paragraph, matching screen)
+    const pdfFwKeys = ['p1_opening','p2_scene','p3_transition','p4_trigger','p56_climax','p7_resolution','p8_conclusion'].filter(function(k){return !!(results.framework||{})[k];});
+    const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p3_transition:'P3 过渡',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
+
+    function buildPdfParaMap(paras, keys) {
+      var map = [];
+      var used = {};
+      for (var p=0; p<paras; p++) {
+        if (!keys.length) { map.push(null); continue; }
+        var raw = (paras <= keys.length) ? p : Math.floor(p / (paras-1) * (keys.length-1) + 0.5);
+        var idx = Math.min(raw, keys.length-1);
+        while (used[idx] && idx < keys.length-1) { idx++; }
+        if (!used[idx]) { map.push(keys[idx]); used[idx]=true; }
+        else { map.push(null); }
+      }
+      return map;
+    }
+
+    const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
+    const pdfParaMap = buildPdfParaMap(pdfParas.length, pdfFwKeys);
+
+    const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
+      const fwKey = pdfParaMap[pIdx];
+      const fw = fwKey ? (results.framework||{})[fwKey] : null;
+      const st = fw ? (fwStatusStyle[fw.status]||fwStatusStyle.pass) : null;
+      // Annotate this paragraph with coloured highlights (matching screen)
+      const annotatedPara = (function() {
+        var sorted = (results.annotations||[]).slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
+        var text = para;
+        sorted.forEach(function(ann) {
+          if (!ann.text || !text.includes(ann.text)) return;
+          var bg = ann.type==='error'?'#ffd6d6':ann.type==='good'?'#d0f0df':'#fff3cc';
+          var ul = ann.type==='error'?'#b83222':ann.type==='good'?'#1a6e40':'#a07820';
+          var dot = ann.type==='error'?'🔴':ann.type==='good'?'🟢':'🟡';
+          var span = '<span style="background:'+bg+';border-bottom:2px solid '+ul+';border-radius:3px;padding:1px 2px">'+ann.text+'<sup style="font-size:8px;color:'+ul+';margin-left:1px">'+dot+'</sup></span>';
+          text = text.replace(ann.text, span);
+        });
+        return text;
+      })();
+      const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
+      const fwCard = fw && st ? (
+        '<div style="width:210px;flex-shrink:0;background:'+st.bg+';border:1px solid '+st.border+';border-left:4px solid '+st.border+';border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
+            '<span style="font-weight:700;font-size:11px;color:'+st.color+';white-space:nowrap">'+(pdfFwLabels[fwKey]||fwKey)+'</span>'+
+            '<span style="font-size:10px;color:'+st.color+';background:white;padding:1px 6px;border-radius:99px;border:1px solid '+st.border+';white-space:nowrap">'+st.icon+' '+st.label+'</span>'+
+          '</div>'+
+          '<div style="font-size:11px;color:#3d3020;line-height:1.6;font-family:Noto Sans SC,sans-serif">'+fw.comment+'</div>'+
+        '</div>'
+      ) : '';
+      return (
+        '<div style="display:flex;gap:8px;align-items:stretch;margin-bottom:6px">'+
+          '<div style="flex:1;min-width:0;font-family:Noto Serif SC,serif;font-size:12px;color:#3d3020;line-height:2;background:#fffef8;padding:10px 14px;border-radius:8px;border:1px solid #e0d5c0;border-left:'+borderLeft+'">'+annotatedPara+'</div>'+
+          fwCard+
+        '</div>'
+      );
+    }).join('');
 
     // ── Score bars
     const cPct = Math.round((results.content_score/20)*100);
@@ -184,14 +236,13 @@ export default function Home() {
     </div>
 
     <div class="sec">
-      <h2>📝 学生原文（批注版）<span class="sec-sub-label">ANNOTATED STUDENT ESSAY</span></h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <h2>📝 学生原文（批注版）<span class="sec-sub-label">ANNOTATED STUDENT ESSAY · FRAMEWORK NOTES ALONGSIDE EACH PARAGRAPH</span></h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
         <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#edf7f1;color:#1a6e40;border:1px solid #1a6e40">🟢 优点</span>
         <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fdf0ee;color:#b83222;border:1px solid #b83222">🔴 错误</span>
         <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fdf6e3;color:#a07820;border:1px solid #a07820">🟡 可改善</span>
       </div>
-      <div class="se">${annotatedEssayText}</div>
-      ${annLegend}
+      ${pdfAnnotatedEssayWithFw}
     </div>
 
     <div class="sec">
@@ -303,17 +354,34 @@ export default function Home() {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
 
-    function assignFw(pIdx, total) {
-      if (!fwKeys.length) return null;
-      const i = Math.min(Math.round((pIdx / Math.max(total-1,1)) * (fwKeys.length-1)), fwKeys.length-1);
-      return fwKeys[i];
+    // Map paragraphs to fw keys: distribute evenly, each key used at most once
+    // If more paragraphs than fw keys, extra paragraphs get null (no card)
+    // If fewer paragraphs than fw keys, some keys are skipped
+    function buildParaFwMap(numParas, keys) {
+      var map = [];
+      if (!keys.length) { for (var x=0; x<numParas; x++) map.push(null); return map; }
+      // Spread keys across paragraphs as evenly as possible
+      var used = {};
+      for (var p=0; p<numParas; p++) {
+        var raw = (numParas <= keys.length)
+          ? p  // one-to-one, skip extras
+          : Math.floor(p / (numParas - 1) * (keys.length - 1) + 0.5);
+        var idx = Math.min(raw, keys.length - 1);
+        // Avoid duplicates: advance to next unused key
+        while (used[idx] && idx < keys.length - 1) { idx++; }
+        if (!used[idx]) { map.push(keys[idx]); used[idx] = true; }
+        else { map.push(null); } // extra paragraph, no card
+      }
+      return map;
     }
+
+    var paraFwMap = buildParaFwMap(paragraphs.length, fwKeys);
 
     // Each paragraph row contains essay + card side by side — perfect alignment guaranteed
     return (
       <div>
         {paragraphs.map(function(para, pIdx) {
-          const fwKey = assignFw(pIdx, paragraphs.length);
+          const fwKey = paraFwMap[pIdx];
           const fw = fwKey ? framework[fwKey] : null;
           const st = fw ? (FW_STATUS[fw.status]||FW_STATUS.pass) : null;
           const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
