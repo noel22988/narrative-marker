@@ -18,8 +18,32 @@ export default function Home() {
   async function markEssay() {
     if (wordCount < 80) return setError('请提供至少80字的作文。');
     setError(''); setState('loading');
+    // Deduplicate essay — detect if student accidentally pasted essay twice
+    const dedupEssay = (function(text) {
+      const paras = text.split('\n').filter(p => p.trim().length > 0);
+      if (paras.length < 4) return text;
+      const half = Math.floor(paras.length / 2);
+      // Check if second half is substantially identical to first half
+      const firstHalf = paras.slice(0, half).join('\n');
+      const secondHalf = paras.slice(half).join('\n');
+      // Compare: if >80% of chars in second half appear in same order in first half
+      const shorter = firstHalf.length < secondHalf.length ? firstHalf : secondHalf;
+      const longer = firstHalf.length < secondHalf.length ? secondHalf : firstHalf;
+      let matches = 0;
+      let li = 0;
+      for (let si = 0; si < shorter.length; si++) {
+        while (li < longer.length && longer[li] !== shorter[si]) li++;
+        if (li < longer.length) { matches++; li++; }
+      }
+      const similarity = matches / shorter.length;
+      if (similarity > 0.85) {
+        // Essay is duplicated — use only first half
+        return paras.slice(0, half).join('\n');
+      }
+      return text;
+    })(essay);
     try {
-      const res = await fetch('/api/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ essay, title }) });
+      const res = await fetch('/api/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ essay: dedupEssay, title }) });
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || '批改失败');
       setResults(data); setState('results');
@@ -77,7 +101,8 @@ export default function Home() {
       const bg = isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
       const border = isGood?'#1a6e40':isOk?'#a07820':'#b83222';
       const color = isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
-      const extractedArr = Array.isArray(it.extracted) ? it.extracted : (it.extracted||'').split('｜').filter(Boolean);
+      // Derive from annotations directly — guaranteed sync with essay highlights
+      const extractedArr = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
       const extractedHtml = extractedArr[0]==='未发现相关描写'||!extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
         : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:\'Noto Serif SC\',serif;font-size:11px">${ex}</span></div>`).join('');
@@ -622,7 +647,25 @@ export default function Home() {
 
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>✍️</div><div><div className="sec-title">EASI 人物描写手法</div><div className="sec-sub">E = Expressions & Appearance &nbsp;·&nbsp; A = Actions &nbsp;·&nbsp; S = Speech &nbsp;·&nbsp; I = Inner Thoughts & Feelings</div></div></div>
-            <div className="easi-grid">{easiItems.map(e=>{const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:'',extracted:''};const c=easiColor(item.rating);return(<div key={e.k} className="easi-item" style={{background:c.bg,borderColor:c.border}}><div className="easi-header"><div className="easi-letter" style={{color:c.border}}>{e.k}</div><div><div className="easi-name">{e.name}</div><div className="easi-en">{e.en}</div></div></div><div className="easi-score" style={{color:c.border}}>{item.score_label}</div><div className="easi-comment">{item.comment}</div><div className="easi-extracted" style={{borderColor:c.border}}><div className="easi-extracted-lbl">学生原文摘录 · Student&apos;s Writing</div>{Array.isArray(item.extracted)?(item.extracted[0]==='未发现相关描写'?<div className="easi-extracted-text" style={{color:'#999',fontStyle:'italic'}}>未发现相关描写</div>:<ul style={{listStyle:'none',padding:0,margin:0,display:'flex',flexDirection:'column',gap:'6px'}}>{item.extracted.map((ex,xi)=>(<li key={xi} style={{display:'flex',gap:'8px',alignItems:'flex-start'}}><span style={{color:c.border,flexShrink:0,fontWeight:700,fontSize:'.85rem',marginTop:'1px'}}>·</span><span className="easi-extracted-text" style={{flex:1}}>{ex}</span></li>))}</ul>):<div className="easi-extracted-text">{typeof item.extracted==='string'?item.extracted.split('｜').map((ex,xi,arr)=>(<div key={xi} style={{display:'flex',gap:'8px',marginBottom:xi<arr.length-1?'4px':'0'}}><span style={{color:c.border,fontWeight:700}}>·</span><span>{ex}</span></div>)):'未发现相关描写'}</div>}</div></div>);})}</div>
+            <div className="easi-grid">{easiItems.map(e=>{
+            const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
+            const c=easiColor(item.rating);
+            // Derive extracted list directly from annotations — guaranteed sync with highlights
+            const fromAnns=(results.annotations||[]).filter(a=>a.type==='good'&&a.technique===e.k).map(a=>a.text).filter(Boolean);
+            const extracted=fromAnns.length>0?fromAnns:['未发现相关描写'];
+            return(<div key={e.k} className="easi-item" style={{background:c.bg,borderColor:c.border}}>
+              <div className="easi-header"><div className="easi-letter" style={{color:c.border}}>{e.k}</div><div><div className="easi-name">{e.name}</div><div className="easi-en">{e.en}</div></div></div>
+              <div className="easi-score" style={{color:c.border}}>{item.score_label}</div>
+              <div className="easi-comment">{item.comment}</div>
+              <div className="easi-extracted" style={{borderColor:c.border}}>
+                <div className="easi-extracted-lbl">学生原文摘录 · Student&apos;s Writing</div>
+                {extracted[0]==='未发现相关描写'
+                  ?<div className="easi-extracted-text" style={{color:'#999',fontStyle:'italic'}}>未发现相关描写</div>
+                  :<ul style={{listStyle:'none',padding:0,margin:0,display:'flex',flexDirection:'column',gap:'6px'}}>{extracted.map((ex,xi)=>(<li key={xi} style={{display:'flex',gap:'8px',alignItems:'flex-start'}}><span style={{color:c.border,flexShrink:0,fontWeight:700,fontSize:'.85rem',marginTop:'1px'}}>·</span><span className="easi-extracted-text" style={{flex:1}}>{ex}</span></li>))}</ul>
+                }
+              </div>
+            </div>);
+          })}</div>
           </div>
 
           <div className="card">
