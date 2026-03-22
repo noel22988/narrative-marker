@@ -241,9 +241,14 @@ export default function Home() {
       <div class="mkt-title">👨‍🏫 Found this useful? Learn directly with Teacher Leon.</div>
       <div class="mkt-cred">BA (Hons) Chinese Studies, NTU · PGDE, NIE · 17 years teaching · 10 years O-Level marker</div>
       <div class="mkt-body">This tool reflects how Leon teaches — structured, strategic, examiner-informed. If your child would benefit from that approach 1-to-1, a trial lesson is the best way to find out.</div>
-      <a class="mkt-wa" href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank">
-        WhatsApp for a Trial →
-      </a>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <a class="mkt-wa" href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank">
+          WhatsApp for a Trial →
+        </a>
+        <a href="/about.html" target="_blank" style="display:inline-block;color:rgba(255,255,255,0.6);font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);text-decoration:none;">
+          Learn more →
+        </a>
+      </div>
     </div>
 
     </body></html>`);
@@ -304,58 +309,50 @@ export default function Home() {
       return fwKeys[i];
     }
 
+    // Each paragraph row contains essay + card side by side — perfect alignment guaranteed
     return (
       <div>
-        <div style={{display:'grid', gridTemplateColumns:'1fr 220px', gap:'0', alignItems:'start'}} className="fw-essay-grid">
-          <div style={{paddingRight:'12px'}}>
-            {paragraphs.map(function(para, pIdx) {
-              const fwKey = assignFw(pIdx, paragraphs.length);
-              const fw = fwKey ? framework[fwKey] : null;
-              const st = fw ? (FW_STATUS[fw.status]||FW_STATUS.pass) : null;
-              const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
-              return (
-                <div key={pIdx} style={{marginBottom:'4px'}}>
-                  <div style={{display:'flex', alignItems:'flex-start', gap:'6px'}}>
-                    <div
-                      style={{flex:1, fontFamily:"'Noto Serif SC',serif", fontSize:'.95rem', color:'#3d3020',
-                        lineHeight:2.2, background:'#fffef8', padding:'10px 14px',
-                        borderRadius:'8px', border:'1px solid #e0d5c0', borderLeft:borderLeft}}
-                      dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations)}}
-                    />
-                    {fw && st && (
-                      <button
-                        onClick={function(){setExpandedIdx(expandedIdx===pIdx?null:pIdx);}}
-                        className="fw-mobile-icon"
-                        style={{display:'none', flexShrink:0, width:'28px', height:'28px',
-                          marginTop:'12px', borderRadius:'50%', border:'2px solid '+st.border,
-                          background:st.bg, color:st.color, fontSize:'.8rem', fontWeight:700,
-                          cursor:'pointer', alignItems:'center', justifyContent:'center'}}
-                      >{st.icon}</button>
-                    )}
-                  </div>
-                  {fw && expandedIdx===pIdx && (
-                    <div className="fw-mobile-card" style={{marginBottom:'10px'}}>
-                      <FwCard fw={fw} fwKey={fwKey} />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          <div style={{display:'flex', flexDirection:'column', gap:'4px'}} className="fw-right-col">
-            {paragraphs.map(function(para, pIdx) {
-              const fwKey = assignFw(pIdx, paragraphs.length);
-              const fw = fwKey ? framework[fwKey] : null;
-              const approxH = Math.max(80, Math.ceil(para.length/22)*38);
-              if (!fw) return <div key={pIdx} style={{minHeight:approxH+'px'}} />;
-              return (
-                <div key={pIdx} style={{minHeight:approxH+'px'}}>
+        {paragraphs.map(function(para, pIdx) {
+          const fwKey = assignFw(pIdx, paragraphs.length);
+          const fw = fwKey ? framework[fwKey] : null;
+          const st = fw ? (FW_STATUS[fw.status]||FW_STATUS.pass) : null;
+          const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
+          return (
+            <div key={pIdx} style={{display:'flex', gap:'8px', alignItems:'stretch', marginBottom:'6px'}}>
+              {/* Essay paragraph */}
+              <div style={{flex:1, minWidth:0}}>
+                <div
+                  style={{fontFamily:"'Noto Serif SC',serif", fontSize:'.95rem', color:'#3d3020',
+                    lineHeight:2.2, background:'#fffef8', padding:'10px 14px', height:'100%',
+                    borderRadius:'8px', border:'1px solid #e0d5c0', borderLeft:borderLeft}}
+                  dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations)}}
+                />
+              </div>
+              {/* Framework card — desktop: inline; mobile: tap to expand */}
+              {fw && st && (
+                <div className="fw-right-col" style={{width:'210px', flexShrink:0}}>
                   <FwCard fw={fw} fwKey={fwKey} />
                 </div>
-              );
-            })}
-          </div>
-        </div>
+              )}
+              {fw && st && (
+                <button
+                  onClick={function(){setExpandedIdx(expandedIdx===pIdx?null:pIdx);}}
+                  className="fw-mobile-icon"
+                  style={{display:'none', flexShrink:0, width:'28px', height:'28px',
+                    alignSelf:'flex-start', marginTop:'12px', borderRadius:'50%',
+                    border:'2px solid '+st.border, background:st.bg, color:st.color,
+                    fontSize:'.8rem', fontWeight:700, cursor:'pointer',
+                    alignItems:'center', justifyContent:'center'}}
+                >{st.icon}</button>
+              )}
+              {fw && expandedIdx===pIdx && (
+                <div className="fw-mobile-card" style={{marginTop:'4px', width:'100%'}}>
+                  <FwCard fw={fw} fwKey={fwKey} />
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
