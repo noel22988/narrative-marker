@@ -84,7 +84,11 @@ CRITICAL: For "extracted" field — extract EVERY SINGLE qualifying phrase from 
 - After your first pass, do a second pass through the essay to catch anything missed.
 - For E (外貌描写): include EVERY phrase describing appearance, facial expression, clothing, body posture, eyes, skin — full phrase e.g. "满头白发的老奶奶，她佝偻着腰"
 - For A (行动描写): include EVERY action phrase — must include adverb+verb chain together e.g. "颤巍巍地从口袋里掏出一个旧布钱包"
-- For S (语言描写): include EVERY dialogue — speech tag + full spoken words. CRITICAL: Chinese speech marks “” are SAFE in JSON. You MUST include them. e.g. 她低声恳求道：“姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？” — copy exactly as written. NEVER use（）instead of “”. NEVER omit the actual dialogue content.
+- For S (语言描写): include EVERY dialogue — speech tag + full quoted words with EXACT quote marks from essay.
+  - Chinese curly quotes “” are 100% safe in JSON. Copy them exactly.
+  - e.g. 她低声恳求道：“姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？”
+  - NEVER replace “” with （）— brackets are wrong for speech
+  - Include the FULL dialogue, not truncated
 - For I (心理描写): include EVERY inner thought — mental verb/phrase + content e.g. "我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗"
 - Search EVERY paragraph: P1开头, P2场景, P3过渡, P4高潮前, P5高潮中一, P6高潮中二, P7高潮后, P8结尾 — ALL count
 - P4 to P7 are especially dense with EASI — extract EVERY single qualifying phrase from these paragraphs, do not skip any
@@ -99,13 +103,24 @@ LANGUAGE MARKING — be lenient with language scores:
 - An essay with 1-2 minor errors should still be Band 1 language
 
 ANNOTATIONS: Identify ALL notable phrases in the student essay for inline markup. For each annotation:
-- "text": copy the EXACT phrase from the essay (keep it short, 5-25 characters ideally)
+- "text": copy the EXACT phrase from the essay. For S (speech), include the full speech tag + quoted words (can be 80+ chars). For E/A/I, include the full meaningful phrase. Do NOT truncate.
 - "type": one of "error" (language mistake), "good" (strong writing worth praising), "improve" (correct but could be better)
 - "technique": only for "good" type — which EASI technique: "E", "A", "S", "I", or "structure" for good structure
 - "comment": brief Chinese explanation (under 20 characters)
 IMPORTANT annotation rules:
 - Annotate EVERY good use of EASI — no limit on number of annotations
-- For S (Speech) annotations: "text" MUST be speech tag + full spoken words. Chinese curly quotes “” are SAFE in JSON — use them exactly as the student wrote. e.g. 她低声恳求道：“姑娘，我今天出门忘了带钱……”. NEVER substitute （）for speech marks. Never annotate just the tag or just the words alone.
+- CRITICAL SYNC RULE: The EASI "extracted" arrays and the annotations array MUST be perfectly in sync:
+  (a) Every string in E.extracted → must have a matching annotation {type:"good", technique:"E"}
+  (b) Every string in A.extracted → must have a matching annotation {type:"good", technique:"A"}
+  (c) Every string in S.extracted → must have a matching annotation {type:"good", technique:"S"}
+  (d) Every string in I.extracted → must have a matching annotation {type:"good", technique:"I"}
+  (e) Every annotation with type "good" and a technique → its text must appear in the corresponding extracted array
+  DO THIS CHECK before finalising your JSON: scan extracted vs annotations and make sure nothing is missing from either side.
+- For S (Speech) annotations: "text" MUST be speech tag + full spoken words WITH the exact quote marks the student used.
+  - If student used “” (curly quotes): include them — e.g. 她低声恳求道：“姑娘，我今天出门忘了带钱……”
+  - “” curly quotes are 100% SAFE in JSON strings. Use them.
+  - （）full-width brackets are WRONG for speech — NEVER use them to replace “”
+  - Never annotate just the speech tag alone or just the quoted words alone.
 - For I (Inner Thoughts) annotations: the "text" MUST include the mental verb AND the thought content together — e.g. 我心想：不过是三块五毛钱. Never annotate just a mental verb or just the content alone.
 - Also annotate every strong vocabulary choice, vivid description, or well-structured sentence
 - Include all genuine errors as "error" annotations
