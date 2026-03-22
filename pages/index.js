@@ -375,9 +375,7 @@ export default function Home() {
         const qs=['“','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
         if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='“'?'”':'"',q0+1);
         if(qe>-1){const cl=text.slice(ni,qe+1); if(!S.includes(cl))S.push(cl);}}ni++;}})()
-    while ((m = niandao.exec(text)) !== null) {
-      if (!S.includes(m[0])) S.push(m[0]);
-    }
+
 
     // I: Inner thoughts & feelings
     const I = findClauses(text, [
