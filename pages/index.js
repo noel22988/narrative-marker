@@ -116,18 +116,37 @@ export default function Home() {
 
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const pdfParaMap = (function() {
-      var map = new Array(pdfParas.length).fill(null);
-      pdfFwKeys.forEach(function(k) {
+      var hasIdx = pdfFwKeys.some(function(k) {
         var fw = (results.framework||{})[k];
-        if (!fw) return;
-        var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
-        if (pi === null || pi >= pdfParas.length) return;
-        map[pi] = k;
-        if (k === 'p56_climax' && pi + 1 < pdfParas.length && map[pi+1] === null) {
-          map[pi+1] = k;
-        }
+        return fw && typeof fw.para_index === 'number';
       });
-      return map;
+      if (hasIdx) {
+        var map = new Array(pdfParas.length).fill(null);
+        pdfFwKeys.forEach(function(k) {
+          var fw = (results.framework||{})[k];
+          if (!fw) return;
+          var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
+          if (pi === null || pi >= pdfParas.length) return;
+          map[pi] = k;
+          if (k === 'p56_climax' && pi + 1 < pdfParas.length) {
+            map[pi + 1] = k;
+          }
+        });
+        return map;
+      } else {
+        var map = new Array(pdfParas.length).fill(null);
+        var ki = 0;
+        for (var pi = 0; pi < pdfParas.length; pi++) {
+          if (ki >= pdfFwKeys.length) break;
+          map[pi] = pdfFwKeys[ki];
+          if (pdfFwKeys[ki] === 'p56_climax' && pi + 1 < pdfParas.length) {
+            pi++;
+            map[pi] = pdfFwKeys[ki];
+          }
+          ki++;
+        }
+        return map;
+      }
     })();
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
@@ -359,21 +378,44 @@ export default function Home() {
 
     // Assign fw keys to paragraphs, giving P5-6 (高潮中) TWO paragraph slots
     // Pattern: P1, P2, P3, P4, P5-6, P5-6, P7, P8, null...
-    // Build para→fwKey map using AI-assigned para_index values
+    // Build para→fwKey map: use AI para_index if available, else sequential with P5-6 double slot
     var paraFwMap = (function() {
-      var map = new Array(paragraphs.length).fill(null);
-      fwKeys.forEach(function(k) {
-        var fw = framework[k];
-        if (!fw) return;
-        var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
-        if (pi === null || pi >= paragraphs.length) return;
-        map[pi] = k;
-        // P5-6 also covers the immediately following paragraph
-        if (k === 'p56_climax' && pi + 1 < paragraphs.length && map[pi+1] === null) {
-          map[pi+1] = k;
-        }
+      // Check if AI returned para_index for any key
+      var hasParaIndex = fwKeys.some(function(k) {
+        return framework[k] && typeof framework[k].para_index === 'number';
       });
-      return map;
+
+      if (hasParaIndex) {
+        // Use AI-assigned indices
+        var map = new Array(paragraphs.length).fill(null);
+        fwKeys.forEach(function(k) {
+          var fw = framework[k];
+          if (!fw) return;
+          var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
+          if (pi === null || pi >= paragraphs.length) return;
+          map[pi] = k;
+          // P5-6 always covers the next paragraph too
+          if (k === 'p56_climax' && pi + 1 < paragraphs.length) {
+            map[pi + 1] = k;
+          }
+        });
+        return map;
+      } else {
+        // Fallback: sequential, P5-6 gets two slots
+        // P1, P2, P3, P4, P5-6, P5-6, P7, P8
+        var map = new Array(paragraphs.length).fill(null);
+        var ki = 0;
+        for (var pi = 0; pi < paragraphs.length; pi++) {
+          if (ki >= fwKeys.length) break;
+          map[pi] = fwKeys[ki];
+          if (fwKeys[ki] === 'p56_climax' && pi + 1 < paragraphs.length) {
+            pi++;
+            map[pi] = fwKeys[ki]; // second climax paragraph
+          }
+          ki++;
+        }
+        return map;
+      }
     })();
 
     // Each paragraph row contains essay + card side by side — perfect alignment guaranteed
@@ -579,9 +621,6 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="card">
-            <div className="sec-head"><div className="sec-icon" style={{background:'#f5eeff'}}>🗂</div><div><div className="sec-title">林老师框架检查</div><div className="sec-sub">Narrative Framework</div></div></div>
-            <div className="fw-items-grid">{fwItems.map(f=>{const item=results.framework?.[f.key]||{status:'warn',comment:''};const c=fwColor(item.status);return <div key={f.key} className="fw-item" style={{background:c.bg,borderColor:c.border,color:c.text}}><span className="fw-icon">{c.icon}</span><div><div className="fw-lbl">{f.label}</div>{item.comment}</div></div>;})}</div>
           </div>
 
           <div className="card">
