@@ -1,7 +1,23 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const { essay, title } = req.body;
-  if (!essay || essay.replace(/\s/g, '').length < 80) return res.status(400).json({ error: '请提供至少80字的作文。' });
+  const { essay: rawEssay, title } = req.body;
+  if (!rawEssay || rawEssay.replace(/\s/g, '').length < 80) return res.status(400).json({ error: '请提供至少80字的作文。' });
+  // Server-side dedup: detect if essay was pasted twice
+  const essay = (function(text) {
+    const paras = text.split('\n').filter(p => p.trim().length > 0);
+    if (paras.length < 4) return text;
+    const half = Math.floor(paras.length / 2);
+    const firstHalf = paras.slice(0, half).join('\n');
+    const secondHalf = paras.slice(half).join('\n');
+    const shorter = firstHalf.length < secondHalf.length ? firstHalf : secondHalf;
+    const longer = firstHalf.length < secondHalf.length ? secondHalf : firstHalf;
+    let matches = 0; let li = 0;
+    for (let si = 0; si < shorter.length; si++) {
+      while (li < longer.length && longer[li] !== shorter[si]) li++;
+      if (li < longer.length) { matches++; li++; }
+    }
+    return (matches / shorter.length) > 0.85 ? paras.slice(0, half).join('\n') : text;
+  })(rawEssay);
   const charCount = essay.replace(/\s/g, '').length;
 
   const system = `You are Teacher Leon (林纯隆老师), a Singapore O Level Chinese (1160) examiner at Teacher Leon's Bilingual Academy with 15+ years experience. You are a generous but accurate marker — you reward what students do well.
@@ -109,13 +125,8 @@ ANNOTATIONS: Identify ALL notable phrases in the student essay for inline markup
 - "comment": brief Chinese explanation (under 20 characters)
 IMPORTANT annotation rules:
 - Annotate EVERY good use of EASI — no limit on number of annotations
-- CRITICAL SYNC RULE: The EASI "extracted" arrays and the annotations array MUST be perfectly in sync:
-  (a) Every string in E.extracted → must have a matching annotation {type:"good", technique:"E"}
-  (b) Every string in A.extracted → must have a matching annotation {type:"good", technique:"A"}
-  (c) Every string in S.extracted → must have a matching annotation {type:"good", technique:"S"}
-  (d) Every string in I.extracted → must have a matching annotation {type:"good", technique:"I"}
-  (e) Every annotation with type "good" and a technique → its text must appear in the corresponding extracted array
-  DO THIS CHECK before finalising your JSON: scan extracted vs annotations and make sure nothing is missing from either side.
+- THE EASI CARDS ARE BUILT FROM YOUR ANNOTATIONS: The frontend builds the E/A/S/I card extracted lists directly from the annotations array. So if you want a phrase to appear in the E card, annotate it with type:"good" and technique:"E". There is no separate extracted field that matters — annotations ARE the source of truth for the cards.
+- This means: annotate EVERY EASI phrase. If you miss an annotation, it will be missing from the card. No exceptions.
 - For S (Speech) annotations: "text" MUST be speech tag + full spoken words WITH the exact quote marks the student used.
   - If student used “” (curly quotes): include them — e.g. 她低声恳求道：“姑娘，我今天出门忘了带钱……”
   - “” curly quotes are 100% SAFE in JSON strings. Use them.
