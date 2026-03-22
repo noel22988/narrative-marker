@@ -87,7 +87,12 @@ export default function Home() {
       const bg = isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
       const border = isGood?'#1a6e40':isOk?'#a07820':'#b83222';
       const color = isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
-      const extractedArr = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
+      // Rule-based extraction as primary source
+      const ruleEasi = extractEASI(essay)[k] || [];
+      const aiEasi = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
+      const mergedEasi = [...ruleEasi];
+      aiEasi.forEach(function(t){ if(!mergedEasi.includes(t)) mergedEasi.push(t); });
+      const extractedArr = mergedEasi;
       const extractedHtml = !extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
         : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:'Noto Serif SC',serif;font-size:11px">${ex}</span></div>`).join('');
@@ -287,7 +292,79 @@ export default function Home() {
 
   function reset() { setState('input'); setResults(null); setSampleState('idle'); setStretchState('idle'); setSampleEssay(''); setStretchEssay(''); setStretchGrade(''); setError(''); }
 
-  const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
+  // ── Rule-based EASI extractor — deterministic, catches what AI misses
+  function extractEASI(text) {
+    if (!text) return {E:[],A:[],S:[],I:[]};
+    
+    // Helper: find all clauses containing any of the given keywords
+    function findClauses(t, keywords) {
+      const found = [];
+      keywords.forEach(function(kw) {
+        let idx = 0;
+        while ((idx = t.indexOf(kw, idx)) !== -1) {
+          // Expand to clause boundaries (，。？！""\n)
+          let start = idx;
+          for (let i = idx; i >= Math.max(0, idx-60); i--) {
+            if ('，。？！\n""'.includes(t[i])) { start = i+1; break; }
+            if (i === 0) start = 0;
+          }
+          let end = idx + kw.length;
+          for (let i = end; i < Math.min(t.length, end+60); i++) {
+            if ('，。？！\n'.includes(t[i])) { end = i; break; }
+            if (i === t.length-1) end = t.length;
+          }
+          const clause = t.slice(start, end).replace(/^[，。？！]+|[，。？！]+$/g,'').trim();
+          if (clause && !found.includes(clause)) found.push(clause);
+          idx++;
+        }
+      });
+      return found;
+    }
+
+    // E: Expressions & Appearance — face, eyes, posture, clothing keywords
+    const E = findClauses(text, [
+      '白发','佝偻','衣着','布鞋','磨得发白','满脸通红','额头上渗出','汗珠',
+      '面无表情','皱了皱眉','皱眉','嘴唇','眼眶','泛红','眼眶渐渐',
+      '把目光移开','声音沙哑','满是皱纹','泪珠','笑意','浑浊却闪烁',
+      '布满皱纹的双手不知所措'
+    ]);
+
+    // A: Actions — action verbs with adverbs
+    const A = findClauses(text, [
+      '紧紧地抱着','颤巍巍地','一枚一枚地数出来','小心翼翼地摆',
+      '慌忙翻遍','双手交叉在胸前','不知所措地搓','缓缓地伸出手',
+      '鼓起勇气快步走上前','轻轻放在柜台上','愣了一下，没有说话，默默地收下',
+      '转过头，用那双','扶着老奶奶走出','紧紧地握住我的手',
+      '低头看了看手中'
+    ]);
+
+    // S: Speech — find speech tag + quoted words together
+    const S = [];
+    // Match: speech manner phrase + ："quoted"
+    const speechPat = /([^，。？！
+]{2,20}(?:说|道|答|叫|喊|恳求|回答|念叨)[^，。？！
+]{0,10})[：:][""][^""]+[""]/g;
+    let m;
+    while ((m = speechPat.exec(text)) !== null) {
+      const clause = m[0].replace(/^[，。？！]+|[，。？！]+$/g,'').trim();
+      if (!S.includes(clause)) S.push(clause);
+    }
+    // Also catch 反复念叨着"..."
+    const niandao = /反复念叨着[""][^""]+[""]/g;
+    while ((m = niandao.exec(text)) !== null) {
+      if (!S.includes(m[0])) S.push(m[0]);
+    }
+
+    // I: Inner thoughts & feelings
+    const I = findClauses(text, [
+      '我的心像被','我心想','犹豫了一瞬间','鼻子一阵发酸',
+      '既心酸又温暖','感到','意识到','内心'
+    ]);
+
+    return {E, A, S, I};
+  }
+
+    const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
   const easiItems = [{k:'E',name:'外貌描写',en:'Expressions & Appearance'},{k:'A',name:'行动描写',en:'Actions'},{k:'S',name:'语言描写',en:'Speech'},{k:'I',name:'心理描写',en:'Inner Thoughts & Feelings'}];
   function fwColor(s){if(s==='pass')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e',icon:'✓'};if(s==='warn')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10',icon:'△'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810',icon:'✗'};}
   function easiColor(r){if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
@@ -553,8 +630,13 @@ export default function Home() {
             <div className="easi-grid">{easiItems.map(e=>{
             const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
             const c=easiColor(item.rating);
-            const fromAnns=(results.annotations||[]).filter(a=>a.type==='good'&&a.technique===e.k).map(a=>a.text).filter(Boolean);
-            const extracted=fromAnns.length>0?fromAnns:['未发现相关描写'];
+            // Rule-based extraction as primary — AI annotations as supplement
+            const ruleExtracted = extractEASI(essay)[e.k] || [];
+            const aiAnns = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===e.k).map(a=>a.text).filter(Boolean);
+            // Merge: rule-based first, then any AI items not already present
+            const merged = [...ruleExtracted];
+            aiAnns.forEach(function(t){ if(!merged.includes(t)) merged.push(t); });
+            const extracted = merged.length>0 ? merged : ['未发现相关描写'];
             return(<div key={e.k} className="easi-item" style={{background:c.bg,borderColor:c.border}}>
               <div className="easi-header"><div className="easi-letter" style={{color:c.border}}>{e.k}</div><div><div className="easi-name">{e.name}</div><div className="easi-en">{e.en}</div></div></div>
               <div className="easi-score" style={{color:c.border}}>{item.score_label}</div>
