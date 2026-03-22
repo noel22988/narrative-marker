@@ -294,7 +294,7 @@ export default function Home() {
   }
 
   function AnnotatedEssayWithFramework({essay, annotations, framework}) {
-    const [expandedIdx, setExpandedIdx] = React.useState(null);
+    const [expandedIdx, setExpandedIdx] = useState(null);
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
 
