@@ -226,8 +226,6 @@ CRITICAL JSON RULES:
     const jsonEnd = clean.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) return res.status(500).json({ error: 'No JSON found: ' + clean.substring(0, 300) });
     clean = clean.substring(jsonStart, jsonEnd + 1);
-    let result;
-    // Robust JSON repair: handle common AI JSON mistakes
     // Multi-strategy JSON repair
     function tryParseJson(s) {
       // Strategy 1: direct parse
