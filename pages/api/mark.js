@@ -107,26 +107,91 @@ LANGUAGE MARKING — be lenient with language scores:
 - Only mark as errors things that are genuinely wrong, not things that are merely different from your preference
 - An essay with 1-2 minor errors should still be Band 1 language
 
-ANNOTATIONS: Identify ALL notable EASI phrases for inline markup. Annotate at CLAUSE level — not full sentences. Split long sentences into individual clauses and annotate each separately.
+ANNOTATIONS: Mark every EASI phrase in the student essay with inline highlights. Study these two worked examples carefully — they show EXACTLY the level of granularity required.
 
+── WORKED EXAMPLE 1 (supermarket essay) ──
+Essay excerpt: "排在我前面的，是一位满头白发的老奶奶，她佝偻着腰，双手紧紧地抱着一小袋米和一瓶酱油。我注意到她的衣着十分朴素，脚上穿着一双磨得发白的布鞋。轮到老奶奶结账时，她颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上。收银员扫了一眼，面无表情地说："还差三块五。"老奶奶愣住了，慌忙翻遍了每一个口袋，却只翻出几枚硬币。她急得满脸通红，额头上渗出了细密的汗珠。老奶奶低声恳求道："姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？"收银员皱了皱眉头，双手交叉在胸前，语气冷淡地回答："不行，这是规定，少一分钱都不能结账。"她说完便把目光移开，开始整理柜台上的东西。老奶奶的嘴唇微微发抖，布满皱纹的双手不知所措地搓着衣角，眼眶渐渐泛红。她缓缓地伸出手，准备把米放回购物篮里。看着这一幕，我的心像被什么东西狠狠揪了一下。我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗？我低头看了看手中妈妈给我的零钱，犹豫了一瞬间，便鼓起勇气快步走上前，将一张五元纸币轻轻放在柜台上，微笑着对收银员说："阿姨，剩下的我来付。"收银员愣了一下，没有说话，默默地收下了钱。老奶奶转过头，用那双浑浊却闪烁着光芒的眼睛望着我，嘴唇颤抖着说："孩子……谢谢你……谢谢你啊……"她的声音沙哑而微弱，却让我的鼻子一阵发酸。我连忙扶着老奶奶走出超市，帮她把东西提好。她紧紧地握住我的手，反复念叨着"好孩子、好孩子"。阳光洒在她满是皱纹的脸上，我看到她的眼角挂着一滴晶莹的泪珠，嘴角却带着温暖的笑意。"
+
+Correct annotations for this excerpt:
+{type:"good",technique:"E",text:"满头白发的老奶奶，她佝偻着腰",comment:"外貌描写生动"}
+{type:"good",technique:"A",text:"双手紧紧地抱着一小袋米和一瓶酱油",comment:"动作细腻"}
+{type:"good",technique:"E",text:"衣着十分朴素，脚上穿着一双磨得发白的布鞋",comment:"细节烘托贫困"}
+{type:"good",technique:"A",text:"颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上",comment:"动作传神"}
+{type:"good",technique:"E",text:"收银员扫了一眼，面无表情地说",comment:"神态冷漠"}
+{type:"good",technique:"S",text:"面无表情地说："还差三块五。"",comment:"语言描写"}
+{type:"good",technique:"A",text:"慌忙翻遍了每一个口袋，却只翻出几枚硬币",comment:"动作表现慌张"}
+{type:"good",technique:"E",text:"她急得满脸通红，额头上渗出了细密的汗珠",comment:"神态描写"}
+{type:"good",technique:"S",text:"老奶奶低声恳求道："姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？"",comment:"语言真实感人"}
+{type:"good",technique:"E",text:"收银员皱了皱眉头",comment:"神态显冷漠"}
+{type:"good",technique:"A",text:"双手交叉在胸前",comment:"动作显态度"}
+{type:"good",technique:"S",text:"语气冷淡地回答："不行，这是规定，少一分钱都不能结账。"",comment:"语言描写冷漠"}
+{type:"good",technique:"E",text:"她说完便把目光移开，开始整理柜台上的东西",comment:"神态无视老人"}
+{type:"good",technique:"E",text:"老奶奶的嘴唇微微发抖",comment:"神态描写"}
+{type:"good",technique:"A",text:"布满皱纹的双手不知所措地搓着衣角",comment:"动作表现无助"}
+{type:"good",technique:"E",text:"眼眶渐渐泛红",comment:"神态感人"}
+{type:"good",technique:"A",text:"她缓缓地伸出手，准备把米放回购物篮里",comment:"动作描写无奈"}
+{type:"good",technique:"I",text:"我的心像被什么东西狠狠揪了一下",comment:"心理描写深刻"}
+{type:"good",technique:"I",text:"我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗？",comment:"心理推动情节"}
+{type:"good",technique:"A",text:"我低头看了看手中妈妈给我的零钱",comment:"动作描写犹豫"}
+{type:"good",technique:"I",text:"犹豫了一瞬间",comment:"心理描写"}
+{type:"good",technique:"A",text:"便鼓起勇气快步走上前，将一张五元纸币轻轻放在柜台上",comment:"动作果断"}
+{type:"good",technique:"S",text:"微笑着对收银员说："阿姨，剩下的我来付。"",comment:"语言体现善意"}
+{type:"good",technique:"A",text:"收银员愣了一下，没有说话，默默地收下了钱",comment:"动作描写"}
+{type:"good",technique:"A",text:"老奶奶转过头，用那双浑浊却闪烁着光芒的眼睛望着我",comment:"动作眼神描写"}
+{type:"good",technique:"S",text:"嘴唇颤抖着说："孩子……谢谢你……谢谢你啊……"",comment:"语言感人至深"}
+{type:"good",technique:"I",text:"让我的鼻子一阵发酸",comment:"心理感受真实"}
+{type:"good",technique:"A",text:"我连忙扶着老奶奶走出超市，帮她把东西提好",comment:"动作体现关怀"}
+{type:"good",technique:"A",text:"她紧紧地握住我的手",comment:"动作感人"}
+{type:"good",technique:"S",text:"反复念叨着"好孩子、好孩子"",comment:"语言真实"}
+{type:"good",technique:"E",text:"阳光洒在她满是皱纹的脸上，我看到她的眼角挂着一滴晶莹的泪珠，嘴角却带着温暖的笑意",comment:"外貌烘托温情"}
+
+── WORKED EXAMPLE 2 (camera essay) ──
+Essay excerpt: "李老师蹲在地上，默默捡起碎裂的镜头，脸上却没有一丝怒意。...围在一旁仔细看着这台复古的相机。李老师把相机放在长椅上，转身去买饮料。立刻凑了过去。志明率先拿起相机，眯着眼睛假装拍照，嘴里还念念有词："来来来，给你们拍个大明星的照片！"伟杰一把抢过相机，笑嘻嘻地举过头顶。三个人你推我搡，笑得前仰后合。志明瞪大了眼睛，脸上的笑容瞬间凝固；伟杰双手僵在半空中，脸色"唰"地变得惨白；大华不由自主地后退了两步，低下头不敢看地上的碎片。我心想：这下完了，那可是老师珍藏的相机啊！他的目光落在碎片上，脚步明显顿了一下。他慢慢蹲下身，小心翼翼地将碎片一片一片捡起，轻轻放在掌心，眼眶微微泛红。三人战战兢兢地走上前，志明小声地说："老……老师，对不起……"李老师沉默了片刻，语气平和地说："相机坏了，可以修。但如果我今天因为一台相机对你们破口大骂，那才是真正无法修复的。"目光变得柔和而深沉，语重心长地说："不过，我希望你们记住，很多东西背后承载着一个人最珍贵的回忆。尊重别人的物品，就是尊重别人的感情。"三个同学的眼眶早已红了。伟杰哽咽着说："老师，我们错了，我们会把相机修好的。"李老师拍了拍他的肩膀，微笑着摇头说："你们能认识到自己的错误，比修好十台相机都珍贵。""
+
+Correct annotations for this excerpt:
+{type:"good",technique:"A",text:"李老师蹲在地上，默默捡起碎裂的镜头",comment:"动作描写沉稳"}
+{type:"good",technique:"E",text:"脸上却没有一丝怒意",comment:"神态体现宽容"}
+{type:"good",technique:"A",text:"围在一旁仔细看着这台复古的相机",comment:"动作描写好奇"}
+{type:"good",technique:"A",text:"李老师把相机放在长椅上，转身去买饮料",comment:"动作交代触发事件"}
+{type:"good",technique:"A",text:"立刻凑了过去",comment:"动作表现冲动"}
+{type:"good",technique:"A",text:"志明率先拿起相机，眯着眼睛假装拍照",comment:"动作描写活灵活现"}
+{type:"good",technique:"S",text:"嘴里还念念有词："来来来，给你们拍个大明星的照片！"",comment:"语言幽默生动"}
+{type:"good",technique:"A",text:"伟杰一把抢过相机，笑嘻嘻地举过头顶",comment:"动作描写顽皮"}
+{type:"good",technique:"A",text:"三个人你推我搡，笑得前仰后合",comment:"动作描写生动"}
+{type:"good",technique:"E",text:"志明瞪大了眼睛，脸上的笑容瞬间凝固",comment:"神态描写震惊"}
+{type:"good",technique:"A",text:"伟杰双手僵在半空中",comment:"动作描写惊呆"}
+{type:"good",technique:"E",text:"脸色"唰"地变得惨白",comment:"神态描写形象"}
+{type:"good",technique:"A",text:"大华不由自主地后退了两步，低下头不敢看地上的碎片",comment:"动作描写内疚"}
+{type:"good",technique:"I",text:"我心想：这下完了，那可是老师珍藏的相机啊！",comment:"心理描写推动情节"}
+{type:"good",technique:"E",text:"他的目光落在碎片上",comment:"神态描写"}
+{type:"good",technique:"A",text:"脚步明显顿了一下",comment:"动作细节传神"}
+{type:"good",technique:"A",text:"他慢慢蹲下身，小心翼翼地将碎片一片一片捡起，轻轻放在掌心",comment:"动作描写细腻"}
+{type:"good",technique:"E",text:"眼眶微微泛红",comment:"神态体现深情"}
+{type:"good",technique:"A",text:"三人战战兢兢地走上前",comment:"动作描写内疚害怕"}
+{type:"good",technique:"S",text:"志明小声地说："老……老师，对不起……"",comment:"语言描写真实"}
+{type:"good",technique:"S",text:"李老师沉默了片刻，语气平和地说："相机坏了，可以修。但如果我今天因为一台相机对你们破口大骂，那才是真正无法修复的。"",comment:"语言体现智慧"}
+{type:"good",technique:"E",text:"目光变得柔和而深沉",comment:"神态描写温和"}
+{type:"good",technique:"S",text:"语重心长地说："不过，我希望你们记住，很多东西背后承载着一个人最珍贵的回忆。尊重别人的物品，就是尊重别人的感情。"",comment:"语言深刻有力"}
+{type:"good",technique:"E",text:"三个同学的眼眶早已红了",comment:"神态描写感动"}
+{type:"good",technique:"S",text:"伟杰哽咽着说："老师，我们错了，我们会把相机修好的。"",comment:"语言描写真诚"}
+{type:"good",technique:"A",text:"李老师拍了拍他的肩膀",comment:"动作体现关爱"}
+{type:"good",technique:"S",text:"微笑着摇头说："你们能认识到自己的错误，比修好十台相机都珍贵。"",comment:"语言智慧感人"}
+
+── ANNOTATION RULES (derived from examples above) ──
 For each annotation:
-- "text": EXACT phrase copied from the essay — must be findable by string search
-- "type": "good" for EASI, "error" for mistakes, "improve" for suggestions
-- "technique": for "good" type — "E", "A", "S", or "I"
-- "comment": brief Chinese label under 15 chars
+- "text": EXACT phrase from the essay — copy character by character, must be findable by string search
+- "type": "good" for EASI, "error" for language mistakes, "improve" for suggestions
+- "technique": "E", "A", "S", or "I" — see definitions below
+- "comment": brief Chinese label, under 15 characters
 
-TECHNIQUE DEFINITIONS — annotate at this level of granularity:
-E (外貌描写): appearance, facial expression, eyes, posture, clothing, skin — e.g. 满头白发的老奶奶，她佝偻着腰 | 她急得满脸通红，额头上渗出了细密的汗珠 | 老奶奶的嘴唇微微发抖 | 眼眶渐渐泛红 | 收银员皱了皱眉头 | 她说完便把目光移开，开始整理柜台上的东西
-A (行动描写): action chains with adverb+verb — e.g. 双手紧紧地抱着一小袋米和一瓶酱油 | 她颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上 | 慌忙翻遍了每一个口袋 | 双手交叉在胸前 | 布满皱纹的双手不知所措地搓着衣角 | 她缓缓地伸出手，准备把米放回购物篮里 | 便鼓起勇气快步走上前，将一张五元纸币轻轻放在柜台上 | 老奶奶转过头，用那双浑浊却闪烁着光芒的眼睛望着我 | 我连忙扶着老奶奶走出超市，帮她把东西提好 | 她紧紧地握住我的手
-S (语言描写): MUST include speech manner/tag + quoted words together. Format: 说话方式："quoted words" — e.g. 面无表情地说："还差三块五。" | 老奶奶低声恳求道："姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？" | 语气冷淡地回答："不行，这是规定，少一分钱都不能结账。" | 微笑着对收银员说："阿姨，剩下的我来付。" | 嘴唇颤抖着说："孩子……谢谢你……谢谢你啊……" | 反复念叨着："好孩子、好孩子"
-I (心理描写): inner thoughts and feelings — e.g. 我的心像被什么东西狠狠揪了一下 | 我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗 | 犹豫了一瞬间 | 让我的鼻子一阵发酸
+TECHNIQUE DEFINITIONS:
+E (外貌描写): appearance, face, eyes, posture, expression, clothing — even short clauses like "脸上却没有一丝怒意" or "眼眶渐渐泛红" count as separate E annotations
+A (行动描写): action with adverb or specific manner — "颤巍巍地掏出", "慢慢蹲下身" — include the full action chain up to the next clause boundary
+S (语言描写): MUST include speech manner/verb + the full quoted words together — e.g. 语气冷淡地回答："不行，这是规定，少一分钱都不能结账。" — NEVER annotate just the quoted words alone, NEVER use （） brackets
+I (心理描写): inner thoughts and feelings — "我心想：...", "犹豫了一瞬间", "让我的鼻子一阵发酸"
 
-CRITICAL RULES:
-- THE EASI CARDS ARE BUILT FROM YOUR ANNOTATIONS — annotating a phrase IS what puts it in the card
-- Annotate EVERY clause that qualifies — if unsure, annotate it
-- For S: ALWAYS include the speech manner/verb + the quoted words. NEVER annotate just the quoted words alone. NEVER annotate just the speech tag alone. Chinese curly quotes "" are safe in JSON.
-- Do NOT merge multiple clauses into one annotation if they belong to different techniques
-- Also annotate errors and improvement suggestions
+CRITICAL: Annotate at CLAUSE level — one annotation per clause, not per sentence. A single sentence often contains 2-4 separate EASI annotations. Annotate ALL of them.
+THE EASI CARDS ARE BUILT FROM YOUR ANNOTATIONS — if you miss an annotation, it will be absent from the card.
 LANGUAGE ERRORS: Only list GENUINE errors — wrong characters, clearly wrong grammar, missing or wrong punctuation that changes meaning. Do NOT flag:
 - correct but alternative punctuation styles
 - stylistic choices
