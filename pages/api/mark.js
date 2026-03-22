@@ -168,10 +168,44 @@ CRITICAL JSON RULES: Never use straight single quotes (') or straight double quo
     if (jsonStart === -1 || jsonEnd === -1) return res.status(500).json({ error: 'No JSON found: ' + clean.substring(0, 300) });
     clean = clean.substring(jsonStart, jsonEnd + 1);
     let result;
+    // Robust JSON repair: handle common AI JSON mistakes
+    function repairJson(s) {
+      // 1. Remove trailing commas before } or ]
+      s = s.replace(/,(\s*[}\]])/g, '$1');
+      // 2. Replace unescaped straight double quotes INSIDE string values
+      // Strategy: walk char by char tracking string context
+      let out = '';
+      let inStr = false;
+      let escaped = false;
+      for (let i = 0; i < s.length; i++) {
+        const ch = s[i];
+        if (escaped) { out += ch; escaped = false; continue; }
+        if (ch === '\\') { out += ch; escaped = true; continue; }
+        if (ch === '"') {
+          if (!inStr) { inStr = true; out += ch; continue; }
+          // Peek: if next non-space char is : , } ] then this closes the string
+          let j = i + 1;
+          while (j < s.length && s[j] === ' ') j++;
+          const next = s[j];
+          if (next === ':' || next === ',' || next === '}' || next === ']' || next === '\n' || j >= s.length) {
+            inStr = false; out += ch;
+          } else {
+            // Unescaped quote inside string — escape it
+            out += '\\"';
+          }
+          continue;
+        }
+        out += ch;
+      }
+      return out;
+    }
     try { result = JSON.parse(clean); }
     catch (e1) {
-      try { result = JSON.parse(clean.replace(/[\u201c\u201d\u2018\u2019]/g, '\\"').replace(/,(\s*[}\]])/g, '$1')); }
-      catch (e2) { return res.status(500).json({ error: 'JSON parse failed: ' + e1.message }); }
+      try { result = JSON.parse(repairJson(clean)); }
+      catch (e2) {
+        try { result = JSON.parse(repairJson(clean.replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'"))); }
+        catch (e3) { return res.status(500).json({ error: 'JSON parse failed: ' + e1.message }); }
+      }
     }
     // Server-side grade recalculation — always accurate
     const total = result.total_score;
