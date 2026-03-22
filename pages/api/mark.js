@@ -203,12 +203,13 @@ For each genuine error provide:
 - reason: brief explanation in Chinese
 
 Return ONLY valid JSON. No markdown. No text outside JSON.
-CRITICAL JSON RULES:
-1. NEVER use straight double quotes (") inside a JSON string value — this breaks parsing. Chinese curly quotes “” are safe and should be kept as-is.
-2. NEVER put line breaks (\n) inside a JSON string value — use a space instead.
-3. For speech S annotations where the student wrote: 她说："你好" — write the text field as: 她说：“你好” (keeping curly quotes, never straight quotes inside the value)
-4. Remove trailing commas before } or ]
-5. All JSON string values must be on a single line
+CRITICAL JSON RULES — READ CAREFULLY:
+1. Your entire response is a JSON object. String values are delimited by straight double quotes (").
+2. NEVER place a straight double quote (") inside a string value — it breaks JSON. This is the most common error.
+3. For speech/dialogue in annotation "text" fields: use 「 」 brackets instead of " " for the quoted words. Example: {"text":"老婆奶低声恳求道：「姑娘，请帮帮我。」","type":"good","technique":"S","comment":"语言描写"}
+4. Chinese curly quotes “” are also safe inside string values.
+5. NEVER put newlines inside string values.
+6. No trailing commas before } or ]
 
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","annotations":[{"text":"exact phrase from student essay","type":"error","comment":"brief Chinese explanation of the error"},{"text":"exact phrase from student essay","type":"good","technique":"E","comment":"brief Chinese praise e.g. 外貌描写生动"},{"text":"exact phrase from student essay","type":"good","technique":"A","comment":"brief Chinese praise"},{"text":"exact phrase from student essay","type":"improve","comment":"brief Chinese suggestion for improvement"}],"framework":{"p1_opening":{"status":"pass","comment":"Chinese","para_index":0},"p2_scene":{"status":"pass","comment":"Chinese","para_index":1},"p3_transition":{"status":"pass","comment":"Chinese","para_index":2},"p4_trigger":{"status":"pass","comment":"Chinese","para_index":3},"p56_climax":{"status":"warn","comment":"Chinese","para_index":4},"p7_resolution":{"status":"pass","comment":"Chinese","para_index":6},"p8_conclusion":{"status":"pass","comment":"Chinese","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1 from essay","EXACT quote 2 from essay"]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":["EXACT quote from essay"]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
 
@@ -272,10 +273,31 @@ CRITICAL JSON RULES:
 
     let result = tryParseJson(clean);
     if (!result) {
-      return res.status(500).json({ error: 'JSON parse failed — please try again' });
+      // Last resort: strip all straight quotes inside string values by replacing
+      // any " that appears after a non-structural character with a safe substitute
+      try {
+        // Replace straight quotes that appear mid-string with Chinese curly equivalent
+        const s5 = clean
+          .replace(/:\s*"((?:[^"\\]|\\.)*)"/g, function(m, inner) {
+            // Replace any unescaped " inside the captured value with \"
+            return ': "' + inner.replace(/(?<!\\)"/g, '\\"') + '"';
+          })
+          .replace(/,\s*([}\]])/g, '$1');
+        result = JSON.parse(s5);
+      } catch(e) {
+        return res.status(500).json({ error: 'JSON parse failed — please try again' });
+      }
     }
     // ---- (legacy label kept for reference below)
-        // Server-side grade recalculation — always accurate
+        // Normalise 「」→"" in annotation text fields (AI uses 「」to avoid JSON breakage)
+    if (result.annotations && Array.isArray(result.annotations)) {
+      result.annotations = result.annotations.map(function(ann) {
+        if (ann.text) ann.text = ann.text.replace(/「/g, '“').replace(/」/g, '”');
+        return ann;
+      });
+    }
+
+    // Server-side grade recalculation — always accurate
     const total = result.total_score;
     if (total >= 30) result.grade = 'A1';
     else if (total >= 28) result.grade = 'A2';
