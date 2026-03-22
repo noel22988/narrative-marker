@@ -92,20 +92,9 @@ IMPORTANT — para_index: For each framework key in your JSON, include "para_ind
 
 EASI — E=Expressions&Appearance外貌描写, A=Actions行动描写, S=Speech语言描写, I=Inner Thoughts&Feelings心理描写
 Ratings: good=clearly present and effective, ok=attempted but weak, weak=absent
-CRITICAL: For "extracted" field — extract EVERY SINGLE qualifying phrase from the ENTIRE essay. NO EXCEPTIONS. NO LIMIT.
-- Go through the essay sentence by sentence, word by word. For each sentence ask: does this contain E, A, S, or I? If yes, extract it.
-- In P4 to P7 (高潮 sections), nearly EVERY sentence contains EASI. Extract ALL of them — do not be selective.
-- The scene paragraph (P2), transition (P3), resolution (P7) and conclusion (P8) also contain EASI — extract from those too.
-- Do NOT stop after you think you have "enough". There is no enough. Extract everything that qualifies.
-- After your first pass, do a second pass through the essay to catch anything missed.
-- For E (外貌描写): include EVERY phrase describing appearance, facial expression, clothing, body posture, eyes, skin — full phrase e.g. "满头白发的老奶奶，她佝偻着腰"
-- For A (行动描写): include EVERY action phrase — must include adverb+verb chain together e.g. "颤巍巍地从口袋里掏出一个旧布钱包"
-- For S (语言描写): include EVERY dialogue — speech tag + full quoted words with EXACT quote marks from essay.
-  - Chinese curly quotes “” are 100% safe in JSON. Copy them exactly.
-  - e.g. 她低声恳求道：“姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？”
-  - NEVER replace “” with （）— brackets are wrong for speech
-  - Include the FULL dialogue, not truncated
-- For I (心理描写): include EVERY inner thought — mental verb/phrase + content e.g. "我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗"
+CRITICAL: For "extracted" field — the frontend builds EASI cards directly from annotations, so focus on annotations. Still populate "extracted" at clause level matching your annotations exactly.
+- For S: speech tag + "quoted words" — e.g. 面无表情地说："还差三块五。"
+- For E/A/I: clause-level phrases matching the annotation texts
 - Search EVERY paragraph: P1开头, P2场景, P3过渡, P4高潮前, P5高潮中一, P6高潮中二, P7高潮后, P8结尾 — ALL count
 - P4 to P7 are especially dense with EASI — extract EVERY single qualifying phrase from these paragraphs, do not skip any
 - If none found, return ["未发现相关描写"]
@@ -118,26 +107,26 @@ LANGUAGE MARKING — be lenient with language scores:
 - Only mark as errors things that are genuinely wrong, not things that are merely different from your preference
 - An essay with 1-2 minor errors should still be Band 1 language
 
-ANNOTATIONS: Identify ALL notable phrases in the student essay for inline markup. For each annotation:
-- "text": copy the EXACT phrase from the essay. For S (speech), include the full speech tag + quoted words (can be 80+ chars). For E/A/I, include the full meaningful phrase. Do NOT truncate.
-- "type": one of "error" (language mistake), "good" (strong writing worth praising), "improve" (correct but could be better)
-- "technique": only for "good" type — which EASI technique: "E", "A", "S", "I", or "structure" for good structure
-- "comment": brief Chinese explanation (under 20 characters)
-IMPORTANT annotation rules:
-- Annotate EVERY good use of EASI — no limit on number of annotations
-- THE EASI CARDS ARE BUILT FROM YOUR ANNOTATIONS: The frontend builds the E/A/S/I card extracted lists directly from the annotations array. So if you want a phrase to appear in the E card, annotate it with type:"good" and technique:"E". There is no separate extracted field that matters — annotations ARE the source of truth for the cards.
-- This means: annotate EVERY EASI phrase. If you miss an annotation, it will be missing from the card. No exceptions.
-- For S (Speech) annotations: "text" MUST be speech tag + full spoken words WITH the exact quote marks the student used.
-  - If student used “” (curly quotes): include them — e.g. 她低声恳求道：“姑娘，我今天出门忘了带钱……”
-  - “” curly quotes are 100% SAFE in JSON strings. Use them.
-  - （）full-width brackets are WRONG for speech — NEVER use them to replace “”
-  - Never annotate just the speech tag alone or just the quoted words alone.
-- For I (Inner Thoughts) annotations: the "text" MUST include the mental verb AND the thought content together — e.g. 我心想：不过是三块五毛钱. Never annotate just a mental verb or just the content alone.
-- Also annotate every strong vocabulary choice, vivid description, or well-structured sentence
-- Include all genuine errors as "error" annotations
-- There is no cap — more is better
-Make sure "text" is unique enough to be found in the essay — avoid very short common phrases (under 4 characters).
+ANNOTATIONS: Identify ALL notable EASI phrases for inline markup. Annotate at CLAUSE level — not full sentences. Split long sentences into individual clauses and annotate each separately.
 
+For each annotation:
+- "text": EXACT phrase copied from the essay — must be findable by string search
+- "type": "good" for EASI, "error" for mistakes, "improve" for suggestions
+- "technique": for "good" type — "E", "A", "S", or "I"
+- "comment": brief Chinese label under 15 chars
+
+TECHNIQUE DEFINITIONS — annotate at this level of granularity:
+E (外貌描写): appearance, facial expression, eyes, posture, clothing, skin — e.g. 满头白发的老奶奶，她佝偻着腰 | 她急得满脸通红，额头上渗出了细密的汗珠 | 老奶奶的嘴唇微微发抖 | 眼眶渐渐泛红 | 收银员皱了皱眉头 | 她说完便把目光移开，开始整理柜台上的东西
+A (行动描写): action chains with adverb+verb — e.g. 双手紧紧地抱着一小袋米和一瓶酱油 | 她颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上 | 慌忙翻遍了每一个口袋 | 双手交叉在胸前 | 布满皱纹的双手不知所措地搓着衣角 | 她缓缓地伸出手，准备把米放回购物篮里 | 便鼓起勇气快步走上前，将一张五元纸币轻轻放在柜台上 | 老奶奶转过头，用那双浑浊却闪烁着光芒的眼睛望着我 | 我连忙扶着老奶奶走出超市，帮她把东西提好 | 她紧紧地握住我的手
+S (语言描写): MUST include speech manner/tag + quoted words together. Format: 说话方式："quoted words" — e.g. 面无表情地说："还差三块五。" | 老奶奶低声恳求道："姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？" | 语气冷淡地回答："不行，这是规定，少一分钱都不能结账。" | 微笑着对收银员说："阿姨，剩下的我来付。" | 嘴唇颤抖着说："孩子……谢谢你……谢谢你啊……" | 反复念叨着："好孩子、好孩子"
+I (心理描写): inner thoughts and feelings — e.g. 我的心像被什么东西狠狠揪了一下 | 我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗 | 犹豫了一瞬间 | 让我的鼻子一阵发酸
+
+CRITICAL RULES:
+- THE EASI CARDS ARE BUILT FROM YOUR ANNOTATIONS — annotating a phrase IS what puts it in the card
+- Annotate EVERY clause that qualifies — if unsure, annotate it
+- For S: ALWAYS include the speech manner/verb + the quoted words. NEVER annotate just the quoted words alone. NEVER annotate just the speech tag alone. Chinese curly quotes "" are safe in JSON.
+- Do NOT merge multiple clauses into one annotation if they belong to different techniques
+- Also annotate errors and improvement suggestions
 LANGUAGE ERRORS: Only list GENUINE errors — wrong characters, clearly wrong grammar, missing or wrong punctuation that changes meaning. Do NOT flag:
 - correct but alternative punctuation styles
 - stylistic choices
