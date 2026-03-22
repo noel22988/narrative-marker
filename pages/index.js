@@ -313,7 +313,7 @@ export default function Home() {
             if ('，。？！\n'.includes(t[i])) { end = i; break; }
             if (i === t.length-1) end = t.length;
           }
-          const clause = t.slice(start, end).replace(/^[，。？！]+|[，。？！]+$/g,'').trim();
+          const clause = t.slice(start, end).replace(/^[\uff0c\u3002\uff1f\uff01]+|[\uff0c\u3002\uff1f\uff01]+$/g,'').trim();
           if (clause && !found.includes(clause)) found.push(clause);
           idx++;
         }
@@ -341,16 +341,40 @@ export default function Home() {
     // S: Speech — find speech tag + quoted words together
     const S = [];
     // Match: speech manner phrase + ："quoted"
-    const speechPat = /([^，。？！
-]{2,20}(?:说|道|答|叫|喊|恳求|回答|念叨)[^，。？！
-]{0,10})[：:][""][^""]+[""]/g;
-    let m;
-    while ((m = speechPat.exec(text)) !== null) {
-      const clause = m[0].replace(/^[，。？！]+|[，。？！]+$/g,'').trim();
-      if (!S.includes(clause)) S.push(clause);
-    }
-    // Also catch 反复念叨着"..."
-    const niandao = /反复念叨着[""][^""]+[""]/g;
+    // S: find speech patterns using string search (SWC-safe, no Chinese in regex)
+    const speechVerbs = ['说：','道：','答：','回答：','恳求道：','恳求：','念叨着：','念叨：'];
+    const quoteStarts = ['“','"'];
+    const quoteEnds = ['”','"'];
+    text.split(/[\n]/).forEach(function(line) {
+      speechVerbs.forEach(function(sv) {
+        let si = 0;
+        while ((si = line.indexOf(sv, si)) !== -1) {
+          const qStart = quoteStarts.findIndex(function(q){ return line.indexOf(q, si) !== -1; });
+          if (qStart !== -1) {
+            const qs = line.indexOf(quoteStarts[qStart], si);
+            const qe = line.indexOf(quoteEnds[qStart], qs+1);
+            if (qe !== -1) {
+              // Find clause start before sv
+              let cs = si;
+              for (let i = si; i >= Math.max(0, si-30); i--) {
+                if ('，。？！\n'.includes(line[i])) { cs = i+1; break; }
+                if (i===0) cs=0;
+              }
+              const clause = line.slice(cs, qe+1).trim();
+              if (clause && !S.includes(clause)) S.push(clause);
+            }
+          }
+          si++;
+        }
+      });
+    });
+    // S extraction complete
+    // also catch 反复念叨着"..."
+    (function(){ const nd = '反复念叨着'; let ni = 0;
+      while((ni=text.indexOf(nd,ni))!==-1){
+        const qs=['“','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
+        if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='“'?'”':'"',q0+1);
+        if(qe>-1){const cl=text.slice(ni,qe+1); if(!S.includes(cl))S.push(cl);}}ni++;}})()
     while ((m = niandao.exec(text)) !== null) {
       if (!S.includes(m[0])) S.push(m[0]);
     }
