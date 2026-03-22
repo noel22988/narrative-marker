@@ -203,7 +203,12 @@ For each genuine error provide:
 - reason: brief explanation in Chinese
 
 Return ONLY valid JSON. No markdown. No text outside JSON.
-CRITICAL JSON RULES: Never use straight single quotes (') or straight double quotes (") inside JSON string values — they break JSON parsing. HOWEVER: Chinese curly quotation marks “” (the “” characters) ARE safe and MUST be preserved exactly as written in the student essay. For speech extraction, always include the “” marks if the student used them. No line breaks inside strings.
+CRITICAL JSON RULES:
+1. NEVER use straight double quotes (") inside a JSON string value — this breaks parsing. Chinese curly quotes “” are safe and should be kept as-is.
+2. NEVER put line breaks (\n) inside a JSON string value — use a space instead.
+3. For speech S annotations where the student wrote: 她说："你好" — write the text field as: 她说：“你好” (keeping curly quotes, never straight quotes inside the value)
+4. Remove trailing commas before } or ]
+5. All JSON string values must be on a single line
 
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","annotations":[{"text":"exact phrase from student essay","type":"error","comment":"brief Chinese explanation of the error"},{"text":"exact phrase from student essay","type":"good","technique":"E","comment":"brief Chinese praise e.g. 外貌描写生动"},{"text":"exact phrase from student essay","type":"good","technique":"A","comment":"brief Chinese praise"},{"text":"exact phrase from student essay","type":"improve","comment":"brief Chinese suggestion for improvement"}],"framework":{"p1_opening":{"status":"pass","comment":"Chinese","para_index":0},"p2_scene":{"status":"pass","comment":"Chinese","para_index":1},"p3_transition":{"status":"pass","comment":"Chinese","para_index":2},"p4_trigger":{"status":"pass","comment":"Chinese","para_index":3},"p56_climax":{"status":"warn","comment":"Chinese","para_index":4},"p7_resolution":{"status":"pass","comment":"Chinese","para_index":6},"p8_conclusion":{"status":"pass","comment":"Chinese","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1 from essay","EXACT quote 2 from essay"]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":["EXACT quote from essay"]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
 
@@ -223,45 +228,56 @@ CRITICAL JSON RULES: Never use straight single quotes (') or straight double quo
     clean = clean.substring(jsonStart, jsonEnd + 1);
     let result;
     // Robust JSON repair: handle common AI JSON mistakes
-    function repairJson(s) {
-      // 1. Remove trailing commas before } or ]
-      s = s.replace(/,(\s*[}\]])/g, '$1');
-      // 2. Replace unescaped straight double quotes INSIDE string values
-      // Strategy: walk char by char tracking string context
-      let out = '';
-      let inStr = false;
-      let escaped = false;
-      for (let i = 0; i < s.length; i++) {
-        const ch = s[i];
-        if (escaped) { out += ch; escaped = false; continue; }
-        if (ch === '\\') { out += ch; escaped = true; continue; }
-        if (ch === '"') {
-          if (!inStr) { inStr = true; out += ch; continue; }
-          // Peek: if next non-space char is : , } ] then this closes the string
-          let j = i + 1;
-          while (j < s.length && s[j] === ' ') j++;
-          const next = s[j];
-          if (next === ':' || next === ',' || next === '}' || next === ']' || next === '\n' || j >= s.length) {
-            inStr = false; out += ch;
-          } else {
-            // Unescaped quote inside string — escape it
-            out += '\\"';
+    // Multi-strategy JSON repair
+    function tryParseJson(s) {
+      // Strategy 1: direct parse
+      try { return JSON.parse(s); } catch(e) {}
+
+      // Strategy 2: remove trailing commas
+      try { return JSON.parse(s.replace(/,(\s*[}\]])/g, '$1')); } catch(e) {}
+
+      // Strategy 3: normalize curly quotes to straight, remove trailing commas
+      try {
+        const s2 = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/,(\s*[}\]])/g, '$1');
+        return JSON.parse(s2);
+      } catch(e) {}
+
+      // Strategy 4: walk char-by-char, escape unescaped straight quotes inside strings
+      try {
+        let out = '', inStr = false, esc = false;
+        const norm = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+        for (let i = 0; i < norm.length; i++) {
+          const ch = norm[i];
+          if (esc) { out += ch; esc = false; continue; }
+          if (ch === '\\') { out += ch; esc = true; continue; }
+          if (ch === '"') {
+            if (!inStr) { inStr = true; out += ch; continue; }
+            // Determine if this quote closes the string
+            // Look ahead for structural char
+            let j = i + 1;
+            while (j < norm.length && norm[j] === ' ') j++;
+            const nx = norm[j];
+            const closes = nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '\n' || j >= norm.length;
+            if (closes) { inStr = false; out += ch; }
+            else { out += '\\"'; }
+            continue;
           }
-          continue;
+          // Newlines inside strings break JSON — replace with space
+          if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
+          out += ch;
         }
-        out += ch;
-      }
-      return out;
+        return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+      } catch(e) {}
+
+      return null;
     }
-    try { result = JSON.parse(clean); }
-    catch (e1) {
-      try { result = JSON.parse(repairJson(clean)); }
-      catch (e2) {
-        try { result = JSON.parse(repairJson(clean.replace(/[\u201c\u201d]/g, '"').replace(/[\u2018\u2019]/g, "'"))); }
-        catch (e3) { return res.status(500).json({ error: 'JSON parse failed: ' + e1.message }); }
-      }
+
+    let result = tryParseJson(clean);
+    if (!result) {
+      return res.status(500).json({ error: 'JSON parse failed — please try again' });
     }
-    // Server-side grade recalculation — always accurate
+    // ---- (legacy label kept for reference below)
+        // Server-side grade recalculation — always accurate
     const total = result.total_score;
     if (total >= 30) result.grade = 'A1';
     else if (total >= 28) result.grade = 'A2';
