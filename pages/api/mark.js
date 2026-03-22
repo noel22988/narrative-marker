@@ -76,18 +76,21 @@ IMPORTANT — para_index: For each framework key in your JSON, include "para_ind
 
 EASI — E=Expressions&Appearance外貌描写, A=Actions行动描写, S=Speech语言描写, I=Inner Thoughts&Feelings心理描写
 Ratings: good=clearly present and effective, ok=attempted but weak, weak=absent
-CRITICAL: For "extracted" field, return a JSON ARRAY of strings — include ABSOLUTELY EVERY example found. NO LIMIT WHATSOEVER.
-- YOU MUST read every single sentence from the first word to the last word. Do NOT stop early.
-- Common mistakes to avoid: (1) stopping too early, (2) skipping the scene paragraph, (3) skipping the resolution paragraph, (4) skipping the conclusion paragraph — ALL paragraphs count, not just the climax
-- After extracting, mentally re-read the essay one more time to check you haven't missed any
+CRITICAL: For "extracted" field — extract EVERY SINGLE qualifying phrase from the ENTIRE essay. NO EXCEPTIONS. NO LIMIT.
+- Go through the essay sentence by sentence, word by word. For each sentence ask: does this contain E, A, S, or I? If yes, extract it.
+- In P4 to P7 (高潮 sections), nearly EVERY sentence contains EASI. Extract ALL of them — do not be selective.
+- The scene paragraph (P2), transition (P3), resolution (P7) and conclusion (P8) also contain EASI — extract from those too.
+- Do NOT stop after you think you have "enough". There is no enough. Extract everything that qualifies.
+- After your first pass, do a second pass through the essay to catch anything missed.
 - For E (外貌描写): include EVERY phrase describing appearance, facial expression, clothing, body posture, eyes, skin — full phrase e.g. "满头白发的老奶奶，她佝偻着腰"
 - For A (行动描写): include EVERY action phrase — must include adverb+verb chain together e.g. "颤巍巍地从口袋里掏出一个旧布钱包"
-- For S (语言描写): include EVERY dialogue — speech tag + FULL quoted words INCLUDING the quotation marks exactly as written in the essay e.g. "她低声恳求道："姑娘，我今天出门忘了多带钱……"" — preserve whatever quote marks the student used ("", 「」, or none)
+- For S (语言描写): include EVERY dialogue — speech tag + full spoken words. CRITICAL: Chinese speech marks “” are SAFE in JSON. You MUST include them. e.g. 她低声恳求道：“姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？” — copy exactly as written. NEVER use（）instead of “”. NEVER omit the actual dialogue content.
 - For I (心理描写): include EVERY inner thought — mental verb/phrase + content e.g. "我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗"
-- Search the ENTIRE essay paragraph by paragraph — climax, opening, scene, resolution and conclusion all count
+- Search EVERY paragraph: P1开头, P2场景, P3过渡, P4高潮前, P5高潮中一, P6高潮中二, P7高潮后, P8结尾 — ALL count
+- P4 to P7 are especially dense with EASI — extract EVERY single qualifying phrase from these paragraphs, do not skip any
 - If none found, return ["未发现相关描写"]
-- Each entry must be a standalone, meaningful phrase — not concatenated strings
-- REMINDER: It is better to over-extract than under-extract. Include every qualifying phrase.
+- Each entry must be a standalone meaningful phrase — not concatenated strings
+- It is always better to over-extract. If unsure whether something counts, include it.
 
 LANGUAGE MARKING — be lenient with language scores:
 - Band 1 language (17-20) is appropriate for essays with only minor, isolated errors
@@ -102,7 +105,7 @@ ANNOTATIONS: Identify ALL notable phrases in the student essay for inline markup
 - "comment": brief Chinese explanation (under 20 characters)
 IMPORTANT annotation rules:
 - Annotate EVERY good use of EASI — no limit on number of annotations
-- For S (Speech) annotations: the "text" MUST include the speech verb phrase AND the quoted words together WITH the exact punctuation from the essay — e.g. if student wrote 她低声恳求道："姑娘，我今天出门忘了带钱……" then include exactly that with the "" marks. Never annotate just the speech tag or just the quoted words alone.
+- For S (Speech) annotations: "text" MUST be speech tag + full spoken words. Chinese curly quotes “” are SAFE in JSON — use them exactly as the student wrote. e.g. 她低声恳求道：“姑娘，我今天出门忘了带钱……”. NEVER substitute （）for speech marks. Never annotate just the tag or just the words alone.
 - For I (Inner Thoughts) annotations: the "text" MUST include the mental verb AND the thought content together — e.g. 我心想：不过是三块五毛钱. Never annotate just a mental verb or just the content alone.
 - Also annotate every strong vocabulary choice, vivid description, or well-structured sentence
 - Include all genuine errors as "error" annotations
@@ -120,7 +123,7 @@ For each genuine error provide:
 - reason: brief explanation in Chinese
 
 Return ONLY valid JSON. No markdown. No text outside JSON.
-CRITICAL JSON RULES: Never use any quotation marks (single or double) inside string values. Use "（text）" with fullwidth brackets for quoting, or rephrase to avoid quotes entirely. No line breaks inside strings.
+CRITICAL JSON RULES: Never use straight single quotes (') or straight double quotes (") inside JSON string values — they break JSON parsing. HOWEVER: Chinese curly quotation marks “” (the “” characters) ARE safe and MUST be preserved exactly as written in the student essay. For speech extraction, always include the “” marks if the student used them. No line breaks inside strings.
 
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","annotations":[{"text":"exact phrase from student essay","type":"error","comment":"brief Chinese explanation of the error"},{"text":"exact phrase from student essay","type":"good","technique":"E","comment":"brief Chinese praise e.g. 外貌描写生动"},{"text":"exact phrase from student essay","type":"good","technique":"A","comment":"brief Chinese praise"},{"text":"exact phrase from student essay","type":"improve","comment":"brief Chinese suggestion for improvement"}],"framework":{"p1_opening":{"status":"pass","comment":"Chinese","para_index":0},"p2_scene":{"status":"pass","comment":"Chinese","para_index":1},"p3_transition":{"status":"pass","comment":"Chinese","para_index":2},"p4_trigger":{"status":"pass","comment":"Chinese","para_index":3},"p56_climax":{"status":"warn","comment":"Chinese","para_index":4},"p7_resolution":{"status":"pass","comment":"Chinese","para_index":6},"p8_conclusion":{"status":"pass","comment":"Chinese","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1 from essay","EXACT quote 2 from essay"]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":["EXACT quote from essay"]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
 
