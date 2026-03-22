@@ -154,7 +154,7 @@ export default function Home() {
           if (pi === null || pi >= pdfParas.length) return;
           map[pi] = k;
           if (k === 'p56_climax' && pi + 1 < pdfParas.length) {
-            map[pi + 1] = null; // second climax para: no duplicate card
+            map[pi + 1] = k; // P5-6 spans two paragraphs
           }
         });
         return map;
@@ -166,7 +166,7 @@ export default function Home() {
           map[pi] = pdfFwKeys[ki];
           if (pdfFwKeys[ki] === 'p56_climax' && pi + 1 < pdfParas.length) {
             pi++;
-            map[pi] = null; // second climax para: no card
+            map[pi] = pdfFwKeys[ki]; // P5-6 spans two paragraphs
           }
           ki++;
         }
@@ -420,8 +420,10 @@ export default function Home() {
           if (pi === null || pi >= paragraphs.length) return;
           map[pi] = k;
           // P5-6 always covers the next paragraph too
-          // P5-6: first para gets the card, second para gets null (no duplicate card)
-          // The second para still has a coloured left border via the card lookup below
+          // P5-6 spans two paragraphs — both show the card
+          if (k === 'p56_climax' && pi + 1 < paragraphs.length) {
+            map[pi + 1] = k;
+          }
         });
         return map;
       } else {
@@ -434,7 +436,7 @@ export default function Home() {
           map[pi] = fwKeys[ki];
           if (fwKeys[ki] === 'p56_climax' && pi + 1 < paragraphs.length) {
             pi++;
-            map[pi] = null; // second climax paragraph gets no card (avoid duplicate)
+            map[pi] = fwKeys[ki]; // P5-6 spans two paragraphs
           }
           ki++;
         }
