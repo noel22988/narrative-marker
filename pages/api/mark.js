@@ -74,14 +74,16 @@ P8结尾: Feelings (感受) + moral/insight (启示). Check: is the moral clearl
 
 EASI — E=Expressions&Appearance外貌描写, A=Actions行动描写, S=Speech语言描写, I=Inner Thoughts&Feelings心理描写
 Ratings: good=clearly present and effective, ok=attempted but weak, weak=absent
-IMPORTANT: For "extracted" field, return a JSON ARRAY of strings — one entry per distinct example.
-- For E: include the FULL description phrase, e.g. "满头白发的老奶奶，她佝偻着腰" — not just one word
-- For A: include the FULL action chain, e.g. "颤巍巍地从口袋里掏出一个旧布钱包" — must include the adverb+verb together
-- For S: include the FULL line — speech tag + quoted words, e.g. "她低声恳求道：「姑娘，我今天出门忘了多带钱」"
-- For I: include the FULL thought — mental verb + content, e.g. "我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗"
-- Search the ENTIRE essay — check every single paragraph, not just the climax
+CRITICAL: For "extracted" field, return a JSON ARRAY of strings — include EVERY example found, no limit.
+- YOU MUST scan every single sentence of the essay. Do not stop after 3-4 examples. A good essay may have 6-10+ examples per category.
+- For E (外貌描写): include EVERY phrase describing appearance, facial expression, clothing, body posture, eyes, skin — full phrase e.g. "满头白发的老奶奶，她佝偻着腰"
+- For A (行动描写): include EVERY action phrase — must include adverb+verb chain together e.g. "颤巍巍地从口袋里掏出一个旧布钱包"
+- For S (语言描写): include EVERY dialogue — speech tag + full quoted words together e.g. "她低声恳求道：姑娘，我今天出门忘了多带钱"
+- For I (心理描写): include EVERY inner thought — mental verb/phrase + content e.g. "我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗"
+- Search the ENTIRE essay paragraph by paragraph — climax, opening, scene, resolution and conclusion all count
 - If none found, return ["未发现相关描写"]
 - Each entry must be a standalone, meaningful phrase — not concatenated strings
+- REMINDER: It is better to over-extract than under-extract. Include every qualifying phrase.
 
 LANGUAGE MARKING — be lenient with language scores:
 - Band 1 language (17-20) is appropriate for essays with only minor, isolated errors
