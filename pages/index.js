@@ -115,9 +115,20 @@ export default function Home() {
     const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p3_transition:'P3 过渡',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
 
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
-    const pdfParaMap = pdfParas.map(function(_, pIdx) {
-      return pIdx < pdfFwKeys.length ? pdfFwKeys[pIdx] : null;
-    });
+    const pdfParaMap = (function() {
+      var map = new Array(pdfParas.length).fill(null);
+      pdfFwKeys.forEach(function(k) {
+        var fw = (results.framework||{})[k];
+        if (!fw) return;
+        var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
+        if (pi === null || pi >= pdfParas.length) return;
+        map[pi] = k;
+        if (k === 'p56_climax' && pi + 1 < pdfParas.length && map[pi+1] === null) {
+          map[pi+1] = k;
+        }
+      });
+      return map;
+    })();
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
       const fwKey = pdfParaMap[pIdx];
@@ -346,11 +357,24 @@ export default function Home() {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
 
-    // Assign fw keys sequentially 1-to-1: para 0→key 0, para 1→key 1, etc.
-    // Extra paragraphs beyond the number of keys get null (no card shown)
-    var paraFwMap = paragraphs.map(function(_, pIdx) {
-      return pIdx < fwKeys.length ? fwKeys[pIdx] : null;
-    });
+    // Assign fw keys to paragraphs, giving P5-6 (高潮中) TWO paragraph slots
+    // Pattern: P1, P2, P3, P4, P5-6, P5-6, P7, P8, null...
+    // Build para→fwKey map using AI-assigned para_index values
+    var paraFwMap = (function() {
+      var map = new Array(paragraphs.length).fill(null);
+      fwKeys.forEach(function(k) {
+        var fw = framework[k];
+        if (!fw) return;
+        var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
+        if (pi === null || pi >= paragraphs.length) return;
+        map[pi] = k;
+        // P5-6 also covers the immediately following paragraph
+        if (k === 'p56_climax' && pi + 1 < paragraphs.length && map[pi+1] === null) {
+          map[pi+1] = k;
+        }
+      });
+      return map;
+    })();
 
     // Each paragraph row contains essay + card side by side — perfect alignment guaranteed
     return (
