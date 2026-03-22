@@ -23,10 +23,8 @@ export default function Home() {
       const paras = text.split('\n').filter(p => p.trim().length > 0);
       if (paras.length < 4) return text;
       const half = Math.floor(paras.length / 2);
-      // Check if second half is substantially identical to first half
       const firstHalf = paras.slice(0, half).join('\n');
       const secondHalf = paras.slice(half).join('\n');
-      // Compare: if >80% of chars in second half appear in same order in first half
       const shorter = firstHalf.length < secondHalf.length ? firstHalf : secondHalf;
       const longer = firstHalf.length < secondHalf.length ? secondHalf : firstHalf;
       let matches = 0;
@@ -36,10 +34,7 @@ export default function Home() {
         if (li < longer.length) { matches++; li++; }
       }
       const similarity = matches / shorter.length;
-      if (similarity > 0.85) {
-        // Essay is duplicated — use only first half
-        return paras.slice(0, half).join('\n');
-      }
+      if (similarity > 0.85) return paras.slice(0, half).join('\n');
       return text;
     })(essay);
     try {
@@ -75,14 +70,6 @@ export default function Home() {
     const easiNames = {E:{zh:'外貌描写',en:'Expressions & Appearance'},A:{zh:'行动描写',en:'Actions'},S:{zh:'语言描写',en:'Speech'},I:{zh:'心理描写',en:'Inner Thoughts & Feelings'}};
     const fmt = t => t.replace(/【([^】]+)】/g,'<span style="font-family:monospace;font-size:10px;color:#a07820;display:block;margin-top:14px;font-weight:600;letter-spacing:.05em">【$1】</span>');
 
-    // ── Annotated essay text (inline emoji markers)
-    const annotatedEssayText = (results.annotations||[]).reduce((text, ann) => {
-      if (!ann.text || !text.includes(ann.text)) return text;
-      const dot = ann.type==='error'?'🔴':ann.type==='good'?'🟢':'🟡';
-      return text.replace(ann.text, ann.text + dot);
-    }, essay);
-
-    // ── Framework cards HTML (2-column grid matching screen)
     const fwCards = Object.entries(results.framework||{}).map(([k,v]) => {
       const st = fwStatusStyle[v.status]||fwStatusStyle.pass;
       return `<div style="background:${st.bg};border:1px solid ${st.border};border-left:4px solid ${st.border};border-radius:8px;padding:12px 14px;">
@@ -94,25 +81,20 @@ export default function Home() {
       </div>`;
     }).join('');
 
-    // ── EASI cards HTML (2-column grid matching screen)
     const easiCards = ['E','A','S','I'].map(k => {
       const it = results.easi?.[k]||{};
       const isGood = it.rating==='good', isOk = it.rating==='ok';
       const bg = isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
       const border = isGood?'#1a6e40':isOk?'#a07820':'#b83222';
       const color = isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
-      // Derive from annotations directly — guaranteed sync with essay highlights
       const extractedArr = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
-      const extractedHtml = extractedArr[0]==='未发现相关描写'||!extractedArr.length
+      const extractedHtml = !extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
-        : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:\'Noto Serif SC\',serif;font-size:11px">${ex}</span></div>`).join('');
+        : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:'Noto Serif SC',serif;font-size:11px">${ex}</span></div>`).join('');
       return `<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:14px 16px;">
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
           <span style="font-family:'Noto Serif SC',serif;font-size:1.6rem;font-weight:900;color:${border};line-height:1">${k}</span>
-          <div>
-            <div style="font-weight:700;font-size:12px;color:${color}">${easiNames[k].zh}</div>
-            <div style="font-size:10px;color:${color};opacity:.7">${easiNames[k].en}</div>
-          </div>
+          <div><div style="font-weight:700;font-size:12px;color:${color}">${easiNames[k].zh}</div><div style="font-size:10px;color:${color};opacity:.7">${easiNames[k].en}</div></div>
           <span style="margin-left:auto;font-size:10px;color:${color};background:white;padding:1px 7px;border-radius:99px;border:1px solid ${border}">${it.score_label||''}</span>
         </div>
         <div style="font-size:11px;color:#3d3020;margin-bottom:8px">${it.comment||''}</div>
@@ -123,7 +105,6 @@ export default function Home() {
       </div>`;
     }).join('');
 
-    // ── Language errors
     const errSection = (results.language_errors||[]).length
       ? (results.language_errors||[]).map(e=>`<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #b83222;background:#fdf0ee;margin-bottom:8px;font-size:12px">
           <div style="font-weight:700;font-size:10px;color:#b83222;margin-bottom:4px">${e.label}</div>
@@ -133,52 +114,29 @@ export default function Home() {
         </div>`).join('')
       : '<p style="color:#1a6e40;font-style:italic;font-size:12px">语言运用良好，未发现明显错误。✓</p>';
 
-    // ── No annotation legend in PDF — inline dots only, matching screen
-
-    // ── Annotated essay with framework cards (paragraph by paragraph, matching screen)
     const pdfFwKeys = ['p1_opening','p2_scene','p3_transition','p4_trigger','p56_climax','p7_resolution','p8_conclusion'].filter(function(k){return !!(results.framework||{})[k];});
     const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p3_transition:'P3 过渡',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
 
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const pdfParaMap = (function() {
-      var hasIdx = pdfFwKeys.some(function(k) {
-        var fw = (results.framework||{})[k];
-        return fw && typeof fw.para_index === 'number';
-      });
-      if (hasIdx) {
-        var map = new Array(pdfParas.length).fill(null);
-        pdfFwKeys.forEach(function(k) {
-          var fw = (results.framework||{})[k];
-          if (!fw) return;
-          var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
-          if (pi === null || pi >= pdfParas.length) return;
-          map[pi] = k;
-          if (k === 'p56_climax' && pi + 1 < pdfParas.length) {
-            map[pi + 1] = k; // P5-6 spans two paragraphs
-          }
-        });
-        return map;
-      } else {
-        var map = new Array(pdfParas.length).fill(null);
-        var ki = 0;
-        for (var pi = 0; pi < pdfParas.length; pi++) {
-          if (ki >= pdfFwKeys.length) break;
+      var map = new Array(pdfParas.length).fill(null);
+      var ki = 0;
+      for (var pi = 0; pi < pdfParas.length; pi++) {
+        if (ki >= pdfFwKeys.length) break;
+        map[pi] = pdfFwKeys[ki];
+        if (pdfFwKeys[ki] === 'p56_climax' && pi + 1 < pdfParas.length) {
+          pi++;
           map[pi] = pdfFwKeys[ki];
-          if (pdfFwKeys[ki] === 'p56_climax' && pi + 1 < pdfParas.length) {
-            pi++;
-            map[pi] = pdfFwKeys[ki]; // P5-6 spans two paragraphs
-          }
-          ki++;
         }
-        return map;
+        ki++;
       }
+      return map;
     })();
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
       const fwKey = pdfParaMap[pIdx];
       const fw = fwKey ? (results.framework||{})[fwKey] : null;
       const st = fw ? (fwStatusStyle[fw.status]||fwStatusStyle.pass) : null;
-      // Annotate this paragraph with coloured highlights (matching screen)
       const annotatedPara = (function() {
         var sorted = (results.annotations||[]).slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
         var text = para;
@@ -212,12 +170,10 @@ export default function Home() {
       );
     }).join('');
 
-    // ── Score bars
     const cPct = Math.round((results.content_score/20)*100);
     const lPct = Math.round((results.language_score/20)*100);
     const barC = p => p>=80?'#1a6e40':p>=65?'#1a4a70':p>=50?'#a07820':'#b83222';
 
-    // ── Sample essays
     const sampleSection = sampleEssay ? `<div class="sec"><h2>⭐ 示范范文 (A1/A2 水平)</h2><div style="font-size:10px;color:#8a7a60;margin-bottom:10px">根据你的故事内容，生成一篇 A1/A2 水平的示范作文。保留你的故事，全面提升语言表达与 EASI 手法至最高水平。</div><div class="et">${fmt(sampleEssay)}</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。以此为范例理解写法，再用自己的语言重写。</p></div>` : '';
     const stretchSection = stretchEssay ? `<div class="sec"><h2>📈 进阶范文 (${stretchGrade} 水平)</h2><div class="et">${fmt(stretchEssay)}</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。</p></div>` : '';
 
@@ -254,14 +210,12 @@ export default function Home() {
       @media print{.pb{display:none}body{background:white;padding:20px}.grade-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}.marketing{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
     </style></head><body>
     <button class="pb" onclick="window.print()">🖨 Print / Save PDF</button>
-
     <div class="hdr">
       <div class="hdr-eye">TEACHER LEON'S BILINGUAL ACADEMY · 专属批改工具</div>
       <h1>记叙文智能批改</h1>
       <div class="hdr-sub">Narrative Composition Marker · 依据 SEAB 1160 评分指引 · 结合林老师记叙文框架</div>
       ${title?'<div style="margin-top:10px;font-size:13px;font-family:\'Noto Serif SC\',serif;color:#3d3020">题目：'+title+'</div>':''}
     </div>
-
     <div class="grade-banner">
       <div class="grade-letter">${results.grade}</div>
       <div>
@@ -269,17 +223,10 @@ export default function Home() {
         <div class="grade-sub">内容 ${results.content_score}/20（第${results.content_band}级）　语文与结构 ${results.language_score}/20（第${results.language_band}级）</div>
       </div>
       <div class="bars">
-        <div class="bar-row">
-          <span style="width:80px">内容 ${results.content_score}/20</span>
-          <div class="bar-track"><div class="bar-fill" style="width:${cPct}%;background:${barC(cPct)}"></div></div>
-        </div>
-        <div class="bar-row">
-          <span style="width:80px">语文 ${results.language_score}/20</span>
-          <div class="bar-track"><div class="bar-fill" style="width:${lPct}%;background:${barC(lPct)}"></div></div>
-        </div>
+        <div class="bar-row"><span style="width:80px">内容 ${results.content_score}/20</span><div class="bar-track"><div class="bar-fill" style="width:${cPct}%;background:${barC(cPct)}"></div></div></div>
+        <div class="bar-row"><span style="width:80px">语文 ${results.language_score}/20</span><div class="bar-track"><div class="bar-fill" style="width:${lPct}%;background:${barC(lPct)}"></div></div></div>
       </div>
     </div>
-
     <div class="sec">
       <h2>📝 学生原文（批注版）<span class="sec-sub-label">ANNOTATED STUDENT ESSAY · FRAMEWORK NOTES ALONGSIDE EACH PARAGRAPH</span></h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
@@ -289,30 +236,23 @@ export default function Home() {
       </div>
       ${pdfAnnotatedEssayWithFw}
     </div>
-
     <div class="sec">
       <h2>📊 分项得分<span class="sec-sub-label">SCORE BREAKDOWN</span></h2>
       <p style="margin-bottom:8px"><b>内容：</b>${results.content_feedback}</p>
       <p><b>语文：</b>${results.language_feedback}</p>
     </div>
-
     <div class="sec">
       <h2>🗂 林老师框架检查<span class="sec-sub-label">NARRATIVE FRAMEWORK</span></h2>
       <div class="grid2">${fwCards}</div>
     </div>
-
     <div class="sec">
       <h2>✍️ EASI 人物描写手法<span class="sec-sub-label">E = Expressions & Appearance · A = Actions · S = Speech · I = Inner Thoughts & Feelings</span></h2>
       <div class="grid2">${easiCards}</div>
     </div>
-
-
-
     <div class="sec">
       <h2>🔍 语文错误（全部）<span class="sec-sub-label">ALL LANGUAGE ERRORS</span></h2>
       ${errSection}
     </div>
-
     <div class="grid2" style="margin-bottom:16px">
       <div class="sec" style="margin-bottom:0">
         <h2>🏗 结构与表达<span class="sec-sub-label">STRUCTURE & STYLE</span></h2>
@@ -325,30 +265,22 @@ export default function Home() {
         <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">${(results.improvements||[]).map(i=>'<li style="display:flex;gap:8px;align-items:flex-start;font-size:12px"><span style="color:#1a6e40;flex-shrink:0;font-weight:700">✦</span><span>'+i+'</span></li>').join('')}</ul>
       </div>
     </div>
-
     <div class="sec">
       <h2>📋 老师总评<span class="sec-sub-label">TEACHER LEON'S COMMENT</span></h2>
       <div class="examiner-box">${results.examiner_comment}</div>
       <p style="text-align:right;font-size:11px;color:#8a7a60;margin-top:10px">— 林纯隆老师 · 林老师双语学堂 · O Level 1160 考官</p>
     </div>
-
     ${sampleSection}
     ${stretchSection}
-
     <div class="marketing">
       <div class="mkt-title">👨‍🏫 Found this useful? Learn directly with Teacher Leon.</div>
       <div class="mkt-cred">BA (Hons) Chinese Studies, NTU · PGDE, NIE · 17 years teaching · 10 years O-Level marker</div>
       <div class="mkt-body">This tool reflects how Leon teaches — structured, strategic, examiner-informed. If your child would benefit from that approach 1-to-1, a trial lesson is the best way to find out.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <a class="mkt-wa" href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank">
-          WhatsApp for a Trial →
-        </a>
-        <a href="/about.html" target="_blank" style="display:inline-block;color:rgba(255,255,255,0.6);font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);text-decoration:none;">
-          Learn more →
-        </a>
+        <a class="mkt-wa" href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank">WhatsApp for a Trial →</a>
+        <a href="/about.html" target="_blank" style="display:inline-block;color:rgba(255,255,255,0.6);font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);text-decoration:none;">Learn more →</a>
       </div>
     </div>
-
     </body></html>`);
     w.document.close();
   }
@@ -401,50 +333,23 @@ export default function Home() {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
 
-    // Assign fw keys to paragraphs, giving P5-6 (高潮中) TWO paragraph slots
-    // Pattern: P1, P2, P3, P4, P5-6, P5-6, P7, P8, null...
-    // Build para→fwKey map: use AI para_index if available, else sequential with P5-6 double slot
+    // Sequential mapping: P1→para0, P2→para1... P5-6→para4 AND para5, P7→para6, P8→para7
     var paraFwMap = (function() {
-      // Check if AI returned para_index for any key
-      var hasParaIndex = fwKeys.some(function(k) {
-        return framework[k] && typeof framework[k].para_index === 'number';
-      });
-
-      if (hasParaIndex) {
-        // Use AI-assigned indices
-        var map = new Array(paragraphs.length).fill(null);
-        fwKeys.forEach(function(k) {
-          var fw = framework[k];
-          if (!fw) return;
-          var pi = (typeof fw.para_index === 'number') ? fw.para_index : null;
-          if (pi === null || pi >= paragraphs.length) return;
-          map[pi] = k;
-          // P5-6 always covers the next paragraph too
-          // P5-6 spans two paragraphs — both show the card
-          if (k === 'p56_climax' && pi + 1 < paragraphs.length) {
-            map[pi + 1] = k;
-          }
-        });
-        return map;
-      } else {
-        // Fallback: sequential, P5-6 gets two slots
-        // P1, P2, P3, P4, P5-6, P5-6, P7, P8
-        var map = new Array(paragraphs.length).fill(null);
-        var ki = 0;
-        for (var pi = 0; pi < paragraphs.length; pi++) {
-          if (ki >= fwKeys.length) break;
+      var map = new Array(paragraphs.length).fill(null);
+      var ki = 0;
+      for (var pi = 0; pi < paragraphs.length; pi++) {
+        if (ki >= fwKeys.length) break;
+        map[pi] = fwKeys[ki];
+        // P5-6 spans two paragraphs — both get the card
+        if (fwKeys[ki] === 'p56_climax' && pi + 1 < paragraphs.length) {
+          pi++;
           map[pi] = fwKeys[ki];
-          if (fwKeys[ki] === 'p56_climax' && pi + 1 < paragraphs.length) {
-            pi++;
-            map[pi] = fwKeys[ki]; // P5-6 spans two paragraphs
-          }
-          ki++;
         }
-        return map;
+        ki++;
       }
+      return map;
     })();
 
-    // Each paragraph row contains essay + card side by side — perfect alignment guaranteed
     return (
       <div>
         {paragraphs.map(function(para, pIdx) {
@@ -454,7 +359,6 @@ export default function Home() {
           const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
           return (
             <div key={pIdx} style={{display:'flex', gap:'8px', alignItems:'stretch', marginBottom:'6px'}}>
-              {/* Essay paragraph */}
               <div style={{flex:1, minWidth:0}}>
                 <div
                   style={{fontFamily:"'Noto Serif SC',serif", fontSize:'.95rem', color:'#3d3020',
@@ -463,7 +367,6 @@ export default function Home() {
                   dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations)}}
                 />
               </div>
-              {/* Framework card — desktop: inline; mobile: tap to expand */}
               {fw && st && (
                 <div className="fw-right-col" style={{width:'210px', flexShrink:0}}>
                   <FwCard fw={fw} fwKey={fwKey} />
@@ -494,10 +397,9 @@ export default function Home() {
 
   function annotateEssay(text, annotations) {
     if (!annotations || annotations.length === 0) return text.replace(/\n/g, '<br/>');
-    // Sort by length descending to avoid partial replacements
     const sorted = [...annotations].sort((a,b) => (b.text||'').length - (a.text||'').length);
     let result = text;
-    sorted.forEach((ann, idx) => {
+    sorted.forEach((ann) => {
       if (!ann.text || !result.includes(ann.text)) return;
       const colors = {
         error: { bg:'#fff0ee', underline:'#b83222', dot:'🔴' },
@@ -517,7 +419,6 @@ export default function Home() {
     const currentGradeIdx = results ? gradeOrder.indexOf(results.grade) : -1;
     const computedStretchGrade = currentGradeIdx >= 0 ? gradeOrder[Math.min(currentGradeIdx+2, gradeOrder.length-1)] : '';
     const isStretch = mode==='stretch';
-    // Hide stretch button for A1/A2 — already at top level
     if (isStretch && (results?.grade === 'A1' || results?.grade === 'A2')) return null;
     const stateVal = isStretch ? stretchState : sampleState;
     const essayVal = isStretch ? stretchEssay : sampleEssay;
@@ -531,17 +432,17 @@ export default function Home() {
         <div className="sec-head">
           <div className="sec-icon" style={{background:isStretch?'#eaf2fb':'#fdf6e3'}}>{isStretch?'📈':'⭐'}</div>
           <div>
-            <div className="sec-title" style={{color}}>{isStretch?`进阶范文 (${tGrade} 水平)`:'示范范文 (A1/A2 水平)'}</div>
-            <div className="sec-sub">{isStretch?`2 grades above your current ${results?.grade}`:'Highest standard model essay'}</div>
+            <div className="sec-title" style={{color}}>{isStretch?('进阶范文 ('+tGrade+' 水平)'):'示范范文 (A1/A2 水平)'}</div>
+            <div className="sec-sub">{isStretch?('2 grades above your current '+(results?.grade||'')):'Highest standard model essay'}</div>
           </div>
         </div>
         <p style={{fontSize:'.86rem',color:'#3d3020',lineHeight:1.7,marginBottom:16}}>{desc}</p>
-        {stateVal==='idle'&&<button className="btn-gold" style={{background:color}} onClick={()=>generateSample(mode)}>{isStretch?`📈 生成进阶范文 (${tGrade})`:'⭐ 生成示范范文 (A1/A2)'}</button>}
+        {stateVal==='idle'&&<button className="btn-gold" style={{background:color}} onClick={()=>generateSample(mode)}>{isStretch?('📈 生成进阶范文 ('+tGrade+')'):'⭐ 生成示范范文 (A1/A2)'}</button>}
         {stateVal==='loading'&&<div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 0',color:'#8a7a60',fontStyle:'italic',fontSize:'.87rem'}}><div className="dots"><span/><span/><span/></div>生成中，约需 20–30 秒……</div>}
         {stateVal==='error'&&<div><p style={{color:'#b83222',fontSize:'.84rem',marginBottom:10}}>生成时出现错误，请重试。</p><button className="btn-gold" style={{background:color}} onClick={()=>generateSample(mode)}>重试</button></div>}
         {stateVal==='done'&&essayVal&&(
           <div>
-            <div style={{fontFamily:'Noto Serif SC,serif',fontSize:'.95rem',fontWeight:600,color,marginBottom:12,paddingBottom:10,borderBottom:'1px solid #e0d5c0'}}>{isStretch?'📈':'⭐'} {isStretch?`进阶范文 — ${tGrade} 水平`:'示范范文 — A1/A2 水平'}　题目：{title||'（无题目）'}</div>
+            <div style={{fontFamily:'Noto Serif SC,serif',fontSize:'.95rem',fontWeight:600,color,marginBottom:12,paddingBottom:10,borderBottom:'1px solid #e0d5c0'}}>{isStretch?'📈':'⭐'} {isStretch?('进阶范文 — '+tGrade+' 水平'):'示范范文 — A1/A2 水平'}　题目：{title||'（无题目）'}</div>
             <div style={{fontFamily:'Noto Serif SC,serif',fontSize:'.95rem',color:'#3d3020',lineHeight:2.1,whiteSpace:'pre-wrap'}} dangerouslySetInnerHTML={{__html:formatSample(essayVal)}} />
             <div style={{fontSize:'.76rem',color:'#8a7a60',fontStyle:'italic',marginTop:12,paddingTop:10,borderTop:'1px solid #e0d5c0'}}>※ 此范文仅供参考，请勿直接抄写。以此为范例理解写法，再用自己的语言重写。</div>
           </div>
@@ -557,7 +458,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
       </Head>
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f5ef;color:#1c1710;font-family:'Noto Sans SC',sans-serif;min-height:100vh}.topbar{background:#1c1710;padding:0 32px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}.logo{font-family:'Noto Serif SC',serif;font-size:1rem;font-weight:700;color:#e8d090}.topbar-mid{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7a6a50;text-transform:uppercase}.chip{font-family:'DM Mono',monospace;font-size:9px;padding:3px 10px;border-radius:99px;border:1px solid rgba(160,120,32,.4);color:#c8a050;background:rgba(160,120,32,.1)}.page{max-width:860px;margin:0 auto;padding:44px 20px 60px}.hero{text-align:center;margin-bottom:36px}.hero-eye{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#a07820;margin-bottom:10px}.hero h1{font-family:'Noto Serif SC',serif;font-size:clamp(1.8rem,4.5vw,2.6rem);font-weight:700;margin-bottom:8px}.hero h1 em{color:#a07820;font-style:normal}.hero-sub{font-size:.88rem;color:#8a7a60}.card{background:#fff;border:1px solid #e0d5c0;border-radius:10px;padding:24px 26px;box-shadow:0 2px 14px rgba(0,0,0,.06);margin-bottom:14px}.card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#8a7a60;margin-bottom:5px;display:flex;align-items:center;gap:8px}.lnum{width:20px;height:20px;border-radius:50%;background:#1c1710;color:#e8d090;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}.card-hint{font-size:.8rem;color:#8a7a60;margin-bottom:12px}input[type=text]{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:11px 14px;font-family:'Noto Sans SC',sans-serif;font-size:.95rem;color:#1c1710;outline:none;margin-bottom:18px;transition:border-color .2s}input[type=text]:focus{border-color:#a07820}input::placeholder{color:#8a7a60;font-style:italic}textarea{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:14px;font-family:'Noto Serif SC',serif;font-size:.97rem;color:#1c1710;outline:none;resize:vertical;min-height:280px;line-height:2;transition:border-color .2s}textarea:focus{border-color:#a07820}textarea::placeholder{color:#8a7a60;font-style:italic;font-family:'Noto Sans SC',sans-serif;font-size:.88rem}.row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}.wc{font-family:'DM Mono',monospace;font-size:11px;color:#8a7a60}.wc.ok{color:#1a6e40}.wc.low{color:#b83222}.btn-main{font-family:'Noto Sans SC',sans-serif;font-size:.88rem;font-weight:500;padding:11px 28px;border-radius:8px;border:none;background:#1c1710;color:#e8d090;cursor:pointer;transition:all .15s}.btn-main:hover{background:#332a18}.btn-main:disabled{background:#8a7a60;cursor:not-allowed}.btn-gold{font-family:'Noto Sans SC',sans-serif;font-size:.9rem;font-weight:500;padding:12px 24px;border-radius:8px;border:none;color:#fff;cursor:pointer;transition:all .15s;width:100%}.btn-gold:hover{filter:brightness(1.12)}.btn-ghost{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #c8b99a;background:transparent;color:#8a7a60;cursor:pointer;transition:all .15s}.btn-ghost:hover{color:#1c1710;border-color:#3d3020}.btn-pdf{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #1a4a70;background:transparent;color:#1a4a70;cursor:pointer;transition:all .15s}.btn-pdf:hover{background:#1a4a70;color:#fff}.error{color:#b83222;font-size:.85rem;margin-top:8px}.loading-wrap{text-align:center;padding:60px 20px}.loading-char{font-family:'Noto Serif SC',serif;font-size:2rem;letter-spacing:.2em;color:#a07820;animation:breathe 2s ease-in-out infinite;margin-bottom:14px}.loading-msg{font-size:.88rem;color:#8a7a60;font-style:italic;margin-bottom:20px}.loading-steps{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}.lstep{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#a07820}.grade-banner{background:#1c1710;border-radius:10px;padding:22px 26px;display:flex;align-items:center;gap:22px;margin-bottom:14px;position:relative;overflow:hidden}.grade-banner::after{content:'记';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:'Noto Serif SC',serif;font-size:7rem;font-weight:700;color:rgba(255,255,255,.04);pointer-events:none}.grade-ring{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}.grade-letter{font-family:'Noto Serif SC',serif;font-size:1.8rem;font-weight:700;color:#e8d090;line-height:1}.grade-pts{font-family:'DM Mono',monospace;font-size:10px;color:rgba(232,208,144,.5);margin-top:2px}.grade-name{font-family:'Noto Serif SC',serif;font-size:1.1rem;color:#e8d090;font-weight:600;margin-bottom:4px}.grade-desc{font-size:.82rem;color:rgba(232,208,144,.6);margin-bottom:8px}.score-pills{display:flex;gap:8px;flex-wrap:wrap}.spill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:rgba(232,208,144,.65)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}@media(max-width:600px){.grid2{grid-template-columns:1fr}.grade-banner{flex-direction:column;text-align:center}}.sec-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e0d5c0}.sec-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}.sec-title{font-family:'Noto Serif SC',serif;font-size:.9rem;font-weight:600}.sec-sub{font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}.bar-wrap{margin-bottom:11px}.bar-top{display:flex;justify-content:space-between;font-size:.78rem;color:#8a7a60;margin-bottom:5px}.bar-top strong{color:#3d3020}.bar-track{height:7px;background:#f2ede3;border-radius:99px;overflow:hidden;border:1px solid #e0d5c0}.bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1)}.fw-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:500px){.fw-grid{grid-template-columns:1fr}}.fw-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;font-size:.82rem;line-height:1.5;border-left:3px solid}.fw-icon{flex-shrink:0;font-weight:700;margin-top:1px}.fw-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:2px}.easi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:500px){.easi-grid{grid-template-columns:1fr}}.easi-item{padding:14px;border-radius:8px;border:1px solid}.easi-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}.easi-letter{font-family:'Noto Serif SC',serif;font-size:1.4rem;font-weight:700}.easi-name{font-size:.78rem;font-weight:600;color:#3d3020}.easi-en{font-size:.7rem;color:#8a7a60}.easi-score{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.06);display:inline-block;margin-bottom:6px}.easi-comment{font-size:.78rem;color:#555;line-height:1.5;margin-bottom:8px}.easi-extracted{padding:8px 10px;background:rgba(0,0,0,.04);border-radius:6px;border-left:2px solid}.easi-extracted-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;margin-bottom:3px}.easi-extracted-text{font-family:'Noto Serif SC',serif;font-size:.82rem;color:#3d3020;line-height:1.7}.err-list{list-style:none;display:flex;flex-direction:column;gap:8px}.err-item{padding:10px 13px;border-radius:8px;font-size:.82rem;line-height:1.7;border-left:3px solid;background:#fdf0ee;border-color:#b83222;color:#6a1810}.err-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:3px}.err-orig{font-family:'Noto Serif SC',serif;margin-bottom:2px}.err-fix{font-family:'Noto Serif SC',serif;color:#1a6e40}.err-reason{font-size:.75rem;opacity:.8;margin-top:2px}.sug-list{list-style:none;display:flex;flex-direction:column;gap:8px}.sug-item{display:flex;gap:10px;padding:10px 12px;border-radius:8px;background:#edf7f1;border-left:3px solid #1a6e40;font-size:.83rem;color:#154d2e;line-height:1.6}.examiner-box{background:#f2ede3;border:1px solid #c8b99a;border-radius:10px;padding:20px 24px;position:relative}.examiner-box::before{content:'"';position:absolute;top:5px;left:12px;font-family:'Noto Serif SC',serif;font-size:2.8rem;color:#c8b99a;line-height:1}.examiner-text{font-family:'Noto Serif SC',serif;font-size:.93rem;color:#3d3020;line-height:1.95;padding-top:14px}.examiner-sig{margin-top:12px;font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.12em;text-align:right}.center-row{display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap}.dots span{display:inline-block;width:5px;height:5px;background:#a07820;border-radius:50%;animation:pulse 1.2s ease-in-out infinite;margin:0 2px}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}@keyframes pulse{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.fade{animation:fadeUp .5s ease both}.fw-right-col{display:flex!important}.fw-mobile-icon{display:none!important}.fw-mobile-card{display:block}.fw-essay-grid{grid-template-columns:1fr 220px!important}.ann-mark{transition:all .15s}.ann-mark:hover{filter:brightness(.95)}.ann-tooltip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1c1710;color:#e8d090;padding:4px 10px;border-radius:6px;font-size:11px;white-space:nowrap;pointer-events:none;z-index:999;font-family:'Noto Sans SC',sans-serif}`}</style>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f5ef;color:#1c1710;font-family:'Noto Sans SC',sans-serif;min-height:100vh}.topbar{background:#1c1710;padding:0 32px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}.logo{font-family:'Noto Serif SC',serif;font-size:1rem;font-weight:700;color:#e8d090}.topbar-mid{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7a6a50;text-transform:uppercase}.chip{font-family:'DM Mono',monospace;font-size:9px;padding:3px 10px;border-radius:99px;border:1px solid rgba(160,120,32,.4);color:#c8a050;background:rgba(160,120,32,.1)}.page{max-width:860px;margin:0 auto;padding:44px 20px 60px}.hero{text-align:center;margin-bottom:36px}.hero-eye{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#a07820;margin-bottom:10px}.hero h1{font-family:'Noto Serif SC',serif;font-size:clamp(1.8rem,4.5vw,2.6rem);font-weight:700;margin-bottom:8px}.hero h1 em{color:#a07820;font-style:normal}.hero-sub{font-size:.88rem;color:#8a7a60}.card{background:#fff;border:1px solid #e0d5c0;border-radius:10px;padding:24px 26px;box-shadow:0 2px 14px rgba(0,0,0,.06);margin-bottom:14px}.card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#8a7a60;margin-bottom:5px;display:flex;align-items:center;gap:8px}.lnum{width:20px;height:20px;border-radius:50%;background:#1c1710;color:#e8d090;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}.card-hint{font-size:.8rem;color:#8a7a60;margin-bottom:12px}input[type=text]{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:11px 14px;font-family:'Noto Sans SC',sans-serif;font-size:.95rem;color:#1c1710;outline:none;margin-bottom:18px;transition:border-color .2s}input[type=text]:focus{border-color:#a07820}input::placeholder{color:#8a7a60;font-style:italic}textarea{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:14px;font-family:'Noto Serif SC',serif;font-size:.97rem;color:#1c1710;outline:none;resize:vertical;min-height:280px;line-height:2;transition:border-color .2s}textarea:focus{border-color:#a07820}textarea::placeholder{color:#8a7a60;font-style:italic;font-family:'Noto Sans SC',sans-serif;font-size:.88rem}.row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}.wc{font-family:'DM Mono',monospace;font-size:11px;color:#8a7a60}.wc.ok{color:#1a6e40}.wc.low{color:#b83222}.btn-main{font-family:'Noto Sans SC',sans-serif;font-size:.88rem;font-weight:500;padding:11px 28px;border-radius:8px;border:none;background:#1c1710;color:#e8d090;cursor:pointer;transition:all .15s}.btn-main:hover{background:#332a18}.btn-main:disabled{background:#8a7a60;cursor:not-allowed}.btn-gold{font-family:'Noto Sans SC',sans-serif;font-size:.9rem;font-weight:500;padding:12px 24px;border-radius:8px;border:none;color:#fff;cursor:pointer;transition:all .15s;width:100%}.btn-gold:hover{filter:brightness(1.12)}.btn-ghost{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #c8b99a;background:transparent;color:#8a7a60;cursor:pointer;transition:all .15s}.btn-ghost:hover{color:#1c1710;border-color:#3d3020}.btn-pdf{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #1a4a70;background:transparent;color:#1a4a70;cursor:pointer;transition:all .15s}.btn-pdf:hover{background:#1a4a70;color:#fff}.error{color:#b83222;font-size:.85rem;margin-top:8px}.loading-wrap{text-align:center;padding:60px 20px}.loading-char{font-family:'Noto Serif SC',serif;font-size:2rem;letter-spacing:.2em;color:#a07820;animation:breathe 2s ease-in-out infinite;margin-bottom:14px}.loading-msg{font-size:.88rem;color:#8a7a60;font-style:italic;margin-bottom:20px}.loading-steps{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}.lstep{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#a07820}.grade-banner{background:#1c1710;border-radius:10px;padding:22px 26px;display:flex;align-items:center;gap:22px;margin-bottom:14px;position:relative;overflow:hidden}.grade-banner::after{content:'记';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:'Noto Serif SC',serif;font-size:7rem;font-weight:700;color:rgba(255,255,255,.04);pointer-events:none}.grade-ring{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}.grade-letter{font-family:'Noto Serif SC',serif;font-size:1.8rem;font-weight:700;color:#e8d090;line-height:1}.grade-pts{font-family:'DM Mono',monospace;font-size:10px;color:rgba(232,208,144,.5);margin-top:2px}.grade-name{font-family:'Noto Serif SC',serif;font-size:1.1rem;color:#e8d090;font-weight:600;margin-bottom:4px}.grade-desc{font-size:.82rem;color:rgba(232,208,144,.6);margin-bottom:8px}.score-pills{display:flex;gap:8px;flex-wrap:wrap}.spill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:rgba(232,208,144,.65)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}@media(max-width:600px){.grid2{grid-template-columns:1fr}.grade-banner{flex-direction:column;text-align:center}}.sec-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e0d5c0}.sec-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}.sec-title{font-family:'Noto Serif SC',serif;font-size:.9rem;font-weight:600}.sec-sub{font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}.bar-wrap{margin-bottom:11px}.bar-top{display:flex;justify-content:space-between;font-size:.78rem;color:#8a7a60;margin-bottom:5px}.bar-top strong{color:#3d3020}.bar-track{height:7px;background:#f2ede3;border-radius:99px;overflow:hidden;border:1px solid #e0d5c0}.bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1)}.fw-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:500px){.fw-grid{grid-template-columns:1fr}}.fw-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;font-size:.82rem;line-height:1.5;border-left:3px solid}.fw-icon{flex-shrink:0;font-weight:700;margin-top:1px}.fw-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:2px}.easi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:500px){.easi-grid{grid-template-columns:1fr}}.easi-item{padding:14px;border-radius:8px;border:1px solid}.easi-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}.easi-letter{font-family:'Noto Serif SC',serif;font-size:1.4rem;font-weight:700}.easi-name{font-size:.78rem;font-weight:600;color:#3d3020}.easi-en{font-size:.7rem;color:#8a7a60}.easi-score{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.06);display:inline-block;margin-bottom:6px}.easi-comment{font-size:.78rem;color:#555;line-height:1.5;margin-bottom:8px}.easi-extracted{padding:8px 10px;background:rgba(0,0,0,.04);border-radius:6px;border-left:2px solid}.easi-extracted-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;margin-bottom:3px}.easi-extracted-text{font-family:'Noto Serif SC',serif;font-size:.82rem;color:#3d3020;line-height:1.7}.err-list{list-style:none;display:flex;flex-direction:column;gap:8px}.err-item{padding:10px 13px;border-radius:8px;font-size:.82rem;line-height:1.7;border-left:3px solid;background:#fdf0ee;border-color:#b83222;color:#6a1810}.err-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:3px}.err-orig{font-family:'Noto Serif SC',serif;margin-bottom:2px}.err-fix{font-family:'Noto Serif SC',serif;color:#1a6e40}.err-reason{font-size:.75rem;opacity:.8;margin-top:2px}.sug-list{list-style:none;display:flex;flex-direction:column;gap:8px}.sug-item{display:flex;gap:10px;padding:10px 12px;border-radius:8px;background:#edf7f1;border-left:3px solid #1a6e40;font-size:.83rem;color:#154d2e;line-height:1.6}.examiner-box{background:#f2ede3;border:1px solid #c8b99a;border-radius:10px;padding:20px 24px;position:relative}.examiner-box::before{content:'"';position:absolute;top:5px;left:12px;font-family:'Noto Serif SC',serif;font-size:2.8rem;color:#c8b99a;line-height:1}.examiner-text{font-family:'Noto Serif SC',serif;font-size:.93rem;color:#3d3020;line-height:1.95;padding-top:14px}.examiner-sig{margin-top:12px;font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.12em;text-align:right}.center-row{display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap}.dots span{display:inline-block;width:5px;height:5px;background:#a07820;border-radius:50%;animation:pulse 1.2s ease-in-out infinite;margin:0 2px}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}@keyframes pulse{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.fade{animation:fadeUp .5s ease both}.fw-right-col{display:flex!important}.fw-mobile-icon{display:none!important}.fw-mobile-card{display:block}.ann-mark{transition:all .15s}.ann-mark:hover{filter:brightness(.95)}@media(max-width:600px){.fw-right-col{display:none!important}.fw-mobile-icon{display:inline-flex!important}}`}</style>
 
       <div className="topbar">
         <div className="logo">林老师双语学堂</div>
@@ -652,7 +553,6 @@ export default function Home() {
             <div className="easi-grid">{easiItems.map(e=>{
             const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
             const c=easiColor(item.rating);
-            // Derive extracted list directly from annotations — guaranteed sync with highlights
             const fromAnns=(results.annotations||[]).filter(a=>a.type==='good'&&a.technique===e.k).map(a=>a.text).filter(Boolean);
             const extracted=fromAnns.length>0?fromAnns:['未发现相关描写'];
             return(<div key={e.k} className="easi-item" style={{background:c.bg,borderColor:c.border}}>
