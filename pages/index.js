@@ -246,6 +246,11 @@ export default function Home() {
       <div class="grid2">${fwCards}</div>
     </div>
 
+    <div class="sec">
+      <h2>✍️ EASI 人物描写手法<span class="sec-sub-label">E = Expressions & Appearance · A = Actions · S = Speech · I = Inner Thoughts & Feelings</span></h2>
+      <div class="grid2">${easiCards}</div>
+    </div>
+
 
 
     <div class="sec">
