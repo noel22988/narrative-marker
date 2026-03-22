@@ -65,7 +65,7 @@ Return ONLY the rewritten essay with paragraph labels. No explanation.`;
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
+        max_tokens: 3000,
         system,
         messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生原文（必须保留所有故事内容，只改善语言表达）：\n${essay || ''}` }]
       })
