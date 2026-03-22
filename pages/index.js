@@ -114,22 +114,10 @@ export default function Home() {
     const pdfFwKeys = ['p1_opening','p2_scene','p3_transition','p4_trigger','p56_climax','p7_resolution','p8_conclusion'].filter(function(k){return !!(results.framework||{})[k];});
     const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p3_transition:'P3 过渡',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
 
-    function buildPdfParaMap(paras, keys) {
-      var map = [];
-      var used = {};
-      for (var p=0; p<paras; p++) {
-        if (!keys.length) { map.push(null); continue; }
-        var raw = (paras <= keys.length) ? p : Math.floor(p / (paras-1) * (keys.length-1) + 0.5);
-        var idx = Math.min(raw, keys.length-1);
-        while (used[idx] && idx < keys.length-1) { idx++; }
-        if (!used[idx]) { map.push(keys[idx]); used[idx]=true; }
-        else { map.push(null); }
-      }
-      return map;
-    }
-
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
-    const pdfParaMap = buildPdfParaMap(pdfParas.length, pdfFwKeys);
+    const pdfParaMap = pdfParas.map(function(_, pIdx) {
+      return pIdx < pdfFwKeys.length ? pdfFwKeys[pIdx] : null;
+    });
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
       const fwKey = pdfParaMap[pIdx];
@@ -140,12 +128,14 @@ export default function Home() {
         var sorted = (results.annotations||[]).slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
         var text = para;
         sorted.forEach(function(ann) {
-          if (!ann.text || !text.includes(ann.text)) return;
+          if (!ann.text) return;
+          var pos = text.indexOf(ann.text);
+          if (pos === -1) return;
           var bg = ann.type==='error'?'#ffd6d6':ann.type==='good'?'#d0f0df':'#fff3cc';
           var ul = ann.type==='error'?'#b83222':ann.type==='good'?'#1a6e40':'#a07820';
           var dot = ann.type==='error'?'🔴':ann.type==='good'?'🟢':'🟡';
           var span = '<span style="background:'+bg+';border-bottom:2px solid '+ul+';border-radius:3px;padding:1px 2px">'+ann.text+'<sup style="font-size:8px;color:'+ul+';margin-left:1px">'+dot+'</sup></span>';
-          text = text.replace(ann.text, span);
+          text = text.slice(0, pos) + span + text.slice(pos + ann.text.length);
         });
         return text;
       })();
@@ -256,10 +246,7 @@ export default function Home() {
       <div class="grid2">${fwCards}</div>
     </div>
 
-    <div class="sec">
-      <h2>✍️ EASI 人物描写手法<span class="sec-sub-label">E = Expressions & Appearance · A = Actions · S = Speech · I = Inner Thoughts & Feelings</span></h2>
-      <div class="grid2">${easiCards}</div>
-    </div>
+
 
     <div class="sec">
       <h2>🔍 语文错误（全部）<span class="sec-sub-label">ALL LANGUAGE ERRORS</span></h2>
@@ -354,28 +341,11 @@ export default function Home() {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
 
-    // Map paragraphs to fw keys: distribute evenly, each key used at most once
-    // If more paragraphs than fw keys, extra paragraphs get null (no card)
-    // If fewer paragraphs than fw keys, some keys are skipped
-    function buildParaFwMap(numParas, keys) {
-      var map = [];
-      if (!keys.length) { for (var x=0; x<numParas; x++) map.push(null); return map; }
-      // Spread keys across paragraphs as evenly as possible
-      var used = {};
-      for (var p=0; p<numParas; p++) {
-        var raw = (numParas <= keys.length)
-          ? p  // one-to-one, skip extras
-          : Math.floor(p / (numParas - 1) * (keys.length - 1) + 0.5);
-        var idx = Math.min(raw, keys.length - 1);
-        // Avoid duplicates: advance to next unused key
-        while (used[idx] && idx < keys.length - 1) { idx++; }
-        if (!used[idx]) { map.push(keys[idx]); used[idx] = true; }
-        else { map.push(null); } // extra paragraph, no card
-      }
-      return map;
-    }
-
-    var paraFwMap = buildParaFwMap(paragraphs.length, fwKeys);
+    // Assign fw keys sequentially 1-to-1: para 0→key 0, para 1→key 1, etc.
+    // Extra paragraphs beyond the number of keys get null (no card shown)
+    var paraFwMap = paragraphs.map(function(_, pIdx) {
+      return pIdx < fwKeys.length ? fwKeys[pIdx] : null;
+    });
 
     // Each paragraph row contains essay + card side by side — perfect alignment guaranteed
     return (
