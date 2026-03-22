@@ -1023,7 +1023,7 @@
 <!-- ── HERO ── -->
 <div class="waitlist-banner">
   <span class="dot"></span>
-  Limited slots available — <a href="#waitlist">WhatsApp Leon now to secure yours</a>
+  Limited slots available — <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%27d%20like%20to%20find%20out%20more%20about%20tuition." target="_blank">WhatsApp Leon now to secure yours</a>
 </div>
 <section class="hero">
   <div class="hero-text">
@@ -1333,13 +1333,9 @@
 
       <div class="lead-card" style="text-align:center;">
         <div style="font-size:36px;margin-bottom:16px;">📋</div>
-        <h3 style="font-size:17px;margin-bottom:10px;">Get the free<br><em>Playbook</em></h3>
-        <p style="margin-bottom:20px;">5 reasons your child is losing marks in O-Level Chinese — and what can be done about each one.</p>
-        <div class="lead-input-row">
-          <input class="lead-input" type="text" placeholder="Your name">
-          <input class="lead-input" type="email" placeholder="Your email address">
-          <button class="lead-btn" onclick="alert('Thank you! Leon will send you the playbook shortly.')">Send me the playbook →</button>
-        </div>
+        <h3 style="font-size:17px;margin-bottom:10px;">Read the free<br><em>Playbook</em></h3>
+        <p style="margin-bottom:20px;">5 reasons your child is losing marks in O-Level Chinese — and what to do about each one. Read it in 5 minutes.</p>
+        <a href="playbook.html" target="_blank" class="lead-btn" style="text-decoration:none;text-align:center;display:block;">Read the playbook →</a>
       </div>
 
       <div class="lead-card" style="text-align:center;">
