@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5 Reasons Your Child Is Losing Marks in O-Level Chinese — Teacher Leon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --teal: #0f6b7a;
+    --teal-light: #e8f4f6;
+    --teal-mid: #1a9aad;
+    --gold: #c8943a;
+    --gold-light: #fdf6ec;
+    --warm: #f9f6f1;
+    --white: #ffffff;
+    --grey: #6b7280;
+    --red: #dc2626;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--warm); color: var(--ink); }
+
+  /* ── COVER ── */
+  .cover {
+    background: var(--ink);
+    padding: 64px 56px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -180px; right: -180px;
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(15,107,122,0.22) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; left: -100px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(200,148,58,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover-tag {
+    display: inline-block;
+    background: rgba(200,148,58,0.2);
+    border: 1px solid rgba(200,148,58,0.4);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+  }
+  .cover-number {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(80px, 14vw, 130px);
+    font-weight: 900;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    position: absolute;
+    right: 48px;
+    top: 40px;
+    letter-spacing: -4px;
+  }
+  .cover h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 4.5vw, 46px);
+    font-weight: 900;
+    color: white;
+    line-height: 1.15;
+    margin-bottom: 20px;
+    max-width: 560px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover h1 em { color: var(--teal-mid); font-style: italic; }
+  .cover-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 300;
+    max-width: 500px;
+    line-height: 1.65;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-author {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .author-badge {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+  .author-badge strong { color: rgba(255,255,255,0.85); font-weight: 600; display: block; font-size: 13px; }
+
+  /* ── INTRO ── */
+  .intro {
+    background: var(--white);
+    padding: 48px 56px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  .intro p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #374151;
+    font-weight: 300;
+    max-width: 680px;
+  }
+  .intro p strong { font-weight: 600; color: var(--ink); }
+  .intro p em { color: var(--teal); font-style: italic; }
+
+  /* ── REASONS ── */
+  .reasons { padding: 0; }
+
+  .reason {
+    padding: 52px 56px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 32px;
+    align-items: start;
+    background: var(--white);
+    transition: background 0.2s;
+  }
+  .reason:nth-child(even) { background: var(--warm); }
+
+  .reason-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 72px;
+    font-weight: 900;
+    color: var(--teal-light);
+    line-height: 0.85;
+    letter-spacing: -2px;
+    text-align: center;
+  }
+
+  .reason-body {}
+
+  .reason-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    background: var(--teal-light);
+    padding: 4px 10px;
+    border-radius: 100px;
+    margin-bottom: 10px;
+  }
+
+  .reason h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(20px, 2.5vw, 26px);
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.25;
+    margin-bottom: 16px;
+  }
+  .reason h2 em { color: var(--teal); font-style: italic; }
+
+  .reason-scene {
+    background: var(--gold-light);
+    border-left: 3px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #374151;
+    font-weight: 300;
+    font-style: italic;
+  }
+  .reason-scene strong { font-style: normal; font-weight: 600; color: var(--gold); }
+
+  .reason p {
+    font-size: 15px;
+    line-height: 1.75;
+    color: #374151;
+    font-weight: 300;
+    margin-bottom: 14px;
+  }
+  .reason p strong { font-weight: 600; color: var(--ink); }
+  .reason p em { color: var(--teal); font-style: normal; font-weight: 500; }
+
+  .reason-fix {
+    background: var(--teal-light);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink);
+    font-weight: 300;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .reason-fix-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .reason-fix strong { font-weight: 600; color: var(--teal); }
+
+  /* ── CTA ── */
+  .cta-section {
+    background: var(--ink);
+    padding: 72px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    top: -150px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 400px;
+    background: radial-gradient(circle, rgba(15,107,122,0.2) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-section .section-tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--teal-mid);
+    margin-bottom: 20px;
+  }
+  .cta-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 3.5vw, 38px);
+    font-weight: 700;
+    color: white;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-section h2 em { color: var(--teal-mid); font-style: italic; }
+  .cta-sub {
+    font-size: 15px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 300;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+  }
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #25D366;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 18px 36px;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 6px 28px rgba(37,211,102,0.4);
+    position: relative;
+    z-index: 1;
+  }
+  .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(37,211,102,0.5); }
+  .cta-btn svg { width: 20px; height: 20px; fill: white; }
+  .cta-fine {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 16px;
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── FOOTER ── */
+  .page-footer {
+    background: var(--teal);
+    padding: 20px 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+  }
+  .footer-note { font-size: 12px; color: rgba(255,255,255,0.55); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 640px) {
+    .cover { padding: 48px 24px 44px; }
+    .cover-number { display: none; }
+    .intro { padding: 36px 24px; }
+    .reason { grid-template-columns: 1fr; gap: 0; padding: 40px 24px; }
+    .reason-num { font-size: 48px; line-height: 1; margin-bottom: 8px; }
+    .cta-section { padding: 56px 24px; }
+    .page-footer { padding: 16px 24px; }
+  }
+
+  @media print {
+    .cover { padding: 40px; }
+    .intro, .reason { padding: 32px 40px; }
+    .cta-section { padding: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-tag">Free Playbook · Teacher Leon</div>
+  <div class="cover-number">5</div>
+  <h1>5 Reasons Your Child Is Losing Marks in O-Level Chinese<br><em>(That Have Nothing to Do with Their Chinese)</em></h1>
+  <p class="cover-sub">A straight-talking playbook for parents — from someone who has marked thousands of O-Level scripts and knows exactly why students lose marks.</p>
+  <div class="cover-author">
+    <div class="author-badge">
+      <strong>Leon Lim</strong>
+      BA (Hons) Chinese Studies, NTU · NIE PGDE<br>
+      10-Year O-Level Marker · Current MOE Teacher
+    </div>
+  </div>
+</div>
+
+<!-- INTRO -->
+<div class="intro">
+  <p>If your child studies, puts in effort, but still can't move the needle on their Chinese grade — this playbook is for you. <strong>After 10 years marking O-Level Chinese papers, I can tell you with confidence: the five problems below affect students across every component of the exam.</strong> Fix any one of them, and marks improve everywhere. Here's what they are — and what can actually be done about each.</p>
+</div>
+
+<!-- REASONS -->
+<div class="reasons">
+
+  <!-- 1 -->
+  <div class="reason">
+    <div class="reason-num">1</div>
+    <div class="reason-body">
+      <span class="reason-tag">Mindset</span>
+      <h2>They think better Chinese means better marks — <em>so they give up before they start.</em></h2>
+      <div class="reason-scene">
+        <strong>Sound familiar?</strong> Your child says "I'm just bad at Chinese" and disengages entirely. They've decided the subject is a lost cause before understanding what's actually being tested.
+      </div>
+      <p>This is the most damaging issue of all — because it's a belief, not a skill gap. And it affects everything: how much effort they put in, how they approach each paper, whether they even try in oral. <strong>The O-Level Chinese paper does not require perfect language.</strong> It rewards clear content, correct structure, and hitting the marking criteria.</p>
+      <p>I've marked thousands of scripts. I've given top marks to students whose Chinese was basic but whose structure was disciplined. I've given average marks to students whose language was impressive but whose answers were vague. <strong>Content is king — not language.</strong> Once a student understands this, everything changes.</p>
+      <div class="reason-fix">
+        <div class="reason-fix-icon">💡</div>
+        <div><strong>What fixes it:</strong> A tutor who reframes the problem — showing students that Chinese is a system that can be learned, not a talent you either have or don't. That shift in belief is often the turning point that unlocks improvement across every single paper.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="reason">
+    <div class="reason-num">2</div>
+    <div class="reason-body">
+      <span class="reason-tag">Question Analysis</span>
+      <h2>They answer what they <em>think</em> is being asked — not what's actually there.</h2>
+      <div class="reason-scene">
+        <strong>Sound familiar?</strong> Your child finishes the paper feeling confident — then gets the results back and can't understand where the marks went. They answered everything.
+      </div>
+      <p>Most students skim the question and start writing. They miss a second task buried in the question, misread a keyword, or answer in the wrong format entirely. This happens in email writing, comprehension, oral, and composition. <strong>It's not a language problem — it's a reading problem.</strong></p>
+      <p>Examiners cannot give marks for a correct answer to the wrong question. A student who misses one task in an email loses up to half the content marks for that section — regardless of how well-written their response is.</p>
+      <div class="reason-fix">
+        <div class="reason-fix-icon">💡</div>
+        <div><strong>What fixes it:</strong> A disciplined question analysis habit — underlining key words, identifying the exact tasks required, and checking back after every paragraph. It takes 60 seconds and saves marks across every component.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="reason">
+    <div class="reason-num">3</div>
+    <div class="reason-body">
+      <span class="reason-tag">Development</span>
+      <h2>They state their point — but never <em>explain it.</em></h2>
+      <div class="reason-scene">
+        <strong>Sound familiar?</strong> Your child gives three suggestions in their email, three points in their composition, three answers in oral — and gets far fewer marks than expected. They answered the question. Why so few marks?
+      </div>
+      <p style="font-size:14px;background:var(--teal-light);border-radius:8px;padding:12px 16px;color:var(--ink);font-weight:300;font-style:italic;margin-bottom:16px;">One of my students was scoring E8 consistently — this was exactly his problem. Within two sessions of learning to properly explain his points, his scores jumped. He finished with a B3 at O-Levels.</p>
+      <p>This is the single most common reason students lose marks across all components. <strong>Stating a point is not the same as answering the question.</strong> Examiners want to know: why does this matter? How does it work? What's your evidence? A suggestion without explanation, a composition point without development, an oral answer without reasoning — all score far below what they should.</p>
+      <div class="reason-fix">
+        <div class="reason-fix-icon">💡</div>
+        <div><strong>What fixes it:</strong> The PEEL framework — Point, Explain, Evidence, Link. One framework, applied consistently across email, composition, and oral. Once students internalise it, they stop leaving marks on the table they clearly earned.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="reason">
+    <div class="reason-num">4</div>
+    <div class="reason-body">
+      <span class="reason-tag">Structure</span>
+      <h2>They have something to say — but no <em>structure to say it in.</em></h2>
+      <div class="reason-scene">
+        <strong>Sound familiar?</strong> You read your child's composition and something feels off — even if you can't put your finger on it. The ideas are there, but there's no beginning that sets things up, no clear middle, no real ending. It just stops. The examiner marks organisation as a separate criterion, and right now there's nothing to mark.
+      </div>
+      <p>Structure is invisible when it's done right — but painfully obvious when it's missing. An email without a proper opening and closing. A composition that jumps straight to the ending. An oral answer that circles back on itself. <strong>Examiners mark organisation as a separate criterion.</strong> You can have excellent content and still lose marks because it isn't presented clearly.</p>
+      <p>Most students have never been taught an explicit structure for each component. They write by instinct — which works for students with strong language intuition, but fails everyone else. <strong>Structure is a skill, not a gift.</strong> It can be taught, practised, and applied consistently.</p>
+      <div class="reason-fix">
+        <div class="reason-fix-icon">💡</div>
+        <div><strong>What fixes it:</strong> A clear template for each component — email format, composition framework, oral response structure. Once students have the skeleton, they just need to fill it in. The marks for organisation become predictable and reliable.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="reason">
+    <div class="reason-num">5</div>
+    <div class="reason-body">
+      <span class="reason-tag">Time Management</span>
+      <h2>They run out of time — not because they're slow, but because they don't know <em>where the marks are.</em></h2>
+      <div class="reason-scene">
+        <strong>Sound familiar?</strong> Your child rushes the last section of the paper. Or writes a beautiful introduction and a half-finished conclusion. Or spends 40 minutes on a 20-mark component.
+      </div>
+      <p>Time mismanagement in Chinese exams isn't about being slow — it's about not knowing which sections carry the most weight. Students spend disproportionate time on the parts they feel comfortable with, and rush through the parts that actually carry the marks. <strong>In a composition, the main event carries the most marks — yet most students spend the least time on it.</strong> In oral, the conversation is worth 20% of the total grade — yet most students barely prepare for it.</p>
+      <p>Every component has a mark allocation. Every mark allocation should have a time allocation. When students understand this, they stop writing beautifully in the wrong places.</p>
+      <div class="reason-fix">
+        <div class="reason-fix-icon">💡</div>
+        <div><strong>What fixes it:</strong> A time plan for each paper — built around where the marks actually are. Not generic advice like "manage your time well." A specific breakdown: this component gets this many minutes, this section gets this much of that time. Followed consistently, it prevents the most avoidable mark losses in the exam.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CTA -->
+<div class="cta-section">
+  <div class="section-tag">What Next?</div>
+  <h2>These are fixable problems.<br><em>All of them.</em></h2>
+  <p class="cta-sub">If any of these sounded like your child, a trial session with Leon is the fastest way to find out how many marks are recoverable — and how quickly.</p>
+  <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20read%20your%20guide%20and%20I%27d%20like%20to%20arrange%20a%20trial%20for%20my%20child." class="cta-btn" target="_blank">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    WhatsApp Leon for a Trial
+  </a>
+  <p class="cta-fine">Slots are currently full — but WhatsApp to join the waitlist.</p>
+</div>
+
+<!-- FOOTER -->
+<div class="page-footer">
+  <div>
+    <div class="footer-brand">Teacher Leon · 林老师</div>
+    <div class="footer-note">O-Level Chinese Specialist · Sec 3 & 4 · Singapore</div>
+  </div>
+  <div class="footer-note">9228 6725</div>
+</div>
+
+</body>
+</html>
