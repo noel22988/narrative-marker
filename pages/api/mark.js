@@ -149,6 +149,13 @@ For each annotation:
 
 LANGUAGE ERRORS: Only GENUINE errors. For each: label, original (use 「」), correction, reason.
 
+STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
+- {"label":"完整八段结构","text":"八段式记叙文结构完整，层次分明，过渡自然"}
+- {"label":"详略得当","text":"重点突出高潮部分的EASI描写，详略安排合理"}
+- {"label":"主题鲜明","text":"通过具体事件展现人间温情，升华到社会意义"}
+Bad examples (DO NOT DO THIS):
+- {"label":"倒叙开头","text":"每当我走进超市，听到收银机的扫描声，脑海中总会浮现..."} ← WRONG: quoting the essay
+
 JSON SAFETY RULES:
 1. Return ONLY a JSON object. No markdown, no backticks.
 2. String values use straight double quotes " as delimiters.
