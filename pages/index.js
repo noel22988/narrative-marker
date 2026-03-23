@@ -305,14 +305,32 @@ export default function Home() {
 
       // Cross-category correction: remove misclassified items
       if (k === 'E') {
-        // Remove speech items from E (speech verb + quote = S, not E)
-        expanded = expanded.filter(function(t) { return !isSpeech(t); });
+        // Remove speech items from E: if text contains a speech verb character, it's S not E
+        // This is intentionally aggressive — speech verb ALWAYS takes precedence over appearance
+        expanded = expanded.filter(function(t) {
+          // Check for speech verb + colon/quote patterns
+          if (/[说道答][\s]*[：:""「]/.test(t)) return false;
+          if (/回答[\s]*[：:""「]/.test(t)) return false;
+          if (/恳求道/.test(t)) return false;
+          if (/念叨/.test(t)) return false;
+          if (/念念有词/.test(t)) return false;
+          // Also use isSpeech as backup
+          if (isSpeech(t)) return false;
+          return true;
+        });
         // Remove action items from E (body doing something = A, not E)
         expanded = expanded.filter(function(t) { return !isAction(t); });
       }
       if (k === 'A') {
         // Remove speech items from A
-        expanded = expanded.filter(function(t) { return !isSpeech(t); });
+        expanded = expanded.filter(function(t) {
+          if (/[说道答][\s]*[：:""「]/.test(t)) return false;
+          if (/回答[\s]*[：:""「]/.test(t)) return false;
+          if (/恳求道/.test(t)) return false;
+          if (/念叨/.test(t)) return false;
+          if (isSpeech(t)) return false;
+          return true;
+        });
       }
 
       // Prefer clauses over sentences: if a longer entry contains
@@ -338,7 +356,7 @@ export default function Home() {
       });
 
       // Cross-category global dedup (also using normalized form)
-      result[k] = deduped.filter(function(t) {
+      var final = deduped.filter(function(t) {
         if (!t) return false;
         var n = normalize(t);
         if (seenGlobal.has(t) || seenGlobal.has(n)) return false;
@@ -346,6 +364,17 @@ export default function Home() {
         seenGlobal.add(n);
         return true;
       });
+
+      // Sort by essay order: items appearing earlier in the essay come first
+      final.sort(function(a, b) {
+        var posA = essayText.indexOf(a);
+        var posB = essayText.indexOf(b);
+        if (posA === -1) posA = 999999;
+        if (posB === -1) posB = 999999;
+        return posA - posB;
+      });
+
+      result[k] = final;
     });
 
     return result;
