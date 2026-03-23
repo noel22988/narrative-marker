@@ -188,7 +188,18 @@ For each annotation:
 - "technique": "E", "A", "S", or "I" (only for type "good")
 - "comment": brief Chinese label, under 15 chars
 
+ANNOTATION COVERAGE — BE THOROUGH:
+Annotate EVERY instance of EASI in the essay, not just the best ones. For weak essays:
+- Even simple/clumsy descriptions count. 「笑了笑的回答」is still S. 「我感到很丢脸」is still I. 「低着头惭愧的说」has both A (低着头) and S (说).
+- Annotate ALL dialogue as S, even poorly punctuated ones. Every line of speech with a speech verb (说/道/问/喊/骂/回答/叫) + quoted words = S.
+- Any physical action = A. 「把食物从手里抢出」= A. 「我跑到门口」= A. 「把门打开」= A.
+- Any facial expression, emotion shown physically, appearance detail = E. 「微笑这说」has E (微笑). 「生气喊着」has E (生气).
+- Any first-person feeling/thought = I. 「我感到很好奇」= I. 「我感到很不耐心」= I.
+The goal: the EASI cards should contain ALL instances from the essay. Missing items = marking failure.
+
 LANGUAGE ERRORS: Only flag GENUINE errors — wrong characters (错别字), clearly wrong grammar (语法错误), wrong word usage (用词不当).
+Each error MUST have these exact fields: "label" (error type), "original" (exact wrong text from essay, use 「」), "correction" (correct version), "reason" (brief explanation).
+Example: {"label":"错别字","original":"「说到」","correction":"说道","reason":"到是方向词，道是说话的道"}
 ABSOLUTELY DO NOT FLAG any of these — they are NOT errors:
 - Colon width: : vs ： (NEVER flag this)
 - Quote style: " vs " vs " (NEVER flag this)
@@ -218,7 +229,7 @@ JSON SAFETY RULES:
 5. No trailing commas before } or ].
 
 TEMPLATE:
-{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
+{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[{"label":"错别字","original":"说到","correction":"说道","reason":"到是方向词，道是说话的道"}],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
 
   try {
     const controller = new AbortController();
