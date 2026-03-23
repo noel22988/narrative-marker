@@ -301,7 +301,7 @@ TEMPLATE:
     else if (total >= 18) result.grade = 'D7';
     else if (total >= 16) result.grade = 'E8';
     else result.grade = 'F9';
-    const labels = { A1:'优秀', A2:'优良', B3:'良好', B4:'良', C5:'及格', C6:'及格', D7:'及格边缘', E8:'不及格', F9:'不及格' };
+    const labels = { A1:'优秀', A2:'优良', B3:'良好', B4:'良', C5:'及格', C6:'及格', D7:'不及格', E8:'不及格', F9:'不及格' };
     result.grade_label = labels[result.grade];
     return res.status(200).json(result);
   } catch (err) { return res.status(500).json({ error: err.message }); }
