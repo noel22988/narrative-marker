@@ -207,7 +207,7 @@ CRITICAL JSON RULES — READ CAREFULLY:
 1. Your entire response is a JSON object. String values are delimited by straight double quotes (").
 2. NEVER place a straight double quote (") inside a string value — it breaks JSON. This is the most common error.
 3. For speech/dialogue in annotation "text" fields: use 「 」 brackets instead of " " for the quoted words. Example: {"text":"老婆奶低声恳求道：「姑娘，请帮帮我。」","type":"good","technique":"S","comment":"语言描写"}
-4. Chinese curly quotes “” are also safe inside string values.
+4. Chinese curly quotes "" are also safe inside string values.
 5. NEVER put newlines inside string values.
 6. No trailing commas before } or ]
 
@@ -227,38 +227,86 @@ CRITICAL JSON RULES — READ CAREFULLY:
     const jsonEnd = clean.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) return res.status(500).json({ error: 'No JSON found: ' + clean.substring(0, 300) });
     clean = clean.substring(jsonStart, jsonEnd + 1);
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PRE-REPAIR: Neutralise Chinese quotes BEFORE any JSON.parse attempt
+    // This is the #1 cause of parse failures — Chinese "" inside JSON
+    // string values look like JSON string delimiters to the parser.
+    // Convert them to corner brackets 「」 which are JSON-safe. The
+    // post-parse normaliser below converts them back for display.
+    // ═══════════════════════════════════════════════════════════════════
+    clean = clean.replace(/\u201c([^\u201d]*)\u201d/g, '\u300c$1\u300d');
+
+    // Also neutralise the less-common left/right double angle quotes
+    clean = clean.replace(/\u00ab([^\u00bb]*)\u00bb/g, '\u300c$1\u300d');
+
     // Multi-strategy JSON repair
     function tryParseJson(s) {
-      // Strategy 1: direct parse
+      // Strategy 1: direct parse (works if pre-repair was sufficient)
       try { return JSON.parse(s); } catch(e) {}
 
       // Strategy 2: remove trailing commas
       try { return JSON.parse(s.replace(/,(\s*[}\]])/g, '$1')); } catch(e) {}
 
-      // Strategy 3: normalize curly quotes to straight, remove trailing commas
-      try {
-        const s2 = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/,(\s*[}\]])/g, '$1');
-        return JSON.parse(s2);
-      } catch(e) {}
-
-      // Strategy 4: walk char-by-char, escape unescaped straight quotes inside strings
+      // Strategy 3: char-by-char walker — escape rogue straight quotes inside strings
       try {
         let out = '', inStr = false, esc = false;
-        const norm = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
-        for (let i = 0; i < norm.length; i++) {
-          const ch = norm[i];
+        for (let i = 0; i < s.length; i++) {
+          const ch = s[i];
           if (esc) { out += ch; esc = false; continue; }
           if (ch === '\\') { out += ch; esc = true; continue; }
           if (ch === '"') {
             if (!inStr) { inStr = true; out += ch; continue; }
-            // Determine if this quote closes the string
-            // Look ahead for structural char
+            // Determine if this quote closes the JSON string:
+            // Look ahead past whitespace for a structural JSON character
             let j = i + 1;
-            while (j < norm.length && norm[j] === ' ') j++;
-            const nx = norm[j];
-            const closes = nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '\n' || j >= norm.length;
-            if (closes) { inStr = false; out += ch; }
-            else { out += '\\"'; }
+            while (j < s.length && (s[j] === ' ' || s[j] === '\t')) j++;
+            const nx = s[j];
+            const closes = (
+              nx === ':' || nx === ',' || nx === '}' || nx === ']' ||
+              nx === '"' || nx === '\n' || nx === '\r' || j >= s.length
+            );
+            if (closes) {
+              inStr = false;
+              out += ch;
+            } else {
+              // This is a rogue quote inside a string — replace with corner bracket
+              out += '\u300c';
+              // Find its matching close quote and replace that too
+              // Scan forward for the next " that IS followed by a structural char
+              let foundClose = false;
+              for (let k = i + 1; k < s.length; k++) {
+                if (s[k] === '\\') { k++; continue; } // skip escaped
+                if (s[k] === '"') {
+                  let m = k + 1;
+                  while (m < s.length && (s[m] === ' ' || s[m] === '\t')) m++;
+                  const nx2 = s[m];
+                  const closes2 = (
+                    nx2 === ':' || nx2 === ',' || nx2 === '}' || nx2 === ']' ||
+                    nx2 === '"' || nx2 === '\n' || nx2 === '\r' || m >= s.length
+                  );
+                  if (closes2) {
+                    // This is the real closing quote — everything between i and k
+                    // has already been / will be copied; just replace s[k] marker
+                    // by outputting chars from i+1..k-1 then 」
+                    for (let p = i + 1; p < k; p++) {
+                      // Replace any more rogue " inside this speech span
+                      out += (s[p] === '"') ? '\u300c' : s[p];
+                    }
+                    out += '\u300d';
+                    i = k - 1; // outer loop will i++ to k
+                    foundClose = true;
+                    break;
+                  } else {
+                    // Another rogue mid-string quote — skip, will be handled as char
+                  }
+                }
+              }
+              if (!foundClose) {
+                // Couldn't find matching close — just escape it
+                out += '"';
+              }
+            }
             continue;
           }
           // Newlines inside strings break JSON — replace with space
@@ -268,37 +316,63 @@ CRITICAL JSON RULES — READ CAREFULLY:
         return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
       } catch(e) {}
 
+      // Strategy 4: brute force — strip ALL remaining straight quotes that
+      // aren't JSON structural delimiters by checking surrounding context
+      try {
+        // Replace any " that sits between two Chinese/CJK characters with 「」
+        const s4 = s
+          .replace(/([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])"([^"]*?)"([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef,.\uff0c\u3002])/g,
+            '$1\u300c$2\u300d$3')
+          .replace(/,(\s*[}\]])/g, '$1');
+        return JSON.parse(s4);
+      } catch(e) {}
+
       return null;
     }
 
     let result = tryParseJson(clean);
     if (!result) {
-      // Last resort: strip all straight quotes inside string values by replacing
-      // any " that appears after a non-structural character with a safe substitute
-      try {
-        // Replace straight quotes that appear mid-string with Chinese curly equivalent
-        const s5 = clean
-          .replace(/:\s*"((?:[^"\\]|\\.)*)"/g, function(m, inner) {
-            // Replace any unescaped " inside the captured value with \"
-            return ': "' + inner.replace(/(?<!\\)"/g, '\\"') + '"';
-          })
-          .replace(/,\s*([}\]])/g, '$1');
-        result = JSON.parse(s5);
-      } catch(e) {
-        return res.status(500).json({ error: 'JSON parse failed — please try again' });
-      }
+      return res.status(500).json({ error: 'JSON parse failed — please try again' });
     }
-    // ---- (legacy label kept for reference below)
-        // Normalise 「」→"" in annotation text fields (AI uses 「」to avoid JSON breakage)
+
+    // ═══════════════════════════════════════════════════════════════════
+    // POST-PARSE: Normalise 「」 back to "" in annotation text fields
+    // so highlights match the original essay text for string search
+    // ═══════════════════════════════════════════════════════════════════
     if (result.annotations && Array.isArray(result.annotations)) {
       result.annotations = result.annotations.map(function(ann) {
-        if (ann.text) ann.text = ann.text.replace(/「/g, '“').replace(/」/g, '”');
+        if (ann.text) {
+          ann.text = ann.text
+            .replace(/\u300c/g, '\u201c')   // 「 → "
+            .replace(/\u300d/g, '\u201d');   // 」 → "
+        }
         return ann;
+      });
+    }
+    // Also normalise EASI extracted fields
+    if (result.easi) {
+      ['E','A','S','I'].forEach(function(k) {
+        if (result.easi[k] && Array.isArray(result.easi[k].extracted)) {
+          result.easi[k].extracted = result.easi[k].extracted.map(function(t) {
+            return t
+              .replace(/\u300c/g, '\u201c')
+              .replace(/\u300d/g, '\u201d');
+          });
+        }
+      });
+    }
+    // Normalise language_errors original/correction fields
+    if (result.language_errors && Array.isArray(result.language_errors)) {
+      result.language_errors = result.language_errors.map(function(err) {
+        if (err.original) err.original = err.original.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
+        if (err.correction) err.correction = err.correction.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
+        return err;
       });
     }
 
     // Server-side grade recalculation — always accurate
-    const total = result.total_score;
+    const total = (result.content_score || 0) + (result.language_score || 0);
+    result.total_score = total;
     if (total >= 30) result.grade = 'A1';
     else if (total >= 28) result.grade = 'A2';
     else if (total >= 26) result.grade = 'B3';
