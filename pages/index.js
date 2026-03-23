@@ -112,6 +112,13 @@ export default function Home() {
       '\u9633\u5149\u6d12\u5728','\u8138\u4e0a\u7684\u7b11\u5bb9\u77ac\u95f4\u51dd\u56fa',
     ]);
 
+    // Post-filter E: if an extracted E clause also contains a speech verb, it's S not E
+    // Rule: speech verb takes precedence over appearance descriptor
+    const speechVerbsInE = ['说：','说:','道：','道:','回答：','回答:','恳求道：','恳求道:','念叨','念念有词'];
+    const E_filtered = E.filter(function(clause) {
+      return !speechVerbsInE.some(function(sv) { return clause.includes(sv); });
+    });
+
     // A: Actions — physical movement, body DOING something, freeze reactions
     const A = findClauses(text, [
       '\u53cc\u624b\u7d27\u7d27\u5730','\u98a4\u5371\u5371\u5730','\u4e00\u679a\u4e00\u679a\u5730\u6570\u51fa\u6765',
@@ -204,7 +211,7 @@ export default function Home() {
     }
 
     return {
-      E: dedupSubstrings(E),
+      E: dedupSubstrings(E_filtered),
       A: dedupSubstrings(A),
       S: dedupSubstrings(S),
       I: dedupSubstrings(I)
