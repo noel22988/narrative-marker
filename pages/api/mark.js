@@ -50,6 +50,7 @@ LANGUAGE SCORING ANCHORS (out of 20):
 - 2-3 minor errors, varied vocab → Band 1 (17)
 - 3-5 minor errors → Band 2 (15-16)
 - DO NOT penalise stylistic choices or minor punctuation variations
+- DO NOT flag ASCII vs fullwidth punctuation differences (e.g. : vs ：, " vs ", . vs 。) — these are typing/input method issues, not language errors
 
 Content and language scores should be within 2-3 marks of each other.
 
