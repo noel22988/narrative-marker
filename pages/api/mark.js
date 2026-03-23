@@ -60,11 +60,11 @@ FRAMEWORK: pass/warn/fail. For each, write 2-3 Chinese sentences naming what the
 P1开头: 抄题 or 倒叙. P2场景: Time+People+Place+Activity+Environment. P3过渡: bridge to conflict. P4高潮前: trigger incident. P5-6高潮中: main event with EASI. P7高潮后: resolution. P8结尾: feelings + moral.
 Include "para_index" (0-based) for each key.
 
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 EASI CLASSIFICATION RULES — FOLLOW THESE EXACTLY
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 
-CRITICAL: Annotate at CLAUSE level. Split on Chinese commas (，) and periods (。). Each clause = one annotation. NEVER merge multiple clauses into one annotation.
+CRITICAL: Annotate at CLAUSE level. Split on Chinese commas and periods. Each clause = one annotation. NEVER merge multiple clauses into one annotation.
 
 E (外貌描写 Expressions & Appearance):
 How someone LOOKS — face, eyes, skin colour, posture, clothing, gaze direction.
@@ -79,167 +79,71 @@ KEY: If hands/body are DOING something (搓着衣角, 整理东西) = A, even if
 S (语言描写 Speech):
 Speech verb/manner + FULL quoted dialogue as ONE unit. NEVER split speech.
 Examples: 面无表情地说：「还差三块五。」, 老奶奶低声恳求道：「姑娘，我今天出门忘了多带钱……」, 语气冷淡地回答：「不行，这是规定，少一分钱都不能结账。」, 微笑着对收银员说：「阿姨，剩下的我来付。」, 反复念叨着：「好孩子、好孩子」, 嘴唇颤抖着说：「孩子……谢谢你……谢谢你啊……」
-KEY: If clause has 说/道/回答/恳求/念叨 + quoted words → ALWAYS S, even if there is a facial descriptor (嘴唇颤抖着说 = S, not E). The speech manner tag is part of S. NEVER split quoted speech into separate fragments.
+KEY: If clause has 说/道/回答/恳求/念叨 + quoted words → ALWAYS S, even if there is a facial descriptor before it. The speech manner tag is part of S. NEVER split quoted speech into separate fragments.
 
 I (心理描写 Inner Thoughts & Feelings):
 First-person mental state DURING the action (P3-P7 only).
 Examples: 我的心像被什么东西狠狠揪了一下, 我心想：不过是三块五毛钱, 犹豫了一瞬间, 让我的鼻子一阵发酸
-NOT EASI: P2 scene atmosphere (让人感到一阵舒适), P8 conclusions (我感到既心酸又温暖, 这也让我意识到), narrator bridging text (她的声音沙哑而微弱). These are narration, not character-level EASI techniques.
+NOT EASI: P2 scene atmosphere (让人感到一阵舒适), P8 conclusions (我感到既心酸又温暖, 这也让我意识到), narrator bridging text (她的声音沙哑而微弱). These are narration, NOT character-level EASI techniques.
 
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 WORKED EXAMPLE 1 — SUPERMARKET ESSAY (Teacher Leon's marking)
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 
-P3 过渡:
-A: 我拿了妈妈要的洗洁精和纸巾
-A: 便朝收银台走去
-E: 一位满头白发的老奶奶
-E: 她佝偻着腰
-A: 双手紧紧地抱着一小袋米和一瓶酱油
-E: 她的衣着十分朴素
-E: 脚上穿着一双磨得发白的布鞋
+P3: A:我拿了妈妈要的洗洁精和纸巾 A:便朝收银台走去 E:一位满头白发的老奶奶 E:她佝偻着腰 A:双手紧紧地抱着一小袋米和一瓶酱油 E:她的衣着十分朴素 E:脚上穿着一双磨得发白的布鞋
+P4: A:她颤巍巍地从口袋里掏出一个旧布钱包 A:把里面的零钱一枚一枚地数出来 A:小心翼翼地摆在柜台上 E:收银员扫了一眼 S:面无表情地说：「还差三块五。」 A:老奶奶愣住了 A:慌忙翻遍了每一个口袋 A:却只翻出几枚硬币 E:她急得满脸通红 E:额头上渗出了细密的汗珠
+P5-6: S:老奶奶低声恳求道：「姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？」 E:收银员皱了皱眉头 A:双手交叉在胸前 S:语气冷淡地回答：「不行，这是规定，少一分钱都不能结账。」 E:她说完便把目光移开 A:开始整理柜台上的东西 E:老奶奶的嘴唇微微发抖 A:布满皱纹的双手不知所措地搓着衣角 E:眼眶渐渐泛红 A:她缓缓地伸出手 I:我的心像被什么东西狠狠揪了一下 I:我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗？ A:我低头看了看手中妈妈给我的零钱 I:犹豫了一瞬间 A:便鼓起勇气快步走上前 A:将一张五元纸币轻轻放在柜台上 S:微笑着对收银员说：「阿姨，剩下的我来付。」 A:收银员愣了一下 A:没有说话 A:默默地收下了钱 A:老奶奶转过头 E:用那双浑浊却闪烁着光芒的眼睛望着我 S:嘴唇颤抖着说：「孩子……谢谢你……谢谢你啊……」 I:让我的鼻子一阵发酸
+P7: A:我连忙扶着老奶奶走出超市 A:帮她把东西提好 A:她紧紧地握住我的手 S:反复念叨着：「好孩子、好孩子」 E:阳光洒在她满是皱纹的脸上 E:我看到她的眼角挂着一滴晶莹的泪珠 E:嘴角却带着温暖的笑意
 
-P4 高潮前:
-A: 她颤巍巍地从口袋里掏出一个旧布钱包
-A: 把里面的零钱一枚一枚地数出来
-A: 小心翼翼地摆在柜台上
-E: 收银员扫了一眼
-S: 面无表情地说：「还差三块五。」
-A: 老奶奶愣住了
-A: 慌忙翻遍了每一个口袋
-A: 却只翻出几枚硬币
-E: 她急得满脸通红
-E: 额头上渗出了细密的汗珠
+NOT annotated (narration, not EASI): 让人感到一阵舒适(P2), 她的声音沙哑而微弱(bridging), 我感到既心酸又温暖(P8), 这也让我意识到(P8)
 
-P5-6 高潮中:
-S: 老奶奶低声恳求道：「姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？」
-E: 收银员皱了皱眉头
-A: 双手交叉在胸前
-S: 语气冷淡地回答：「不行，这是规定，少一分钱都不能结账。」
-E: 她说完便把目光移开
-A: 开始整理柜台上的东西
-E: 老奶奶的嘴唇微微发抖
-A: 布满皱纹的双手不知所措地搓着衣角
-E: 眼眶渐渐泛红
-A: 她缓缓地伸出手
-I: 我的心像被什么东西狠狠揪了一下
-I: 我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗？
-A: 我低头看了看手中妈妈给我的零钱
-I: 犹豫了一瞬间
-A: 便鼓起勇气快步走上前
-A: 将一张五元纸币轻轻放在柜台上
-S: 微笑着对收银员说：「阿姨，剩下的我来付。」
-A: 收银员愣了一下
-A: 没有说话
-A: 默默地收下了钱
-A: 老奶奶转过头
-E: 用那双浑浊却闪烁着光芒的眼睛望着我
-S: 嘴唇颤抖着说：「孩子……谢谢你……谢谢你啊……」
-I: 让我的鼻子一阵发酸
-
-P7 高潮后:
-A: 我连忙扶着老奶奶走出超市
-A: 帮她把东西提好
-A: 她紧紧地握住我的手
-S: 反复念叨着：「好孩子、好孩子」
-E: 阳光洒在她满是皱纹的脸上
-E: 我看到她的眼角挂着一滴晶莹的泪珠
-E: 嘴角却带着温暖的笑意
-
-NOT annotated (narration, not EASI): 让人感到一阵舒适 (P2 scene), 她的声音沙哑而微弱 (narrator bridging), 我感到既心酸又温暖 (P8 conclusion), 这也让我意识到 (P8 conclusion)
-
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 WORKED EXAMPLE 2 — CAMERA ESSAY (Teacher Leon's marking)
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 
-P1 开头:
-A: 李老师蹲在地上
-A: 默默捡起碎裂的镜头
-E: 脸上却没有一丝怒意
+P1: A:李老师蹲在地上 A:默默捡起碎裂的镜头 E:脸上却没有一丝怒意
+P3: A:围在一旁仔细看着这台复古的相机
+P4: A:李老师把相机放在长椅上 A:转身去买饮料 A:立刻凑了过去 A:志明率先拿起相机 A:眯着眼睛假装拍照 S:嘴里还念念有词：「来来来，给你们拍个大明星的照片！」
+P5-6: A:伟杰一把抢过相机 A:笑嘻嘻地举过头顶 A:三个人你推我搡 A:笑得前仰后合 E:志明瞪大了眼睛 E:脸上的笑容瞬间凝固 A:伟杰双手僵在半空中 E:脸色「唰」地变得惨白 A:大华不由自主地后退了两步 A:低下头不敢看地上的碎片 I:我心想：这下完了，那可是老师珍藏的相机啊！ E:他的目光落在碎片上 A:脚步明显顿了一下 A:他慢慢蹲下身 A:小心翼翼地将碎片一片一片捡起 A:轻轻放在掌心 E:眼眶微微泛红 A:三人战战兢兢地走上前 S:志明小声地说：「老……老师，对不起……」 S:语气平和地说：「相机坏了，可以修。但如果我今天因为一台相机对你们破口大骂，那才是真正无法修复的。」 E:目光变得柔和而深沉 S:语重心长地说：「不过，我希望你们记住，很多东西背后承载着一个人最珍贵的回忆。尊重别人的物品，就是尊重别人的感情。」
+P7: E:三个同学的眼眶早已红了 S:伟杰哽咽着说：「老师，我们错了，我们会把相机修好的。」 A:李老师拍了拍他的肩膀 S:微笑着摇头说：「你们能认识到自己的错误，比修好十台相机都珍贵。」
 
-P3 过渡:
-A: 围在一旁仔细看着这台复古的相机
+NOT annotated: 经历过这件事情，我感到无比触动(P8), 这也让我意识到(P8)
 
-P4 高潮前:
-A: 李老师把相机放在长椅上
-A: 转身去买饮料
-A: 立刻凑了过去
-A: 志明率先拿起相机
-A: 眯着眼睛假装拍照
-S: 嘴里还念念有词：「来来来，给你们拍个大明星的照片！」
-
-P5-6 高潮中:
-A: 伟杰一把抢过相机
-A: 笑嘻嘻地举过头顶
-A: 三个人你推我搡
-A: 笑得前仰后合
-E: 志明瞪大了眼睛
-E: 脸上的笑容瞬间凝固
-A: 伟杰双手僵在半空中
-E: 脸色"唰"地变得惨白
-A: 大华不由自主地后退了两步
-A: 低下头不敢看地上的碎片
-I: 我心想：这下完了，那可是老师珍藏的相机啊！
-
-P5-6 (continued):
-E: 他的目光落在碎片上
-A: 脚步明显顿了一下
-A: 他慢慢蹲下身
-A: 小心翼翼地将碎片一片一片捡起
-A: 轻轻放在掌心
-E: 眼眶微微泛红
-A: 三人战战兢兢地走上前
-S: 志明小声地说：「老……老师，对不起……」
-S: 语气平和地说：「相机坏了，可以修。但如果我今天因为一台相机对你们破口大骂，那才是真正无法修复的。」
-E: 目光变得柔和而深沉
-S: 语重心长地说：「不过，我希望你们记住，很多东西背后承载着一个人最珍贵的回忆。尊重别人的物品，就是尊重别人的感情。」
-
-P7 高潮后:
-E: 三个同学的眼眶早已红了
-S: 伟杰哽咽着说：「老师，我们错了，我们会把相机修好的。」
-A: 李老师拍了拍他的肩膀
-S: 微笑着摇头说：「你们能认识到自己的错误，比修好十台相机都珍贵。」
-
-NOT annotated: 经历过这件事情，我感到无比触动 (P8), 这也让我意识到 (P8)
-
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 动作流程 (ACTION SEQUENCES)
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
 
-When 3 or more consecutive EASI clauses appear in a row (within the same sentence or across adjacent clauses separated only by commas), this forms a 动作流程. Detect these and return them in the "action_sequences" field.
+When 3+ consecutive EASI clauses appear in a row (within the same sentence or across adjacent clauses separated by commas), this forms a 动作流程. Detect and return in "action_sequences".
 
-Examples from the worked essays:
+Examples:
 - A→A→A: 她颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上
-- A→A→A: 老奶奶愣住了，慌忙翻遍了每一个口袋，却只翻出几枚硬币
 - E→A→S: 收银员皱了皱眉头，双手交叉在胸前，语气冷淡地回答：「不行，这是规定，少一分钱都不能结账。」
 - E→A→E: 老奶奶的嘴唇微微发抖，布满皱纹的双手不知所措地搓着衣角，眼眶渐渐泛红
 - A→I→A: 我低头看了看手中妈妈给我的零钱，犹豫了一瞬间，便鼓起勇气快步走上前
-- A→A→A: 收银员愣了一下，没有说话，默默地收下了钱
 - E→E→E: 阳光洒在她满是皱纹的脸上，我看到她的眼角挂着一滴晶莹的泪珠，嘴角却带着温暖的笑意
-- A→A→A→A→E: 他慢慢蹲下身，小心翼翼地将碎片一片一片捡起，轻轻放在掌心，眼眶微微泛红
 
-For each sequence, return: pattern (e.g. "E→A→E"), text (full combined text), and comment (Chinese explanation of why this sequence is effective).
+For each: pattern (e.g. "E→A→E"), text (full combined text), comment (Chinese explanation).
 
-═══════════════════════════════════════════════════════════════
-ANNOTATION OUTPUT FORMAT
-═══════════════════════════════════════════════════════════════
+════════════════════════════════════════════════════════════
+OUTPUT FORMAT
+════════════════════════════════════════════════════════════
 
 For each annotation:
-- "text": EXACT clause from essay. Replace all Chinese quotes " " with corner brackets 「 」.
+- "text": EXACT clause from essay. Replace all " " with 「 」.
 - "type": "good" for EASI, "error" for language mistakes, "improve" for suggestions
 - "technique": "E", "A", "S", or "I" (only for type "good")
 - "comment": brief Chinese label, under 15 chars
 
-LANGUAGE ERRORS: Only GENUINE errors. For each: label, original (use 「」 for quotes), correction, reason.
+LANGUAGE ERRORS: Only GENUINE errors. For each: label, original (use 「」), correction, reason.
 
-ABSOLUTE JSON SAFETY RULES:
+JSON SAFETY RULES:
 1. Return ONLY a JSON object. No markdown, no backticks.
-2. All string values use straight double quotes " as delimiters.
-3. INSIDE string values: NEVER use " or " or ". ALWAYS use 「 」.
-4. INSIDE string values: NEVER use literal newlines. Use spaces.
+2. String values use straight double quotes " as delimiters.
+3. INSIDE strings: NEVER use " or " or ". ALWAYS use 「 」.
+4. INSIDE strings: NEVER use literal newlines.
 5. No trailing commas before } or ].
 
-RESPONSE TEMPLATE:
+TEMPLATE:
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":0},"p2_scene":{"status":"pass","comment":"...","para_index":1},"p3_transition":{"status":"pass","comment":"...","para_index":2},"p4_trigger":{"status":"pass","comment":"...","para_index":3},"p56_climax":{"status":"warn","comment":"...","para_index":4},"p7_resolution":{"status":"pass","comment":"...","para_index":6},"p8_conclusion":{"status":"pass","comment":"...","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
 
   try {
@@ -269,6 +173,7 @@ RESPONSE TEMPLATE:
     function tryParse(s) {
       try { return JSON.parse(s); } catch(e) {}
       try { return JSON.parse(s.replace(/,(\s*[}\]])/g, '$1')); } catch(e) {}
+      // Fix newlines inside strings
       try {
         let out = '', inStr = false, esc = false;
         const s3 = s.replace(/,(\s*[}\]])/g, '$1');
@@ -282,6 +187,7 @@ RESPONSE TEMPLATE:
         }
         return JSON.parse(out);
       } catch(e) {}
+      // Char-by-char rogue quote repair
       try {
         let out = '', inStr = false, esc = false;
         for (let i = 0; i < s.length; i++) {
@@ -333,7 +239,7 @@ RESPONSE TEMPLATE:
       return res.status(500).json({ error: 'JSON parse failed — please try again', debug_error: errorMsg, debug_position: errorPos, debug_snippet: snippet });
     }
 
-    // Post-parse: restore 「」 → "" for display
+    // Post-parse: restore corner brackets to curly quotes for display
     function rq(s) {
       if (typeof s !== 'string') return s;
       return s.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
