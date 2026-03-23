@@ -57,58 +57,15 @@ Content and language scores should be within 2-3 marks of each other.
 GRADE BOUNDARIES: A1:30-40, A2:28-29, B3:26-27, B4:24-25, C5:22-23, C6:20-21, D7:18-19, E8:16-17, F9:≤15
 total_score MUST equal content_score + language_score.
 
-FRAMEWORK: For each stage, assign status and write 2-3 Chinese sentences explaining what the student wrote and what was done well/missing.
+FRAMEWORK: Assign pass/warn/fail to each stage. Write 1-2 Chinese sentences per stage. ALL 8 keys MUST appear. Missing stage = "fail" with para_index:[].
+Status: "pass"=present+good, "warn"=weak/incomplete, "fail"=missing.
+para_index: ARRAY of 0-based paragraph indices (e.g. [2] or [5,6,7]). A stage can span multiple paragraphs. One paragraph = one stage only.
+For messy essays: assign paragraph to dominant stage, note problems in comment. Out-of-order = still identify stages.
 
-STATUS CRITERIA:
-- "pass" — stage is clearly present and well-executed
-- "warn" — stage exists but is weak, incomplete, or poorly done (e.g. P2 missing environment, P8 has feelings but no moral)
-- "fail" — stage is entirely MISSING from the essay, or so poorly done it barely counts
-
-IMPORTANT: ALL 8 framework keys MUST appear in the output, even if the stage is missing. If a stage is missing, set status to "fail" and explain what is missing in the comment. Example: {"status":"fail","comment":"缺少过渡段，从场景描写直接跳入冲突，缺乏铺垫和人物背景介绍。","para_index":[]}
-
-HANDLING WEAK / MESSY / JUMBLED ESSAYS:
-Not every essay follows a clear 8-stage structure. For weak students:
-- A paragraph may attempt multiple stages poorly (e.g. scene + trigger in one paragraph). Assign it to the DOMINANT stage and note the mixing in the comment.
-- Stages may appear OUT OF ORDER (e.g. climax before scene). Still identify each stage where it appears and note the structural problem in the comment (e.g. "高潮部分出现在场景描写之前，结构混乱").
-- Some stages may be completely absent. Mark as "fail" with empty para_index [].
-- If the essay is so short or chaotic that you cannot identify a stage at all, mark it "fail".
-- A single paragraph can only belong to ONE stage. Choose the best fit.
-- If the essay has only 3-4 paragraphs, many stages will be "fail" — that is correct and expected.
-
-IMPORTANT — FLEXIBLE PARAGRAPH MAPPING:
-The 8 stages map to STORY BEATS, not fixed paragraph counts. A stage can span 1-3 paragraphs.
-- P3过渡 may have a 插叙 (flashback/backstory) sub-paragraph — this is still P3
-- P5-6高潮中 can span 2-4 paragraphs depending on the essay
-- There may be extra transitional paragraphs between stages
-
-For "para_index": use an ARRAY of 0-based paragraph indices that the stage covers.
-- Single paragraph: "para_index": [2]
-- Two paragraphs: "para_index": [2, 3]
-- Three paragraphs: "para_index": [5, 6, 7]
-
-Example for a 10-paragraph essay with flashback and extended climax:
-P1开头: para_index [0] — opening paragraph
-P2场景: para_index [1] — scene setting
-P3.1过渡: para_index [2] — transition to conflict
-P3.2插叙: para_index [3] — backstory flashback (if applicable)
-P4高潮前: para_index [4] — trigger incident
-P5-6高潮中: para_index [5, 6, 7] — climax spanning 3 paragraphs
-P7高潮后: para_index [8] — resolution/aftermath
-P8结尾: para_index [9] — reflection and moral
-
-Stage definitions:
-P1开头: 抄题 or 倒叙 (flashback/in-medias-res)
-P2场景: Time + People + Place + Activity + Environment
-P3.1过渡: Bridge from scene to conflict. Introduces key characters or situation that leads to the main event.
-P3.2插叙: Flashback or backstory paragraph. Gives background context (e.g. how characters met, why a trait exists, past events that matter).
-  CONDITIONAL: P3.2 is EXPECTED when the essay question contains backstory keywords like: 原本, 一向来, 曾经, 向来, 从小, 一直以来, 本来, 过去, 以前.
-  If the question has these keywords and the student has NO 插叙, set P3.2 status to "warn" or "fail".
-  If the question does NOT have these keywords and the student has no 插叙, set P3.2 status to "pass" with comment "此题不需要插叙".
-  If the student includes a 插叙 even without keywords, still mark it as "pass".
-P4高潮前: Trigger incident that starts the main conflict
-P5-6高潮中: Main event with rich EASI. Can span multiple paragraphs
-P7高潮后: Resolution — what happens after the conflict
-P8结尾: Feelings (感受) + moral/insight (启示)
+Stages:
+P1开头: 抄题 or 倒叙. P2场景: Time+People+Place+Activity+Environment.
+P3.1过渡: Bridge to conflict. P3.2插叙: Backstory flashback (CONDITIONAL — expected if question has keywords: 原本/一向来/曾经/向来/从小/一直以来/本来/过去/以前. If no such keywords and no 插叙, P3.2 status="pass" comment="此题不需要插叙").
+P4高潮前: Trigger incident. P5-6高潮中: Main event with EASI, can span 2-4 paragraphs. P7高潮后: Resolution. P8结尾: Feelings + moral.
 
 ════════════════════════════════════════════════════════════
 EASI CLASSIFICATION RULES — FOLLOW THESE EXACTLY
@@ -207,18 +164,9 @@ ABSOLUTELY DO NOT FLAG any of these — they are NOT errors:
 These are input method differences, NOT language errors. If you flag any punctuation width difference, you are WRONG.
 Return language_errors: [] if no genuine errors exist.
 
-STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
-- {"label":"完整八段结构","text":"八段式记叙文结构完整，层次分明，过渡自然"}
-- {"label":"详略得当","text":"重点突出高潮部分的EASI描写，详略安排合理"}
-- {"label":"主题鲜明","text":"通过具体事件展现人间温情，升华到社会意义"}
-Bad examples (DO NOT DO THIS):
-- {"label":"倒叙开头","text":"每当我走进超市，听到收银机的扫描声，脑海中总会浮现..."} ← WRONG: quoting the essay
+STRUCTURE_NOTES: Short label (2-4 words like 完整八段结构) + brief text (under 25 chars). Do NOT quote the essay.
 
-IMPROVEMENTS FORMAT: Give 3 specific, actionable suggestions. CRITICAL RULES:
-1. READ THE ESSAY CAREFULLY before suggesting. Do NOT suggest things the student has ALREADY done well.
-2. If the essay already has environment描写, do NOT suggest "增加环境描写". If the cashier's reaction is already shown, do NOT suggest "展现收银员心理变化". If the conclusion already has social reflection, do NOT suggest "深化社会思考".
-3. Each suggestion should target a GENUINE weakness — something actually missing or weak in this specific essay.
-4. For A1-level essays that are already excellent, focus on subtle refinements like: varying sentence rhythm, adding one more sensory detail in a specific paragraph, or strengthening a specific transition between paragraphs. Reference the specific paragraph or section.
+IMPROVEMENTS: 3 specific suggestions targeting GENUINE weaknesses. Do NOT suggest things already done well. For strong essays, suggest subtle refinements referencing specific paragraphs.
 
 JSON SAFETY RULES:
 1. Return ONLY a JSON object. No markdown, no backticks.
