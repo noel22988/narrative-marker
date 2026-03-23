@@ -110,6 +110,10 @@ export default function Home() {
       '\u76ee\u5149\u53d8\u5f97\u67d4\u548c','\u773c\u6846\u65e9\u5df2\u7ea2\u4e86',
       '\u6536\u94f6\u5458\u626b\u4e86\u4e00\u773c','\u76ee\u5149\u843d\u5728',
       '\u9633\u5149\u6d12\u5728','\u8138\u4e0a\u7684\u7b11\u5bb9\u77ac\u95f4\u51dd\u56fa',
+      '笑了笑','生气','开心的','尬尬的','着急的','伤心的','难过的',
+      '眼泪','流泪','红了眼','哭了','笑了','脸红','微笑着',
+      '不能相信','惊讶','沉默了','感动','愤怒',
+      '惭愧的','惭愚的',
     ]);
 
     // Post-filter E: if an extracted E clause also contains a speech verb, it's S not E
@@ -151,15 +155,23 @@ export default function Home() {
       '\u5374\u53ea\u7ffb\u51fa\u51e0\u679a\u786c\u5e01', // 却只翻出几枚硬币
       '\u5c06\u4e00\u5f20\u4e94\u5143\u7eb8\u5e01\u8f7b\u8f7b\u653e\u5728', // 将一张五元纸币轻轻放在
       '\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u94b1', // 默默地收下了钱
+      '跑到','把门打开','把门关','背着','拿起','放下','抢过','抢出',
+      '推了','拉了','站在那里','坐在','走到','走向','跑了过来',
+      '转身离开','低着头','抬起头','点了点头','摇了摇头',
     ]);
 
     // S: Speech — find speech verb + quoted words together
     const S = [];
-    const speechVerbs = ['\u8bf4\uff1a','\u9053\uff1a','\u7b54\uff1a','\u56de\u7b54\uff1a',
-      '\u6073\u6c42\u9053\uff1a','\u6073\u6c42\uff1a','\u5ff5\u53e8\u7740\uff1a','\u5ff5\u53e8\uff1a',
-      '\u554a\u54fc\u7740\u8bf4\uff1a','\u8bed\u91cd\u5fc3\u957f\u5730\u8bf4\uff1a',
-      '\u5ff5\u5ff5\u6709\u8bcd\uff1a','\u5e73\u548c\u5730\u8bf4\uff1a',
-      '\u54fd\u54bd\u7740\u8bf4\uff1a','\u6447\u5934\u8bf4\uff1a'];
+    const speechVerbs = [
+      '说：','说:','道：','道:','答：','答:','回答：','回答:',
+      '恳求道：','恳求：','念叨着：','念叨：',
+      '啊哼着说：','语重心长地说：',
+      '念念有词：','平和地说：',
+      '哽咽着说：','摇头说：',
+      '嚷着','喊着','吼道','骂道','叫道','问道','问：','问:',
+      '笑着说','笑着回答','着急的说','生气的说',
+      '开心的回答','尴尬的说','骄傲的对','冷冷地回答',
+      '悄悄地跟'];
     const quoteStarts = ['\u201c','"'];
     const quoteEnds = ['\u201d','"'];
     text.split(/[\n]/).forEach(function(line) {
@@ -194,6 +206,10 @@ export default function Home() {
     // I: Inner thoughts — ONLY first-person mental verbs DURING action (P3-P7)
     // NOT P2 scene feelings, NOT P8 conclusion reflections, NOT narrator bridging
     const I = findClauses(text, [
+      '我感到','我觉得','心想','我不知','我开始感到',
+      '我很好奇','很丢脸','很羞愧','很惭愧','很不耐心',
+      '我不禁','内心','心里犹豫','心如刀绞',
+
       '\u6211\u7684\u5fc3\u50cf\u88ab','\u6211\u5fc3\u60f3\uff1a',
       '\u8ba9\u6211\u7684\u9f3b\u5b50\u4e00\u9635\u53d1\u9178','\u5fc3\u91cc\u4e03\u4e0a\u516b\u4e0b',
       '\u5fc3\u5934\u4e00\u7d27','\u5185\u5fc3\u4e94\u5473\u6742\u964c','\u5fc3\u4e2d\u6d8c\u8d77',
