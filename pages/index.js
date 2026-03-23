@@ -237,6 +237,8 @@ export default function Home() {
       '我学会了', '我终于明白',
       '这件事让我', '经历过这件事',
       '她的声音沙哑而微弱',
+      '每当我', '脑海中总会', '听到收银机',
+      '总会浮现', '那是一个',
     ];
 
     function isNonEasi(t) {
@@ -727,7 +729,7 @@ export default function Home() {
                 />
               </div>
               {fw && st && (
-                <div className="fw-right-col" style={{width:'210px', flexShrink:0}}>
+                <div className="fw-right-col" style={{flexShrink:0}}>
                   <FwCard fw={fw} fwKey={fwKey} />
                 </div>
               )}
