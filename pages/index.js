@@ -455,22 +455,6 @@ export default function Home() {
     const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p31_transition:'P3.1 过渡',p32_flashback:'P3.2 插叙',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
 
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
-    const pdfParaMap = (function() {
-      var map = new Array(pdfParas.length).fill(null);
-      var fw = results.framework || {};
-      pdfFwKeys.forEach(function(k) {
-        if (!fw[k]) return;
-        var indices = fw[k].para_index;
-        if (typeof indices === 'number') indices = [indices];
-        if (!Array.isArray(indices)) return;
-        indices.forEach(function(pi) {
-          if (pi >= 0 && pi < pdfParas.length) {
-            map[pi] = k;
-          }
-        });
-      });
-      return map;
-    })();
 
     // CHANGED: Use shared dedup for PDF annotated essay annotations
     const pdfEasiBuilt = buildEasiExtractions(essay, results.annotations);
@@ -487,11 +471,6 @@ export default function Home() {
     const pdfMergedAnns = [...pdfAiAnns, ...pdfExtraAnns];
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
-      const fwKey = pdfParaMap[pIdx];
-      const fw = fwKey ? (results.framework||{})[fwKey] : null;
-      const st = fw ? (fwStatusStyle[fw.status]||fwStatusStyle.pass) : null;
-      const isFirstOfStage = fwKey && (pIdx === 0 || pdfParaMap[pIdx - 1] !== fwKey);
-      const showCard = fw && st && isFirstOfStage;
       const annotatedPara = (function() {
         var sorted = pdfMergedAnns.slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
         var text = para;
@@ -507,20 +486,9 @@ export default function Home() {
         });
         return text;
       })();
-      const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
-      const fwCard = showCard ? (
-        '<div style="width:210px;flex-shrink:0;background:'+st.bg+';border:1px solid '+st.border+';border-left:4px solid '+st.border+';border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;">'+
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
-            '<span style="font-weight:700;font-size:11px;color:'+st.color+';white-space:nowrap">'+(pdfFwLabels[fwKey]||fwKey)+'</span>'+
-            '<span style="font-size:10px;color:'+st.color+';background:white;padding:1px 6px;border-radius:99px;border:1px solid '+st.border+';white-space:nowrap">'+st.icon+' '+st.label+'</span>'+
-          '</div>'+
-          '<div style="font-size:11px;color:#3d3020;line-height:1.6;font-family:Noto Sans SC,sans-serif">'+fw.comment+'</div>'+
-        '</div>'
-      ) : '';
       return (
-        '<div style="display:flex;gap:8px;align-items:stretch;margin-bottom:6px">'+
-          '<div style="flex:1;min-width:0;font-family:Noto Serif SC,serif;font-size:12px;color:#3d3020;line-height:2;background:#fffef8;padding:10px 14px;border-radius:8px;border:1px solid #e0d5c0;border-left:'+borderLeft+'">'+annotatedPara+'</div>'+
-          fwCard+
+        '<div style="margin-bottom:6px">'+
+          '<div style="font-family:Noto Serif SC,serif;font-size:12px;color:#3d3020;line-height:2;background:#fffef8;padding:10px 14px;border-radius:8px;border:1px solid #e0d5c0">'+annotatedPara+'</div>'+
         '</div>'
       );
     }).join('');
