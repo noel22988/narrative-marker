@@ -306,56 +306,69 @@ export default function Home() {
   // ── Rule-based EASI extractor — deterministic, catches what AI misses
   function extractEASI(text) {
     if (!text) return {E:[],A:[],S:[],I:[]};
-    
-    // Helper: find all clauses containing any of the given keywords
+
+    // Helper: find clauses containing keyword, bounded by punctuation
     function findClauses(t, keywords) {
       const found = [];
       keywords.forEach(function(kw) {
-        let idx = 0;
-        while ((idx = t.indexOf(kw, idx)) !== -1) {
-          // Expand to clause boundaries (，。？！""\n)
-          let start = idx;
-          for (let i = idx; i >= Math.max(0, idx-60); i--) {
-            if ('，。？！\n""'.includes(t[i])) { start = i+1; break; }
-            if (i === 0) start = 0;
+        let pos = 0;
+        while ((pos = t.indexOf(kw, pos)) !== -1) {
+          let start = pos;
+          for (let i = pos; i >= Math.max(0, pos-60); i--) {
+            if ('\uff0c\u3002\uff1f\uff01\n\u201c\u201d'.includes(t[i])) { start = i+1; break; }
+            if (i===0) start=0;
           }
-          let end = idx + kw.length;
-          for (let i = end; i < Math.min(t.length, end+60); i++) {
-            if ('，。？！\n'.includes(t[i])) { end = i; break; }
-            if (i === t.length-1) end = t.length;
+          let end2 = pos + kw.length;
+          for (let i = pos+kw.length; i < Math.min(t.length, pos+80); i++) {
+            if ('\uff0c\u3002\uff1f\uff01\n'.includes(t[i])) { end2=i; break; }
+            if (i===t.length-1) end2=t.length;
           }
-          const clause = t.slice(start, end).replace(/^[\uff0c\u3002\uff1f\uff01]+|[\uff0c\u3002\uff1f\uff01]+$/g,'').trim();
-          if (clause && !found.includes(clause)) found.push(clause);
-          idx++;
+          const clause = t.slice(start, end2).replace(/^[\uff0c\u3002\uff1f\uff01]+|[\uff0c\u3002\uff1f\uff01]+$/g,'').trim();
+          if (clause && clause.length >= 6 && !found.includes(clause)) found.push(clause);
+          pos++;
         }
       });
       return found;
     }
 
-    // E: Expressions & Appearance — face, eyes, posture, clothing keywords
+    // E: Expressions & Appearance — faces, eyes, posture, clothing of CHARACTERS only
     const E = findClauses(text, [
-      '白发','佝偻','衣着','布鞋','磨得发白','满脸通红','额头上渗出','汗珠',
-      '面无表情','皱了皱眉','皱眉','嘴唇','眼眶','泛红','眼眶渐渐',
-      '把目光移开','声音沙哑','满是皱纹','泪珠','笑意','浑浊却闪烁',
-      '布满皱纹的双手不知所措'
+      '\u767d\u53d1','\u4f5b\u5c65','\u8863\u7740','\u5e03\u978b','\u78e8\u5f97\u53d1\u767d',
+      '\u6ee1\u8138\u901a\u7ea2','\u6e17\u51fa\u4e86\u7ec6\u5bc6\u7684\u6c57\u73e0','\u6c57\u73e0',
+      '\u9762\u65e0\u8868\u60c5','\u76b1\u4e86\u76b1\u7709','\u76b1\u7709',
+      '\u5634\u5507','\u773c\u8b36\u6e10\u6e10\u6cf3\u7ea2','\u773c\u8b36',
+      '\u628a\u76ee\u5149\u79fb\u5f00','\u6574\u7406\u67dc\u53f0\u4e0a\u7684\u4e1c\u897f',
+      '\u6d51\u6d4a\u5374\u95ea\u70c1\u7740\u5149\u8292','\u6ee1\u662f\u76b1\u7eb9','\u6cea\u73e0',
+      '\u5634\u89d2\u5374\u5e26\u7740\u6e29\u6696\u7684\u7b11\u610f',
+      '\u58f0\u97f3\u6c99\u54d1\u800c\u5fae\u5f31','\u8138\u4e0a\u5374\u6ca1\u6709\u4e00\u4e1d\u6012\u610f',
+      '\u8138\u8272','\u60ca\u6124','\u5951\u888b\u4e86\u773c\u775b','\u8131\u53e3\u800c\u51fa',
+      '\u5c0f\u5fc3\u7fc1\u7fc1\u7684\u8131\u843d','\u795e\u60c5\u51dd\u56fa','\u8138\u8272\u60e8\u767d',
+      '\u4f4e\u4e0b\u5934','\u767e\u611f\u4ea4\u96c6','\u773c\u6846\u5fae\u5fae\u6ce5\u7ea2',
+      '\u76ee\u5149\u53d8\u5f97\u67d4\u548c','\u773c\u8b36\u65e9\u5df2\u7ea2\u4e86',
     ]);
 
-    // A: Actions — action verbs with adverbs
+    // A: Actions — specific physical actions of characters
     const A = findClauses(text, [
-      '紧紧地抱着','颤巍巍地','一枚一枚地数出来','小心翼翼地摆',
-      '慌忙翻遍','双手交叉在胸前','不知所措地搓','缓缓地伸出手',
-      '鼓起勇气快步走上前','轻轻放在柜台上','愣了一下，没有说话，默默地收下',
-      '转过头，用那双','扶着老奶奶走出','紧紧地握住我的手',
-      '低头看了看手中'
+      '\u53cc\u624b\u7d27\u7d27\u5730','\u98a4\u5371\u5371\u5730','\u4e00\u679a\u4e00\u679a\u5730\u6570\u51fa\u6765',
+      '\u5c0f\u5fc3\u7fc1\u7fc1\u5730\u6458','\u614c\u5fd9\u7ffb\u904d','\u53cc\u624b\u4ea4\u53c9\u5728\u80f8\u524d',
+      '\u4e0d\u77e5\u6240\u63aa\u5730\u641e\u7740\u8863\u89d2','\u7f13\u7f13\u5730\u4f38\u51fa\u624b',
+      '\u9f13\u8d77\u52c7\u6c14\u5feb\u6b65\u8d70\u4e0a\u524d','\u8f7b\u8f7b\u653e\u5728\u67dc\u53f0\u4e0a',
+      '\u6108\u4e86\u4e00\u4e0b','\u6ca1\u6709\u8bf4\u8bdd','\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u9322',
+      '\u8f6c\u8fc7\u5934','\u626e\u7740\u8001\u5976\u5962\u8d70\u51fa','\u5e2e\u5979\u628a\u4e1c\u897f\u63d0\u597d',
+      '\u7d27\u7d27\u5730\u63e1\u4f4f\u6211\u7684\u624b','\u4f4e\u5934\u770b\u4e86\u770b',
+      '\u56f4\u5728\u4e00\u65c1','\u7387\u5148\u62ff\u8d77','\u4e00\u628a\u62a2\u8fc7',
+      '\u4e09\u4e2a\u4eba\u4f60\u63a8\u6211\u6426','\u6162\u6162\u84b9\u4e0b\u8eab',
+      '\u4e00\u7247\u4e00\u7247\u6361\u8d77','\u8f7b\u8f7b\u653e\u5728\u638c\u5fc3',
+      '\u6218\u6218\u5162\u5162\u5730\u8d70\u4e0a\u524d','\u62cd\u4e86\u62cd\u4ed6\u7684\u80a9\u8180',
     ]);
 
-    // S: Speech — find speech tag + quoted words together
+    // S: Speech — find speech verb + quoted words together
     const S = [];
-    // Match: speech manner phrase + ："quoted"
-    // S: find speech patterns using string search (SWC-safe, no Chinese in regex)
-    const speechVerbs = ['说：','道：','答：','回答：','恳求道：','恳求：','念叨着：','念叨：'];
-    const quoteStarts = ['“','"'];
-    const quoteEnds = ['”','"'];
+    const speechVerbs = ['\u8bf4\uff1a','\u9053\uff1a','\u7b54\uff1a','\u56de\u7b54\uff1a',
+      '\u6073\u6c42\u9053\uff1a','\u6073\u6c42\uff1a','\u5ff5\u53e8\u7740\uff1a','\u5ff5\u53e8\uff1a',
+      '\u554a\u54fc\u7740\u8bf4\uff1a','\u8bed\u91cd\u5fc3\u957f\u5730\u8bf4\uff1a'];
+    const quoteStarts = ['\u201c','"'];
+    const quoteEnds = ['\u201d','"'];
     text.split(/[\n]/).forEach(function(line) {
       speechVerbs.forEach(function(sv) {
         let si = 0;
@@ -365,36 +378,53 @@ export default function Home() {
             const qs = line.indexOf(quoteStarts[qStart], si);
             const qe = line.indexOf(quoteEnds[qStart], qs+1);
             if (qe !== -1) {
-              // Find clause start before sv
               let cs = si;
-              for (let i = si; i >= Math.max(0, si-30); i--) {
-                if ('，。？！\n'.includes(line[i])) { cs = i+1; break; }
+              for (let i = si; i >= Math.max(0, si-40); i--) {
+                if ('\uff0c\u3002\uff1f\uff01\n'.includes(line[i])) { cs = i+1; break; }
                 if (i===0) cs=0;
               }
               const clause = line.slice(cs, qe+1).trim();
-              if (clause && !S.includes(clause)) S.push(clause);
+              if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
             }
           }
           si++;
         }
       });
     });
-    // S extraction complete
-    // also catch 反复念叨着"..."
-    (function(){ const nd = '反复念叨着'; let ni = 0;
+    // Catch 反复念叨着"..."
+    (function(){ const nd = '\u53cd\u590d\u5ff5\u53e8\u7740'; let ni = 0;
       while((ni=text.indexOf(nd,ni))!==-1){
-        const qs=['“','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
-        if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='“'?'”':'"',q0+1);
-        if(qe>-1){const cl=text.slice(ni,qe+1); if(!S.includes(cl))S.push(cl);}}ni++;}})()
+        const qs=['\u201c','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
+        if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='\u201c'?'\u201d':'"',q0+1);
+        if(qe>-1){const cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
 
-
-    // I: Inner thoughts & feelings
+    // I: Inner thoughts — ONLY first-person mental verbs (not setting or conclusion reflections)
     const I = findClauses(text, [
-      '我的心像被','我心想','犹豫了一瞬间','鼻子一阵发酸',
-      '既心酸又温暖','感到','意识到','内心'
+      '\u6211\u7684\u5fc3\u50cf\u88ab','\u6211\u5fc3\u60f3\uff1a','\u72af\u4e86\u4e00\u4e0b',
+      '\u8ba9\u6211\u7684\u9f3b\u5b50\u4e00\u9635\u53d1\u9178','\u5fc3\u91cc\u4e03\u4e0a\u516b\u4e0b',
+      '\u5fc3\u5934\u4e00\u7d27','\u5185\u5fc3\u4e94\u5473\u6742\u964c','\u5fc3\u4e2d\u6d8c\u8d77',
+      '\u5fc3\u91cc\u9ed8\u60f3','\u6211\u4e0d\u7981\u6124\u4f4f\u4e86','\u6211\u81ea\u6211\u95ee\u9053',
     ]);
+    // Also catch 犹豫了一瞬间 directly
+    if (text.includes('\u72af\u4e86\u4e00\u77ac\u95f4') && !I.includes('\u72af\u4e86\u4e00\u77ac\u95f4')) I.push('\u72af\u4e86\u4e00\u77ac\u95f4');
+    if (text.includes('\u6211\u611f\u5230\u65e2\u5fc3\u9178\u53c8\u6e29\u6696') && !I.includes('\u6211\u611f\u5230\u65e2\u5fc3\u9178\u53c8\u6e29\u6696')) I.push('\u6211\u611f\u5230\u65e2\u5fc3\u9178\u53c8\u6e29\u6696');
 
-    return {E, A, S, I};
+    // Post-process: remove substring duplicates within each category
+    // If item X is a substring of item Y, keep only X (the shorter one)
+    function dedupSubstrings(arr) {
+      return arr.filter(function(item, i) {
+        return !arr.some(function(other, j) {
+          return i !== j && other.includes(item) && other.length > item.length;
+        });
+      });
+    }
+
+    return {
+      E: dedupSubstrings(E),
+      A: dedupSubstrings(A),
+      S: dedupSubstrings(S),
+      I: dedupSubstrings(I)
+    };
   }
 
     const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
