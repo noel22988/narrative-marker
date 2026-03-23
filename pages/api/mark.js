@@ -148,7 +148,13 @@ For each annotation:
 - "technique": "E", "A", "S", or "I" (only for type "good")
 - "comment": brief Chinese label, under 15 chars
 
-LANGUAGE ERRORS: Only GENUINE errors. For each: label, original (use 「」), correction, reason.
+LANGUAGE ERRORS: Only GENUINE errors — wrong characters, clearly wrong grammar, missing words. For each: label, original (use 「」), correction, reason.
+CRITICAL: Do NOT flag these as errors — they are NOT errors:
+- ASCII colon : vs fullwidth colon ：  (this is a typing/input method difference, NOT an error)
+- ASCII quote " vs Chinese quote " "  (same — input method difference)
+- ASCII period . vs Chinese period 。 (same)
+- Any other halfwidth vs fullwidth punctuation difference
+If the ONLY issue is punctuation width, return an EMPTY language_errors array [].
 
 STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
 - {"label":"完整八段结构","text":"八段式记叙文结构完整，层次分明，过渡自然"}
