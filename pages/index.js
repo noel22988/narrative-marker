@@ -399,8 +399,8 @@ export default function Home() {
 
   function generatePDF() {
     const w = window.open('', '_blank');
-    const fwNames = {p1_opening:'P1 开头策略',p2_scene:'P2 场景设置',p3_transition:'P3 过渡段',p4_trigger:'P4 高潮前',p56_climax:'P5–6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
-    const fwStatusStyle = {pass:{bg:'#edf7f1',border:'#1a6e40',color:'#154d2e',icon:'✓',label:'达标'},warn:{bg:'#fdf6e3',border:'#a07820',color:'#5a3e10',icon:'△',label:'可改善'},fail:{bg:'#fff0ee',border:'#b83222',color:'#6a1810',icon:'✗',label:'需改进'}};
+    const fwNames = {p1_opening:'P1 开头策略',p2_scene:'P2 场景设置',p31_transition:'P3.1 过渡段',p32_flashback:'P3.2 插叙',p4_trigger:'P4 高潮前',p56_climax:'P5–6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
+    const fwStatusStyle = {pass:{bg:'#edf7f1',border:'#1a6e40',color:'#154d2e',icon:'✓',label:'达标'},warn:{bg:'#fdf6e3',border:'#a07820',color:'#5a3e10',icon:'△',label:'可改善'},fail:{bg:'#fff0ee',border:'#b83222',color:'#6a1810',icon:'✗',label:'缺失'}};
     const easiNames = {E:{zh:'外貌描写',en:'Expressions & Appearance'},A:{zh:'行动描写',en:'Actions'},S:{zh:'语言描写',en:'Speech'},I:{zh:'心理描写',en:'Inner Thoughts & Feelings'}};
     const fmt = t => t.replace(/【([^】]+)】/g,'<span style="font-family:monospace;font-size:10px;color:#a07820;display:block;margin-top:14px;font-weight:600;letter-spacing:.05em">【$1】</span>');
 
@@ -451,22 +451,24 @@ export default function Home() {
         </div>`).join('')
       : '<p style="color:#1a6e40;font-style:italic;font-size:12px">语言运用良好，未发现明显错误。✓</p>';
 
-    const pdfFwKeys = ['p1_opening','p2_scene','p3_transition','p4_trigger','p56_climax','p7_resolution','p8_conclusion'].filter(function(k){return !!(results.framework||{})[k];});
-    const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p3_transition:'P3 过渡',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
+    const pdfFwKeys = ['p1_opening','p2_scene','p31_transition','p32_flashback','p4_trigger','p56_climax','p7_resolution','p8_conclusion'].filter(function(k){return !!(results.framework||{})[k];});
+    const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p31_transition:'P3.1 过渡',p32_flashback:'P3.2 插叙',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
 
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const pdfParaMap = (function() {
       var map = new Array(pdfParas.length).fill(null);
-      var ki = 0;
-      for (var pi = 0; pi < pdfParas.length; pi++) {
-        if (ki >= pdfFwKeys.length) break;
-        map[pi] = pdfFwKeys[ki];
-        if (pdfFwKeys[ki] === 'p56_climax' && pi + 1 < pdfParas.length) {
-          pi++;
-          map[pi] = pdfFwKeys[ki];
-        }
-        ki++;
-      }
+      var fw = results.framework || {};
+      pdfFwKeys.forEach(function(k) {
+        if (!fw[k]) return;
+        var indices = fw[k].para_index;
+        if (typeof indices === 'number') indices = [indices];
+        if (!Array.isArray(indices)) return;
+        indices.forEach(function(pi) {
+          if (pi >= 0 && pi < pdfParas.length) {
+            map[pi] = k;
+          }
+        });
+      });
       return map;
     })();
 
@@ -488,6 +490,8 @@ export default function Home() {
       const fwKey = pdfParaMap[pIdx];
       const fw = fwKey ? (results.framework||{})[fwKey] : null;
       const st = fw ? (fwStatusStyle[fw.status]||fwStatusStyle.pass) : null;
+      const isFirstOfStage = fwKey && (pIdx === 0 || pdfParaMap[pIdx - 1] !== fwKey);
+      const showCard = fw && st && isFirstOfStage;
       const annotatedPara = (function() {
         var sorted = pdfMergedAnns.slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
         var text = para;
@@ -504,7 +508,7 @@ export default function Home() {
         return text;
       })();
       const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
-      const fwCard = fw && st ? (
+      const fwCard = showCard ? (
         '<div style="width:210px;flex-shrink:0;background:'+st.bg+';border:1px solid '+st.border+';border-left:4px solid '+st.border+';border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;">'+
           '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'+
             '<span style="font-weight:700;font-size:11px;color:'+st.color+';white-space:nowrap">'+(pdfFwLabels[fwKey]||fwKey)+'</span>'+
@@ -648,17 +652,18 @@ export default function Home() {
 
   function reset() { setState('input'); setResults(null); setSampleState('idle'); setStretchState('idle'); setSampleEssay(''); setStretchEssay(''); setStretchGrade(''); setError(''); }
 
-    const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
+    const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p31_transition',label:'P3.1 过渡段'},{key:'p32_flashback',label:'P3.2 插叙'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
   const easiItems = [{k:'E',name:'外貌描写',en:'Expressions & Appearance'},{k:'A',name:'行动描写',en:'Actions'},{k:'S',name:'语言描写',en:'Speech'},{k:'I',name:'心理描写',en:'Inner Thoughts & Feelings'}];
   function fwColor(s){if(s==='pass')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e',icon:'✓'};if(s==='warn')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10',icon:'△'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810',icon:'✗'};}
   function easiColor(r){if(r==='excellent')return{bg:'#eaf2fb',border:'#1a4a70',text:'#0d2d44'};if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
   function barColor(p){if(p>=80)return'#1a6e40';if(p>=65)return'#1a4a70';if(p>=50)return'#a07820';return'#b83222';}
 
-  const FW_KEYS = ['p1_opening','p2_scene','p3_transition','p4_trigger','p56_climax','p7_resolution','p8_conclusion'];
+  const FW_KEYS = ['p1_opening','p2_scene','p31_transition','p32_flashback','p4_trigger','p56_climax','p7_resolution','p8_conclusion'];
   const FW_LABELS = {
     p1_opening:   {label:'P1 开头',     en:'Opening'},
     p2_scene:     {label:'P2 场景',     en:'Scene'},
-    p3_transition:{label:'P3 过渡',     en:'Transition'},
+    p31_transition:{label:'P3.1 过渡',  en:'Transition'},
+    p32_flashback:{label:'P3.2 插叙',   en:'Flashback'},
     p4_trigger:   {label:'P4 高潮前',   en:'Trigger'},
     p56_climax:   {label:'P5-6 高潮中', en:'Climax'},
     p7_resolution:{label:'P7 高潮后',   en:'Resolution'},
@@ -667,7 +672,7 @@ export default function Home() {
   const FW_STATUS = {
     pass:{ bg:'#edfaf3', border:'#1a6e40', color:'#1a6e40', icon:'✓', label:'达标' },
     warn:{ bg:'#fffbe6', border:'#a07820', color:'#a07820', icon:'△', label:'可改善' },
-    fail:{ bg:'#fff0ee', border:'#b83222', color:'#b83222', icon:'✗', label:'需改进' },
+    fail:{ bg:'#fff0ee', border:'#b83222', color:'#b83222', icon:'✗', label:'缺失' },
   };
 
   function FwCard({fw, fwKey}) {
@@ -690,65 +695,19 @@ export default function Home() {
   }
 
   function AnnotatedEssayWithFramework({essay, annotations, framework}) {
-    const [expandedIdx, setExpandedIdx] = useState(null);
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
-    const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
-
-    // Sequential mapping: P1→para0, P2→para1... P5-6→para4 AND para5, P7→para6, P8→para7
-    var paraFwMap = (function() {
-      var map = new Array(paragraphs.length).fill(null);
-      var ki = 0;
-      for (var pi = 0; pi < paragraphs.length; pi++) {
-        if (ki >= fwKeys.length) break;
-        map[pi] = fwKeys[ki];
-        // P5-6 spans two paragraphs — both get the card
-        if (fwKeys[ki] === 'p56_climax' && pi + 1 < paragraphs.length) {
-          pi++;
-          map[pi] = fwKeys[ki];
-        }
-        ki++;
-      }
-      return map;
-    })();
 
     return (
       <div>
         {paragraphs.map(function(para, pIdx) {
-          const fwKey = paraFwMap[pIdx];
-          const fw = fwKey ? framework[fwKey] : null;
-          const st = fw ? (FW_STATUS[fw.status]||FW_STATUS.pass) : null;
-          const borderLeft = st ? ('3px solid '+st.border) : '1px solid #e0d5c0';
           return (
-            <div key={pIdx} style={{display:'flex', gap:'8px', alignItems:'stretch', marginBottom:'6px'}}>
-              <div style={{flex:1, minWidth:0}}>
-                <div
-                  style={{fontFamily:"'Noto Serif SC',serif", fontSize:'.95rem', color:'#3d3020',
-                    lineHeight:2.2, background:'#fffef8', padding:'10px 14px', height:'100%',
-                    borderRadius:'8px', border:'1px solid #e0d5c0', borderLeft:borderLeft}}
-                  dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations)}}
-                />
-              </div>
-              {fw && st && (
-                <div className="fw-right-col" style={{flexShrink:0}}>
-                  <FwCard fw={fw} fwKey={fwKey} />
-                </div>
-              )}
-              {fw && st && (
-                <button
-                  onClick={function(){setExpandedIdx(expandedIdx===pIdx?null:pIdx);}}
-                  className="fw-mobile-icon"
-                  style={{display:'none', flexShrink:0, width:'28px', height:'28px',
-                    alignSelf:'flex-start', marginTop:'12px', borderRadius:'50%',
-                    border:'2px solid '+st.border, background:st.bg, color:st.color,
-                    fontSize:'.8rem', fontWeight:700, cursor:'pointer',
-                    alignItems:'center', justifyContent:'center'}}
-                >{st.icon}</button>
-              )}
-              {fw && expandedIdx===pIdx && (
-                <div className="fw-mobile-card" style={{marginTop:'4px', width:'100%'}}>
-                  <FwCard fw={fw} fwKey={fwKey} />
-                </div>
-              )}
+            <div key={pIdx} style={{marginBottom:'6px'}}>
+              <div
+                style={{fontFamily:"'Noto Serif SC',serif", fontSize:'.95rem', color:'#3d3020',
+                  lineHeight:2.2, background:'#fffef8', padding:'10px 14px',
+                  borderRadius:'8px', border:'1px solid #e0d5c0'}}
+                dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations)}}
+              />
             </div>
           );
         })}
@@ -846,7 +805,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
       </Head>
-      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f5ef;color:#1c1710;font-family:'Noto Sans SC',sans-serif;min-height:100vh}.topbar{background:#1c1710;padding:0 32px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}.logo{font-family:'Noto Serif SC',serif;font-size:1rem;font-weight:700;color:#e8d090}.topbar-mid{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7a6a50;text-transform:uppercase}.chip{font-family:'DM Mono',monospace;font-size:9px;padding:3px 10px;border-radius:99px;border:1px solid rgba(160,120,32,.4);color:#c8a050;background:rgba(160,120,32,.1)}.page{max-width:860px;margin:0 auto;padding:44px 20px 60px}.hero{text-align:center;margin-bottom:36px}.hero-eye{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#a07820;margin-bottom:10px}.hero h1{font-family:'Noto Serif SC',serif;font-size:clamp(1.8rem,4.5vw,2.6rem);font-weight:700;margin-bottom:8px}.hero h1 em{color:#a07820;font-style:normal}.hero-sub{font-size:.88rem;color:#8a7a60}.hero-rubric span+span::before{content:'· ';color:#8a7a60}.card{background:#fff;border:1px solid #e0d5c0;border-radius:10px;padding:24px 26px;box-shadow:0 2px 14px rgba(0,0,0,.06);margin-bottom:14px}.card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#8a7a60;margin-bottom:5px;display:flex;align-items:center;gap:8px}.lnum{width:20px;height:20px;border-radius:50%;background:#1c1710;color:#e8d090;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}.card-hint{font-size:.8rem;color:#8a7a60;margin-bottom:12px}input[type=text]{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:11px 14px;font-family:'Noto Sans SC',sans-serif;font-size:.95rem;color:#1c1710;outline:none;margin-bottom:18px;transition:border-color .2s}input[type=text]:focus{border-color:#a07820}input::placeholder{color:#8a7a60;font-style:italic}textarea{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:14px;font-family:'Noto Serif SC',serif;font-size:.97rem;color:#1c1710;outline:none;resize:vertical;min-height:280px;line-height:2;transition:border-color .2s}textarea:focus{border-color:#a07820}textarea::placeholder{color:#8a7a60;font-style:italic;font-family:'Noto Sans SC',sans-serif;font-size:.88rem}.row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}.wc{font-family:'DM Mono',monospace;font-size:11px;color:#8a7a60}.wc.ok{color:#1a6e40}.wc.low{color:#b83222}.btn-main{font-family:'Noto Sans SC',sans-serif;font-size:.88rem;font-weight:500;padding:11px 28px;border-radius:8px;border:none;background:#1c1710;color:#e8d090;cursor:pointer;transition:all .15s}.btn-main:hover{background:#332a18}.btn-main:disabled{background:#8a7a60;cursor:not-allowed}.btn-gold{font-family:'Noto Sans SC',sans-serif;font-size:.9rem;font-weight:500;padding:12px 24px;border-radius:8px;border:none;color:#fff;cursor:pointer;transition:all .15s;width:100%}.btn-gold:hover{filter:brightness(1.12)}.btn-ghost{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #c8b99a;background:transparent;color:#8a7a60;cursor:pointer;transition:all .15s}.btn-ghost:hover{color:#1c1710;border-color:#3d3020}.btn-pdf{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #1a4a70;background:transparent;color:#1a4a70;cursor:pointer;transition:all .15s}.btn-pdf:hover{background:#1a4a70;color:#fff}.error{color:#b83222;font-size:.85rem;margin-top:8px}.loading-wrap{text-align:center;padding:60px 20px}.loading-char{font-family:'Noto Serif SC',serif;font-size:2rem;letter-spacing:.2em;color:#a07820;animation:breathe 2s ease-in-out infinite;margin-bottom:14px}.loading-msg{font-size:.88rem;color:#8a7a60;font-style:italic;margin-bottom:20px}.loading-steps{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}.lstep{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#a07820}.grade-banner{background:#1c1710;border-radius:10px;padding:22px 26px;display:flex;align-items:center;gap:22px;margin-bottom:14px;position:relative;overflow:hidden}.grade-banner::after{content:'记';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:'Noto Serif SC',serif;font-size:7rem;font-weight:700;color:rgba(255,255,255,.04);pointer-events:none}.grade-ring{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}.grade-letter{font-family:'Noto Serif SC',serif;font-size:1.8rem;font-weight:700;color:#e8d090;line-height:1}.grade-pts{font-family:'DM Mono',monospace;font-size:10px;color:rgba(232,208,144,.5);margin-top:2px}.grade-name{font-family:'Noto Serif SC',serif;font-size:1.1rem;color:#e8d090;font-weight:600;margin-bottom:4px}.grade-desc{font-size:.82rem;color:rgba(232,208,144,.6);margin-bottom:8px}.score-pills{display:flex;gap:8px;flex-wrap:wrap}.spill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:rgba(232,208,144,.65)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}@media(max-width:600px){.grid2{grid-template-columns:1fr}.grade-banner{flex-direction:column;text-align:center}}.sec-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e0d5c0}.sec-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}.sec-title{font-family:'Noto Serif SC',serif;font-size:.9rem;font-weight:600}.sec-sub{font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}.bar-wrap{margin-bottom:11px}.bar-top{display:flex;justify-content:space-between;font-size:.78rem;color:#8a7a60;margin-bottom:5px}.bar-top strong{color:#3d3020}.bar-track{height:7px;background:#f2ede3;border-radius:99px;overflow:hidden;border:1px solid #e0d5c0}.bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1)}.fw-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:500px){.fw-grid{grid-template-columns:1fr}}.fw-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;font-size:.82rem;line-height:1.5;border-left:3px solid}.fw-icon{flex-shrink:0;font-weight:700;margin-top:1px}.fw-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:2px}.easi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}@media(max-width:500px){.easi-grid{grid-template-columns:1fr}}.easi-item{padding:14px;border-radius:8px;border:1px solid;width:100%}.easi-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}.easi-letter{font-family:'Noto Serif SC',serif;font-size:1.4rem;font-weight:700}.easi-name{font-size:.78rem;font-weight:600;color:#3d3020}.easi-en{font-size:.7rem;color:#8a7a60}.easi-score{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.06);display:inline-block;margin-bottom:6px}.easi-comment{font-size:.78rem;color:#555;line-height:1.5;margin-bottom:8px}.easi-extracted{padding:8px 10px;background:rgba(0,0,0,.04);border-radius:6px;border-left:2px solid}.easi-extracted-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;margin-bottom:3px}.easi-extracted-text{font-family:'Noto Serif SC',serif;font-size:.82rem;color:#3d3020;line-height:1.7}.err-list{list-style:none;display:flex;flex-direction:column;gap:8px}.err-item{padding:10px 13px;border-radius:8px;font-size:.82rem;line-height:1.7;border-left:3px solid;background:#fdf0ee;border-color:#b83222;color:#6a1810}.err-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:3px}.err-orig{font-family:'Noto Serif SC',serif;margin-bottom:2px}.err-fix{font-family:'Noto Serif SC',serif;color:#1a6e40}.err-reason{font-size:.75rem;opacity:.8;margin-top:2px}.sug-list{list-style:none;display:flex;flex-direction:column;gap:8px}.sug-item{display:flex;gap:10px;padding:10px 12px;border-radius:8px;background:#edf7f1;border-left:3px solid #1a6e40;font-size:.83rem;color:#154d2e;line-height:1.6}.examiner-box{background:#f2ede3;border:1px solid #c8b99a;border-radius:10px;padding:20px 24px;position:relative}.examiner-box::before{content:'"';position:absolute;top:5px;left:12px;font-family:'Noto Serif SC',serif;font-size:2.8rem;color:#c8b99a;line-height:1}.examiner-text{font-family:'Noto Serif SC',serif;font-size:.93rem;color:#3d3020;line-height:1.95;padding-top:14px}.examiner-sig{margin-top:12px;font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.12em;text-align:right}.center-row{display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap}.dots span{display:inline-block;width:5px;height:5px;background:#a07820;border-radius:50%;animation:pulse 1.2s ease-in-out infinite;margin:0 2px}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}@keyframes pulse{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.fade{animation:fadeUp .5s ease both}.fw-right-col{display:flex!important;width:210px;min-width:210px;max-width:210px}.fw-mobile-icon{display:none!important}.fw-mobile-card{display:block}.ann-mark{transition:all .15s}.ann-mark:hover{filter:brightness(.95)}@media(max-width:600px){.fw-right-col{display:none!important}.fw-mobile-icon{display:inline-flex!important}.topbar{height:auto;padding:8px 16px;flex-wrap:wrap;gap:4px}.topbar .logo{font-size:.9rem;width:100%;text-align:center}.topbar .topbar-mid{width:100%;text-align:center;font-size:9px}.topbar .chip{font-size:8px;padding:2px 8px;width:100%;text-align:center;border:none}.hero-eye{font-size:9px;letter-spacing:.15em}.hero-sub{font-size:.8rem}.hero-rubric span{display:block}.hero-rubric span+span::before{content:none}.card-hint .hint-en,.card-hint .hint-zh{display:block}.card-label{font-size:9px}}`}</style>
+      <style>{`*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f5ef;color:#1c1710;font-family:'Noto Sans SC',sans-serif;min-height:100vh}.topbar{background:#1c1710;padding:0 32px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}.logo{font-family:'Noto Serif SC',serif;font-size:1rem;font-weight:700;color:#e8d090}.topbar-mid{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;color:#7a6a50;text-transform:uppercase}.chip{font-family:'DM Mono',monospace;font-size:9px;padding:3px 10px;border-radius:99px;border:1px solid rgba(160,120,32,.4);color:#c8a050;background:rgba(160,120,32,.1)}.page{max-width:860px;margin:0 auto;padding:44px 20px 60px}.hero{text-align:center;margin-bottom:36px}.hero-eye{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#a07820;margin-bottom:10px}.hero h1{font-family:'Noto Serif SC',serif;font-size:clamp(1.8rem,4.5vw,2.6rem);font-weight:700;margin-bottom:8px}.hero h1 em{color:#a07820;font-style:normal}.hero-sub{font-size:.88rem;color:#8a7a60}.hero-rubric span+span::before{content:'· ';color:#8a7a60}.card{background:#fff;border:1px solid #e0d5c0;border-radius:10px;padding:24px 26px;box-shadow:0 2px 14px rgba(0,0,0,.06);margin-bottom:14px}.card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#8a7a60;margin-bottom:5px;display:flex;align-items:center;gap:8px}.lnum{width:20px;height:20px;border-radius:50%;background:#1c1710;color:#e8d090;display:inline-flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}.card-hint{font-size:.8rem;color:#8a7a60;margin-bottom:12px}input[type=text]{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:11px 14px;font-family:'Noto Sans SC',sans-serif;font-size:.95rem;color:#1c1710;outline:none;margin-bottom:18px;transition:border-color .2s}input[type=text]:focus{border-color:#a07820}input::placeholder{color:#8a7a60;font-style:italic}textarea{width:100%;background:#f2ede3;border:1px solid #e0d5c0;border-radius:8px;padding:14px;font-family:'Noto Serif SC',serif;font-size:.97rem;color:#1c1710;outline:none;resize:vertical;min-height:280px;line-height:2;transition:border-color .2s}textarea:focus{border-color:#a07820}textarea::placeholder{color:#8a7a60;font-style:italic;font-family:'Noto Sans SC',sans-serif;font-size:.88rem}.row{display:flex;justify-content:space-between;align-items:center;margin-top:10px}.wc{font-family:'DM Mono',monospace;font-size:11px;color:#8a7a60}.wc.ok{color:#1a6e40}.wc.low{color:#b83222}.btn-main{font-family:'Noto Sans SC',sans-serif;font-size:.88rem;font-weight:500;padding:11px 28px;border-radius:8px;border:none;background:#1c1710;color:#e8d090;cursor:pointer;transition:all .15s}.btn-main:hover{background:#332a18}.btn-main:disabled{background:#8a7a60;cursor:not-allowed}.btn-gold{font-family:'Noto Sans SC',sans-serif;font-size:.9rem;font-weight:500;padding:12px 24px;border-radius:8px;border:none;color:#fff;cursor:pointer;transition:all .15s;width:100%}.btn-gold:hover{filter:brightness(1.12)}.btn-ghost{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #c8b99a;background:transparent;color:#8a7a60;cursor:pointer;transition:all .15s}.btn-ghost:hover{color:#1c1710;border-color:#3d3020}.btn-pdf{font-family:'Noto Sans SC',sans-serif;font-size:.82rem;padding:9px 22px;border-radius:8px;border:1px solid #1a4a70;background:transparent;color:#1a4a70;cursor:pointer;transition:all .15s}.btn-pdf:hover{background:#1a4a70;color:#fff}.error{color:#b83222;font-size:.85rem;margin-top:8px}.loading-wrap{text-align:center;padding:60px 20px}.loading-char{font-family:'Noto Serif SC',serif;font-size:2rem;letter-spacing:.2em;color:#a07820;animation:breathe 2s ease-in-out infinite;margin-bottom:14px}.loading-msg{font-size:.88rem;color:#8a7a60;font-style:italic;margin-bottom:20px}.loading-steps{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}.lstep{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#a07820}.grade-banner{background:#1c1710;border-radius:10px;padding:22px 26px;display:flex;align-items:center;gap:22px;margin-bottom:14px;position:relative;overflow:hidden}.grade-banner::after{content:'记';position:absolute;right:18px;top:50%;transform:translateY(-50%);font-family:'Noto Serif SC',serif;font-size:7rem;font-weight:700;color:rgba(255,255,255,.04);pointer-events:none}.grade-ring{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.12);display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}.grade-letter{font-family:'Noto Serif SC',serif;font-size:1.8rem;font-weight:700;color:#e8d090;line-height:1}.grade-pts{font-family:'DM Mono',monospace;font-size:10px;color:rgba(232,208,144,.5);margin-top:2px}.grade-name{font-family:'Noto Serif SC',serif;font-size:1.1rem;color:#e8d090;font-weight:600;margin-bottom:4px}.grade-desc{font-size:.82rem;color:rgba(232,208,144,.6);margin-bottom:8px}.score-pills{display:flex;gap:8px;flex-wrap:wrap}.spill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.1);color:rgba(232,208,144,.65)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}@media(max-width:600px){.grid2{grid-template-columns:1fr}.grade-banner{flex-direction:column;text-align:center}}.sec-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid #e0d5c0}.sec-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}.sec-title{font-family:'Noto Serif SC',serif;font-size:.9rem;font-weight:600}.sec-sub{font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.1em;text-transform:uppercase;margin-top:1px}.bar-wrap{margin-bottom:11px}.bar-top{display:flex;justify-content:space-between;font-size:.78rem;color:#8a7a60;margin-bottom:5px}.bar-top strong{color:#3d3020}.bar-track{height:7px;background:#f2ede3;border-radius:99px;overflow:hidden;border:1px solid #e0d5c0}.bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1)}.fw-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:500px){.fw-grid{grid-template-columns:1fr}}.fw-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:8px;font-size:.82rem;line-height:1.5;border-left:3px solid}.fw-icon{flex-shrink:0;font-weight:700;margin-top:1px}.fw-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:2px}.easi-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}@media(max-width:500px){.easi-grid{grid-template-columns:1fr}}.easi-item{padding:14px;border-radius:8px;border:1px solid;width:100%}.easi-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}.easi-letter{font-family:'Noto Serif SC',serif;font-size:1.4rem;font-weight:700}.easi-name{font-size:.78rem;font-weight:600;color:#3d3020}.easi-en{font-size:.7rem;color:#8a7a60}.easi-score{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.06);display:inline-block;margin-bottom:6px}.easi-comment{font-size:.78rem;color:#555;line-height:1.5;margin-bottom:8px}.easi-extracted{padding:8px 10px;background:rgba(0,0,0,.04);border-radius:6px;border-left:2px solid}.easi-extracted-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;margin-bottom:3px}.easi-extracted-text{font-family:'Noto Serif SC',serif;font-size:.82rem;color:#3d3020;line-height:1.7}.err-list{list-style:none;display:flex;flex-direction:column;gap:8px}.err-item{padding:10px 13px;border-radius:8px;font-size:.82rem;line-height:1.7;border-left:3px solid;background:#fdf0ee;border-color:#b83222;color:#6a1810}.err-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-bottom:3px}.err-orig{font-family:'Noto Serif SC',serif;margin-bottom:2px}.err-fix{font-family:'Noto Serif SC',serif;color:#1a6e40}.err-reason{font-size:.75rem;opacity:.8;margin-top:2px}.sug-list{list-style:none;display:flex;flex-direction:column;gap:8px}.sug-item{display:flex;gap:10px;padding:10px 12px;border-radius:8px;background:#edf7f1;border-left:3px solid #1a6e40;font-size:.83rem;color:#154d2e;line-height:1.6}.examiner-box{background:#f2ede3;border:1px solid #c8b99a;border-radius:10px;padding:20px 24px;position:relative}.examiner-box::before{content:'"';position:absolute;top:5px;left:12px;font-family:'Noto Serif SC',serif;font-size:2.8rem;color:#c8b99a;line-height:1}.examiner-text{font-family:'Noto Serif SC',serif;font-size:.93rem;color:#3d3020;line-height:1.95;padding-top:14px}.examiner-sig{margin-top:12px;font-family:'DM Mono',monospace;font-size:9px;color:#8a7a60;letter-spacing:.12em;text-align:right}.center-row{display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap}.dots span{display:inline-block;width:5px;height:5px;background:#a07820;border-radius:50%;animation:pulse 1.2s ease-in-out infinite;margin:0 2px}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}@keyframes breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}@keyframes pulse{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}.fade{animation:fadeUp .5s ease both}.ann-mark{transition:all .15s}.ann-mark:hover{filter:brightness(.95)}@media(max-width:600px){.topbar{height:auto;padding:8px 16px;flex-wrap:wrap;gap:4px}.topbar .logo{font-size:.9rem;width:100%;text-align:center}.topbar .topbar-mid{width:100%;text-align:center;font-size:9px}.topbar .chip{font-size:8px;padding:2px 8px;width:100%;text-align:center;border:none}.hero-eye{font-size:9px;letter-spacing:.15em}.hero-sub{font-size:.8rem}.hero-rubric span{display:block}.hero-rubric span+span::before{content:none}.card-hint .hint-en,.card-hint .hint-zh{display:block}.card-label{font-size:9px}}`}</style>
 
       <div className="topbar">
         <div className="logo">林老师双语学堂</div>
@@ -904,7 +863,7 @@ export default function Home() {
             </div>
           </div>
           <div className="card" style={{marginBottom:14}}>
-            <div className="sec-head"><div className="sec-icon" style={{background:'#fffef8'}}>📝</div><div><div className="sec-title">学生原文（批注版）</div><div className="sec-sub">Annotated Student Essay · Framework notes alongside each paragraph</div></div></div>
+            <div className="sec-head"><div className="sec-icon" style={{background:'#fffef8'}}>📝</div><div><div className="sec-title">学生原文（批注版）</div><div className="sec-sub">Annotated Student Essay</div></div></div>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#edf7f1',color:'#1a6e40',border:'1px solid #1a6e40'}}>🟢 优点</span>
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#fdf0ee',color:'#b83222',border:'1px solid #b83222'}}>🔴 错误</span>
@@ -948,6 +907,18 @@ export default function Home() {
               <div className="sec-head"><div className="sec-icon" style={{background:'#fdf6e3'}}>📝</div><div><div className="sec-title">内容与语文评析</div><div className="sec-sub">Content & Language</div></div></div>
               <p style={{fontSize:'.87rem',color:'#3d3020',lineHeight:1.8,marginBottom:12}}>{results.content_feedback}</p>
               <p style={{fontSize:'.87rem',color:'#3d3020',lineHeight:1.8}}>{results.language_feedback}</p>
+            </div>
+          </div>
+
+          {/* Framework Section - standalone */}
+          <div className="card">
+            <div className="sec-head"><div className="sec-icon" style={{background:'#edf7f1'}}>🗂</div><div><div className="sec-title">林老师框架检查</div><div className="sec-sub">Narrative Framework</div></div></div>
+            <div className="fw-grid">
+              {FW_KEYS.filter(function(k){return !!(results.framework||{})[k];}).map(function(k){
+                const fw = results.framework[k];
+                const st = FW_STATUS[fw.status] || FW_STATUS.pass;
+                return (<FwCard key={k} fw={fw} fwKey={k} />);
+              })}
             </div>
           </div>
 
@@ -1031,4 +1002,3 @@ export default function Home() {
     </>
   );
 }
-
