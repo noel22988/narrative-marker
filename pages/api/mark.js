@@ -150,7 +150,7 @@ TEMPLATE:
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] })
     });
     const data = await response.json();
     if (data.error) return res.status(500).json({ error: data.error.message });
@@ -169,6 +169,33 @@ TEMPLATE:
     clean = clean.replace(/\u00ab([^\u00bb]*)\u00bb/g, '\u300c$1\u300d');
     clean = clean.replace(/\uff02([^\uff02]*)\uff02/g, '\u300c$1\u300d');
     clean = clean.replace(/\u2018([^\u2019]*)\u2019/g, '\u300c$1\u300d');
+
+    // Second pass: catch any remaining Chinese-style quotes that the first pass
+    // might miss (e.g. mismatched pairs, or quotes that span oddly)
+    // Replace ："...anything..." patterns (colon + quote inside JSON strings)
+    clean = clean.replace(/\uff1a\u201c/g, '\uff1a\u300c');
+    clean = clean.replace(/\u201d/g, '\u300d');
+    clean = clean.replace(/\u201c/g, '\u300c');
+
+    // Handle truncated JSON: if response was cut off, close open structures
+    if (clean.lastIndexOf('}') < clean.lastIndexOf('"')) {
+      // JSON was likely truncated mid-string — try to salvage
+      // Find last complete object by looking for last "}}" or "}]}"
+      const lastGoodBrace = clean.lastIndexOf('}');
+      if (lastGoodBrace > 0) {
+        clean = clean.substring(0, lastGoodBrace + 1);
+        // Count open brackets and close them
+        let opens = 0, closes = 0, openArr = 0, closeArr = 0;
+        for (let i = 0; i < clean.length; i++) {
+          if (clean[i] === '{') opens++;
+          if (clean[i] === '}') closes++;
+          if (clean[i] === '[') openArr++;
+          if (clean[i] === ']') closeArr++;
+        }
+        while (closeArr < openArr) { clean += ']'; closeArr++; }
+        while (closes < opens) { clean += '}'; closes++; }
+      }
+    }
 
     function tryParse(s) {
       try { return JSON.parse(s); } catch(e) {}
@@ -301,7 +328,7 @@ TEMPLATE:
     else if (total >= 18) result.grade = 'D7';
     else if (total >= 16) result.grade = 'E8';
     else result.grade = 'F9';
-    const labels = { A1:'优秀', A2:'优良', B3:'良好', B4:'良', C5:'及格', C6:'及格', D7:'不及格', E8:'不及格', F9:'不及格' };
+    const labels = { A1:'优秀', A2:'优良', B3:'良好', B4:'良', C5:'及格', C6:'及格', D7:'及格边缘', E8:'不及格', F9:'不及格' };
     result.grade_label = labels[result.grade];
     return res.status(200).json(result);
   } catch (err) { return res.status(500).json({ error: err.message }); }
