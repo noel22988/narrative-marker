@@ -307,6 +307,8 @@ export default function Home() {
       if (k === 'E') {
         // Remove speech items from E: speech verb ALWAYS takes precedence over appearance
         expanded = expanded.filter(function(t) {
+          // HARD BLOCK: any E item containing 面无表情地说 is S, not E
+          if (t.indexOf('面无表情地说') !== -1) return false;
           // Direct character check using actual Chinese chars
           if (t.includes('说：') || t.includes('说:') || t.includes('说"') || t.includes('说「') || t.includes('说“')) return false;
           if (t.includes('道：') || t.includes('道:') || t.includes('道"') || t.includes('道「') || t.includes('道“')) return false;
@@ -376,6 +378,17 @@ export default function Home() {
         return posA - posB;
       });
 
+      // NUCLEAR: final pass — remove any E item that contains a speech verb
+      if (k === 'E') {
+        final = final.filter(function(t) {
+          if (t.indexOf('地说') !== -1) return false;
+          if (t.indexOf('地道') !== -1) return false;
+          if (t.indexOf('地答') !== -1) return false;
+          if (t.indexOf('恳求道') !== -1) return false;
+          if (t.indexOf('念叨') !== -1) return false;
+          return true;
+        });
+      }
       result[k] = final;
     });
 
