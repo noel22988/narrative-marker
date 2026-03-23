@@ -157,6 +157,12 @@ STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words l
 Bad examples (DO NOT DO THIS):
 - {"label":"倒叙开头","text":"每当我走进超市，听到收银机的扫描声，脑海中总会浮现..."} ← WRONG: quoting the essay
 
+IMPROVEMENTS FORMAT: Give 3 specific, actionable suggestions. CRITICAL RULES:
+1. READ THE ESSAY CAREFULLY before suggesting. Do NOT suggest things the student has ALREADY done well.
+2. If the essay already has environment描写, do NOT suggest "增加环境描写". If the cashier's reaction is already shown, do NOT suggest "展现收银员心理变化". If the conclusion already has social reflection, do NOT suggest "深化社会思考".
+3. Each suggestion should target a GENUINE weakness — something actually missing or weak in this specific essay.
+4. For A1-level essays that are already excellent, focus on subtle refinements like: varying sentence rhythm, adding one more sensory detail in a specific paragraph, or strengthening a specific transition between paragraphs. Reference the specific paragraph or section.
+
 JSON SAFETY RULES:
 1. Return ONLY a JSON object. No markdown, no backticks.
 2. String values use straight double quotes " as delimiters.
