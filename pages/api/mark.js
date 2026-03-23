@@ -93,7 +93,7 @@ IMPORTANT — para_index: For each framework key in your JSON, include "para_ind
 EASI — E=Expressions&Appearance外貌描写, A=Actions行动描写, S=Speech语言描写, I=Inner Thoughts&Feelings心理描写
 Ratings: good=clearly present and effective, ok=attempted but weak, weak=absent
 CRITICAL: For "extracted" field — the frontend builds EASI cards directly from annotations, so focus on annotations. Still populate "extracted" at clause level matching your annotations exactly.
-- For S: speech tag + "quoted words" — e.g. 面无表情地说："还差三块五。"
+- For S: speech tag + quoted words using corner brackets — e.g. 面无表情地说：「还差三块五。」
 - For E/A/I: clause-level phrases matching the annotation texts
 - Search EVERY paragraph: P1开头, P2场景, P3过渡, P4高潮前, P5高潮中一, P6高潮中二, P7高潮后, P8结尾 — ALL count
 - P4 to P7 are especially dense with EASI — extract EVERY single qualifying phrase from these paragraphs, do not skip any
@@ -110,108 +110,46 @@ LANGUAGE MARKING — be lenient with language scores:
 ANNOTATIONS: Mark every EASI phrase in the student essay with inline highlights. Study these two worked examples carefully — they show EXACTLY the level of granularity required.
 
 ── WORKED EXAMPLE 1 (supermarket essay) ──
-Essay excerpt: "排在我前面的，是一位满头白发的老奶奶，她佝偻着腰，双手紧紧地抱着一小袋米和一瓶酱油。我注意到她的衣着十分朴素，脚上穿着一双磨得发白的布鞋。轮到老奶奶结账时，她颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上。收银员扫了一眼，面无表情地说："还差三块五。"老奶奶愣住了，慌忙翻遍了每一个口袋，却只翻出几枚硬币。她急得满脸通红，额头上渗出了细密的汗珠。老奶奶低声恳求道："姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？"收银员皱了皱眉头，双手交叉在胸前，语气冷淡地回答："不行，这是规定，少一分钱都不能结账。"她说完便把目光移开，开始整理柜台上的东西。老奶奶的嘴唇微微发抖，布满皱纹的双手不知所措地搓着衣角，眼眶渐渐泛红。她缓缓地伸出手，准备把米放回购物篮里。看着这一幕，我的心像被什么东西狠狠揪了一下。我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗？我低头看了看手中妈妈给我的零钱，犹豫了一瞬间，便鼓起勇气快步走上前，将一张五元纸币轻轻放在柜台上，微笑着对收银员说："阿姨，剩下的我来付。"收银员愣了一下，没有说话，默默地收下了钱。老奶奶转过头，用那双浑浊却闪烁着光芒的眼睛望着我，嘴唇颤抖着说："孩子……谢谢你……谢谢你啊……"她的声音沙哑而微弱，却让我的鼻子一阵发酸。我连忙扶着老奶奶走出超市，帮她把东西提好。她紧紧地握住我的手，反复念叨着"好孩子、好孩子"。阳光洒在她满是皱纹的脸上，我看到她的眼角挂着一滴晶莹的泪珠，嘴角却带着温暖的笑意。"
+Essay excerpt: 排在我前面的，是一位满头白发的老奶奶，她佝偻着腰，双手紧紧地抱着一小袋米和一瓶酱油。我注意到她的衣着十分朴素，脚上穿着一双磨得发白的布鞋。轮到老奶奶结账时，她颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上。收银员扫了一眼，面无表情地说：「还差三块五。」老奶奶愣住了，慌忙翻遍了每一个口袋，却只翻出几枚硬币。她急得满脸通红，额头上渗出了细密的汗珠。老奶奶低声恳求道：「姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？」
 
 Correct annotations for this excerpt:
-{type:"good",technique:"E",text:"满头白发的老奶奶，她佝偻着腰",comment:"外貌描写生动"}
-{type:"good",technique:"A",text:"双手紧紧地抱着一小袋米和一瓶酱油",comment:"动作细腻"}
-{type:"good",technique:"E",text:"衣着十分朴素，脚上穿着一双磨得发白的布鞋",comment:"细节烘托贫困"}
-{type:"good",technique:"A",text:"颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上",comment:"动作传神"}
-{type:"good",technique:"E",text:"收银员扫了一眼，面无表情地说",comment:"神态冷漠"}
-{type:"good",technique:"S",text:"面无表情地说："还差三块五。"",comment:"语言描写"}
-{type:"good",technique:"A",text:"慌忙翻遍了每一个口袋，却只翻出几枚硬币",comment:"动作表现慌张"}
-{type:"good",technique:"E",text:"她急得满脸通红，额头上渗出了细密的汗珠",comment:"神态描写"}
-{type:"good",technique:"S",text:"老奶奶低声恳求道："姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？"",comment:"语言真实感人"}
-{type:"good",technique:"E",text:"收银员皱了皱眉头",comment:"神态显冷漠"}
-{type:"good",technique:"A",text:"双手交叉在胸前",comment:"动作显态度"}
-{type:"good",technique:"S",text:"语气冷淡地回答："不行，这是规定，少一分钱都不能结账。"",comment:"语言描写冷漠"}
-{type:"good",technique:"E",text:"她说完便把目光移开，开始整理柜台上的东西",comment:"神态无视老人"}
-{type:"good",technique:"E",text:"老奶奶的嘴唇微微发抖",comment:"神态描写"}
-{type:"good",technique:"A",text:"布满皱纹的双手不知所措地搓着衣角",comment:"动作表现无助"}
-{type:"good",technique:"E",text:"眼眶渐渐泛红",comment:"神态感人"}
-{type:"good",technique:"A",text:"她缓缓地伸出手，准备把米放回购物篮里",comment:"动作描写无奈"}
-{type:"good",technique:"I",text:"我的心像被什么东西狠狠揪了一下",comment:"心理描写深刻"}
-{type:"good",technique:"I",text:"我心想：不过是三块五毛钱，难道就没有人愿意帮一帮这位老人家吗？",comment:"心理推动情节"}
-{type:"good",technique:"A",text:"我低头看了看手中妈妈给我的零钱",comment:"动作描写犹豫"}
-{type:"good",technique:"I",text:"犹豫了一瞬间",comment:"心理描写"}
-{type:"good",technique:"A",text:"便鼓起勇气快步走上前，将一张五元纸币轻轻放在柜台上",comment:"动作果断"}
-{type:"good",technique:"S",text:"微笑着对收银员说："阿姨，剩下的我来付。"",comment:"语言体现善意"}
-{type:"good",technique:"A",text:"收银员愣了一下，没有说话，默默地收下了钱",comment:"动作描写"}
-{type:"good",technique:"A",text:"老奶奶转过头，用那双浑浊却闪烁着光芒的眼睛望着我",comment:"动作眼神描写"}
-{type:"good",technique:"S",text:"嘴唇颤抖着说："孩子……谢谢你……谢谢你啊……"",comment:"语言感人至深"}
-{type:"good",technique:"I",text:"让我的鼻子一阵发酸",comment:"心理感受真实"}
-{type:"good",technique:"A",text:"我连忙扶着老奶奶走出超市，帮她把东西提好",comment:"动作体现关怀"}
-{type:"good",technique:"A",text:"她紧紧地握住我的手",comment:"动作感人"}
-{type:"good",technique:"S",text:"反复念叨着"好孩子、好孩子"",comment:"语言真实"}
-{type:"good",technique:"E",text:"阳光洒在她满是皱纹的脸上，我看到她的眼角挂着一滴晶莹的泪珠，嘴角却带着温暖的笑意",comment:"外貌烘托温情"}
+{"type":"good","technique":"E","text":"满头白发的老奶奶，她佝偻着腰","comment":"外貌描写生动"}
+{"type":"good","technique":"A","text":"双手紧紧地抱着一小袋米和一瓶酱油","comment":"动作细腻"}
+{"type":"good","technique":"E","text":"衣着十分朴素，脚上穿着一双磨得发白的布鞋","comment":"细节烘托贫困"}
+{"type":"good","technique":"A","text":"颤巍巍地从口袋里掏出一个旧布钱包，把里面的零钱一枚一枚地数出来，小心翼翼地摆在柜台上","comment":"动作传神"}
+{"type":"good","technique":"S","text":"面无表情地说：「还差三块五。」","comment":"语言描写"}
+{"type":"good","technique":"A","text":"慌忙翻遍了每一个口袋，却只翻出几枚硬币","comment":"动作表现慌张"}
+{"type":"good","technique":"E","text":"她急得满脸通红，额头上渗出了细密的汗珠","comment":"神态描写"}
+{"type":"good","technique":"S","text":"老奶奶低声恳求道：「姑娘，我今天出门忘了多带钱……能不能让我先把东西拿回去，明天再来补？」","comment":"语言真实感人"}
 
-── WORKED EXAMPLE 2 (camera essay) ──
-Essay excerpt: "李老师蹲在地上，默默捡起碎裂的镜头，脸上却没有一丝怒意。...围在一旁仔细看着这台复古的相机。李老师把相机放在长椅上，转身去买饮料。立刻凑了过去。志明率先拿起相机，眯着眼睛假装拍照，嘴里还念念有词："来来来，给你们拍个大明星的照片！"伟杰一把抢过相机，笑嘻嘻地举过头顶。三个人你推我搡，笑得前仰后合。志明瞪大了眼睛，脸上的笑容瞬间凝固；伟杰双手僵在半空中，脸色"唰"地变得惨白；大华不由自主地后退了两步，低下头不敢看地上的碎片。我心想：这下完了，那可是老师珍藏的相机啊！他的目光落在碎片上，脚步明显顿了一下。他慢慢蹲下身，小心翼翼地将碎片一片一片捡起，轻轻放在掌心，眼眶微微泛红。三人战战兢兢地走上前，志明小声地说："老……老师，对不起……"李老师沉默了片刻，语气平和地说："相机坏了，可以修。但如果我今天因为一台相机对你们破口大骂，那才是真正无法修复的。"目光变得柔和而深沉，语重心长地说："不过，我希望你们记住，很多东西背后承载着一个人最珍贵的回忆。尊重别人的物品，就是尊重别人的感情。"三个同学的眼眶早已红了。伟杰哽咽着说："老师，我们错了，我们会把相机修好的。"李老师拍了拍他的肩膀，微笑着摇头说："你们能认识到自己的错误，比修好十台相机都珍贵。""
+NOTE: In every annotation text field above, Chinese dialogue uses corner brackets 「」 not quotation marks. You MUST do the same in your output.
 
-Correct annotations for this excerpt:
-{type:"good",technique:"A",text:"李老师蹲在地上，默默捡起碎裂的镜头",comment:"动作描写沉稳"}
-{type:"good",technique:"E",text:"脸上却没有一丝怒意",comment:"神态体现宽容"}
-{type:"good",technique:"A",text:"围在一旁仔细看着这台复古的相机",comment:"动作描写好奇"}
-{type:"good",technique:"A",text:"李老师把相机放在长椅上，转身去买饮料",comment:"动作交代触发事件"}
-{type:"good",technique:"A",text:"立刻凑了过去",comment:"动作表现冲动"}
-{type:"good",technique:"A",text:"志明率先拿起相机，眯着眼睛假装拍照",comment:"动作描写活灵活现"}
-{type:"good",technique:"S",text:"嘴里还念念有词："来来来，给你们拍个大明星的照片！"",comment:"语言幽默生动"}
-{type:"good",technique:"A",text:"伟杰一把抢过相机，笑嘻嘻地举过头顶",comment:"动作描写顽皮"}
-{type:"good",technique:"A",text:"三个人你推我搡，笑得前仰后合",comment:"动作描写生动"}
-{type:"good",technique:"E",text:"志明瞪大了眼睛，脸上的笑容瞬间凝固",comment:"神态描写震惊"}
-{type:"good",technique:"A",text:"伟杰双手僵在半空中",comment:"动作描写惊呆"}
-{type:"good",technique:"E",text:"脸色"唰"地变得惨白",comment:"神态描写形象"}
-{type:"good",technique:"A",text:"大华不由自主地后退了两步，低下头不敢看地上的碎片",comment:"动作描写内疚"}
-{type:"good",technique:"I",text:"我心想：这下完了，那可是老师珍藏的相机啊！",comment:"心理描写推动情节"}
-{type:"good",technique:"E",text:"他的目光落在碎片上",comment:"神态描写"}
-{type:"good",technique:"A",text:"脚步明显顿了一下",comment:"动作细节传神"}
-{type:"good",technique:"A",text:"他慢慢蹲下身，小心翼翼地将碎片一片一片捡起，轻轻放在掌心",comment:"动作描写细腻"}
-{type:"good",technique:"E",text:"眼眶微微泛红",comment:"神态体现深情"}
-{type:"good",technique:"A",text:"三人战战兢兢地走上前",comment:"动作描写内疚害怕"}
-{type:"good",technique:"S",text:"志明小声地说："老……老师，对不起……"",comment:"语言描写真实"}
-{type:"good",technique:"S",text:"李老师沉默了片刻，语气平和地说："相机坏了，可以修。但如果我今天因为一台相机对你们破口大骂，那才是真正无法修复的。"",comment:"语言体现智慧"}
-{type:"good",technique:"E",text:"目光变得柔和而深沉",comment:"神态描写温和"}
-{type:"good",technique:"S",text:"语重心长地说："不过，我希望你们记住，很多东西背后承载着一个人最珍贵的回忆。尊重别人的物品，就是尊重别人的感情。"",comment:"语言深刻有力"}
-{type:"good",technique:"E",text:"三个同学的眼眶早已红了",comment:"神态描写感动"}
-{type:"good",technique:"S",text:"伟杰哽咽着说："老师，我们错了，我们会把相机修好的。"",comment:"语言描写真诚"}
-{type:"good",technique:"A",text:"李老师拍了拍他的肩膀",comment:"动作体现关爱"}
-{type:"good",technique:"S",text:"微笑着摇头说："你们能认识到自己的错误，比修好十台相机都珍贵。"",comment:"语言智慧感人"}
-
-── ANNOTATION RULES (derived from examples above) ──
+── ANNOTATION RULES ──
 For each annotation:
-- "text": EXACT phrase from the essay — copy character by character, must be findable by string search
+- "text": EXACT phrase from the essay, but replace ALL Chinese quotation marks (" " or " ") with corner brackets 「 」 to keep JSON valid
 - "type": "good" for EASI, "error" for language mistakes, "improve" for suggestions
-- "technique": "E", "A", "S", or "I" — see definitions below
+- "technique": "E", "A", "S", or "I"
 - "comment": brief Chinese label, under 15 characters
 
-TECHNIQUE DEFINITIONS:
-E (外貌描写): appearance, face, eyes, posture, expression, clothing — even short clauses like "脸上却没有一丝怒意" or "眼眶渐渐泛红" count as separate E annotations
-A (行动描写): action with adverb or specific manner — "颤巍巍地掏出", "慢慢蹲下身" — include the full action chain up to the next clause boundary
-S (语言描写): MUST include speech manner/verb + the full quoted words together — e.g. 语气冷淡地回答："不行，这是规定，少一分钱都不能结账。" — NEVER annotate just the quoted words alone, NEVER use （） brackets
-I (心理描写): inner thoughts and feelings — "我心想：...", "犹豫了一瞬间", "让我的鼻子一阵发酸"
-
 CRITICAL: Annotate at CLAUSE level — one annotation per clause, not per sentence. A single sentence often contains 2-4 separate EASI annotations. Annotate ALL of them.
-THE EASI CARDS ARE BUILT FROM YOUR ANNOTATIONS — if you miss an annotation, it will be absent from the card.
-LANGUAGE ERRORS: Only list GENUINE errors — wrong characters, clearly wrong grammar, missing or wrong punctuation that changes meaning. Do NOT flag:
-- correct but alternative punctuation styles
-- stylistic choices
-- things that are actually correct
+
+LANGUAGE ERRORS: Only list GENUINE errors — wrong characters, clearly wrong grammar, missing or wrong punctuation that changes meaning.
 For each genuine error provide:
 - label: error type in Chinese (标点符号错误, 错别字, 用词不当, 语法错误)
-- original: EXACT wrong text copied from essay
+- original: EXACT wrong text copied from essay (use 「」 for any quotes)
 - correction: corrected version
 - reason: brief explanation in Chinese
 
-Return ONLY valid JSON. No markdown. No text outside JSON.
-CRITICAL JSON RULES — READ CAREFULLY:
-1. Your entire response is a JSON object. String values are delimited by straight double quotes (").
-2. NEVER place a straight double quote (") inside a string value — it breaks JSON. This is the most common error.
-3. For speech/dialogue in annotation "text" fields: use 「 」 brackets instead of " " for the quoted words. Example: {"text":"老婆奶低声恳求道：「姑娘，请帮帮我。」","type":"good","technique":"S","comment":"语言描写"}
-4. Chinese curly quotes "" are also safe inside string values.
-5. NEVER put newlines inside string values.
-6. No trailing commas before } or ]
+ABSOLUTE JSON SAFETY RULES:
+1. Return ONLY a JSON object. No markdown, no backticks, no text before or after.
+2. All string values use straight double quotes " as delimiters.
+3. INSIDE string values, NEVER use straight double quotes ". NEVER use curly quotes " ". ALWAYS use corner brackets 「 」 for any quoted speech or dialogue.
+4. INSIDE string values, NEVER use literal newlines. Use a space character instead.
+5. No trailing commas before } or ].
+6. Every { must have a matching }. Every [ must have a matching ].
 
-{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"Chinese 2-3 sentences","language_feedback":"Chinese 2-3 sentences","annotations":[{"text":"exact phrase from student essay","type":"error","comment":"brief Chinese explanation of the error"},{"text":"exact phrase from student essay","type":"good","technique":"E","comment":"brief Chinese praise e.g. 外貌描写生动"},{"text":"exact phrase from student essay","type":"good","technique":"A","comment":"brief Chinese praise"},{"text":"exact phrase from student essay","type":"improve","comment":"brief Chinese suggestion for improvement"}],"framework":{"p1_opening":{"status":"pass","comment":"Chinese","para_index":0},"p2_scene":{"status":"pass","comment":"Chinese","para_index":1},"p3_transition":{"status":"pass","comment":"Chinese","para_index":2},"p4_trigger":{"status":"pass","comment":"Chinese","para_index":3},"p56_climax":{"status":"warn","comment":"Chinese","para_index":4},"p7_resolution":{"status":"pass","comment":"Chinese","para_index":6},"p8_conclusion":{"status":"pass","comment":"Chinese","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1 from essay","EXACT quote 2 from essay"]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"Chinese evaluation","extracted":["EXACT quote from essay"]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"Chinese evaluation","extracted":["EXACT quote 1","EXACT quote 2"]}},"language_errors":[{"type":"lang","label":"标点符号错误","original":"exact wrong text from essay","correction":"corrected text","reason":"Chinese explanation"}],"structure_notes":[{"type":"struct","label":"结构建议","text":"Chinese feedback"}],"improvements":["Chinese improvement 1","Chinese improvement 2","Chinese improvement 3"],"examiner_comment":"3-4 warm sentences as Teacher Leon referencing specific parts of the essay"}`;
+TEMPLATE (follow this structure exactly):
+{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"E","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":0},"p2_scene":{"status":"pass","comment":"...","para_index":1},"p3_transition":{"status":"pass","comment":"...","para_index":2},"p4_trigger":{"status":"pass","comment":"...","para_index":3},"p56_climax":{"status":"warn","comment":"...","para_index":4},"p7_resolution":{"status":"pass","comment":"...","para_index":6},"p8_conclusion":{"status":"pass","comment":"...","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"..."}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -222,33 +160,58 @@ CRITICAL JSON RULES — READ CAREFULLY:
     const data = await response.json();
     if (data.error) return res.status(500).json({ error: data.error.message });
     const raw = data.content.find(b => b.type === 'text')?.text || '';
-    let clean = raw.replace(/```json|```/g, '').trim();
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ROBUST JSON EXTRACTION AND REPAIR
+    // ═══════════════════════════════════════════════════════════════════
+    let clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const jsonStart = clean.indexOf('{');
     const jsonEnd = clean.lastIndexOf('}');
-    if (jsonStart === -1 || jsonEnd === -1) return res.status(500).json({ error: 'No JSON found: ' + clean.substring(0, 300) });
+    if (jsonStart === -1 || jsonEnd === -1) {
+      return res.status(500).json({
+        error: 'No JSON found in API response',
+        debug_raw_start: raw.substring(0, 500)
+      });
+    }
     clean = clean.substring(jsonStart, jsonEnd + 1);
 
-    // ═══════════════════════════════════════════════════════════════════
-    // PRE-REPAIR: Neutralise Chinese quotes BEFORE any JSON.parse attempt
-    // This is the #1 cause of parse failures — Chinese "" inside JSON
-    // string values look like JSON string delimiters to the parser.
-    // Convert them to corner brackets 「」 which are JSON-safe. The
-    // post-parse normaliser below converts them back for display.
-    // ═══════════════════════════════════════════════════════════════════
+    // ── Phase 1: Neutralise ALL Chinese quote variants before parsing ──
+    // These appear inside JSON string values and break the parser.
+    // We convert them to corner brackets 「」 which are JSON-safe.
+
+    // 1a. Curly double quotes "" (most common)
     clean = clean.replace(/\u201c([^\u201d]*)\u201d/g, '\u300c$1\u300d');
-
-    // Also neutralise the less-common left/right double angle quotes
+    // 1b. Guillemets «»
     clean = clean.replace(/\u00ab([^\u00bb]*)\u00bb/g, '\u300c$1\u300d');
+    // 1c. Fullwidth quotes ＂＂
+    clean = clean.replace(/\uff02([^\uff02]*)\uff02/g, '\u300c$1\u300d');
+    // 1d. Single curly quotes ''
+    clean = clean.replace(/\u2018([^\u2019]*)\u2019/g, '\u300c$1\u300d');
 
-    // Multi-strategy JSON repair
-    function tryParseJson(s) {
-      // Strategy 1: direct parse (works if pre-repair was sufficient)
+    // ── Phase 2: Multi-strategy JSON parse ──
+    function tryParse(s) {
+      // Strategy 1: direct parse
       try { return JSON.parse(s); } catch(e) {}
 
       // Strategy 2: remove trailing commas
       try { return JSON.parse(s.replace(/,(\s*[}\]])/g, '$1')); } catch(e) {}
 
-      // Strategy 3: char-by-char walker — escape rogue straight quotes inside strings
+      // Strategy 3: fix newlines inside strings + trailing commas
+      try {
+        let out = '', inStr = false, esc = false;
+        const s3 = s.replace(/,(\s*[}\]])/g, '$1');
+        for (let i = 0; i < s3.length; i++) {
+          const ch = s3[i];
+          if (esc) { out += ch; esc = false; continue; }
+          if (ch === '\\') { out += ch; esc = true; continue; }
+          if (ch === '"') { inStr = !inStr; out += ch; continue; }
+          if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
+          out += ch;
+        }
+        return JSON.parse(out);
+      } catch(e) {}
+
+      // Strategy 4: char-by-char with rogue straight-quote repair
       try {
         let out = '', inStr = false, esc = false;
         for (let i = 0; i < s.length; i++) {
@@ -257,120 +220,128 @@ CRITICAL JSON RULES — READ CAREFULLY:
           if (ch === '\\') { out += ch; esc = true; continue; }
           if (ch === '"') {
             if (!inStr) { inStr = true; out += ch; continue; }
-            // Determine if this quote closes the JSON string:
-            // Look ahead past whitespace for a structural JSON character
+            // Check if this " is a JSON structural close
             let j = i + 1;
-            while (j < s.length && (s[j] === ' ' || s[j] === '\t')) j++;
-            const nx = s[j];
-            const closes = (
-              nx === ':' || nx === ',' || nx === '}' || nx === ']' ||
-              nx === '"' || nx === '\n' || nx === '\r' || j >= s.length
-            );
-            if (closes) {
+            while (j < s.length && (s[j] === ' ' || s[j] === '\t' || s[j] === '\r' || s[j] === '\n')) j++;
+            const nx = j < s.length ? s[j] : '';
+            const structural = (nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '"' || nx === '');
+            if (structural) {
               inStr = false;
               out += ch;
             } else {
-              // This is a rogue quote inside a string — replace with corner bracket
+              // Rogue " inside string value — replace with 「
               out += '\u300c';
-              // Find its matching close quote and replace that too
-              // Scan forward for the next " that IS followed by a structural char
-              let foundClose = false;
+              // Scan forward for matching rogue close "
+              let segment = '';
               for (let k = i + 1; k < s.length; k++) {
-                if (s[k] === '\\') { k++; continue; } // skip escaped
+                if (s[k] === '\\') { segment += s[k] + (s[k+1]||''); k++; continue; }
                 if (s[k] === '"') {
                   let m = k + 1;
-                  while (m < s.length && (s[m] === ' ' || s[m] === '\t')) m++;
-                  const nx2 = s[m];
-                  const closes2 = (
-                    nx2 === ':' || nx2 === ',' || nx2 === '}' || nx2 === ']' ||
-                    nx2 === '"' || nx2 === '\n' || nx2 === '\r' || m >= s.length
-                  );
-                  if (closes2) {
-                    // This is the real closing quote — everything between i and k
-                    // has already been / will be copied; just replace s[k] marker
-                    // by outputting chars from i+1..k-1 then 」
-                    for (let p = i + 1; p < k; p++) {
-                      // Replace any more rogue " inside this speech span
-                      out += (s[p] === '"') ? '\u300c' : s[p];
-                    }
-                    out += '\u300d';
-                    i = k - 1; // outer loop will i++ to k
-                    foundClose = true;
+                  while (m < s.length && (s[m] === ' ' || s[m] === '\t' || s[m] === '\r' || s[m] === '\n')) m++;
+                  const nx2 = m < s.length ? s[m] : '';
+                  const structural2 = (nx2 === ':' || nx2 === ',' || nx2 === '}' || nx2 === ']' || nx2 === '"' || nx2 === '');
+                  if (structural2) {
+                    out += segment + '\u300d';
+                    i = k - 1;
                     break;
                   } else {
-                    // Another rogue mid-string quote — skip, will be handled as char
+                    segment += '\u300c'; // nested rogue quote
                   }
+                } else if (s[k] === '\n' || s[k] === '\r') {
+                  segment += ' ';
+                } else {
+                  segment += s[k];
                 }
-              }
-              if (!foundClose) {
-                // Couldn't find matching close — just escape it
-                out += '"';
               }
             }
             continue;
           }
-          // Newlines inside strings break JSON — replace with space
           if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
           out += ch;
         }
         return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
       } catch(e) {}
 
-      // Strategy 4: brute force — strip ALL remaining straight quotes that
-      // aren't JSON structural delimiters by checking surrounding context
-      try {
-        // Replace any " that sits between two Chinese/CJK characters with 「」
-        const s4 = s
-          .replace(/([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])"([^"]*?)"([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef,.\uff0c\u3002])/g,
-            '$1\u300c$2\u300d$3')
-          .replace(/,(\s*[}\]])/g, '$1');
-        return JSON.parse(s4);
-      } catch(e) {}
-
       return null;
     }
 
-    let result = tryParseJson(clean);
+    let result = tryParse(clean);
+
     if (!result) {
-      return res.status(500).json({ error: 'JSON parse failed — please try again' });
+      // Return diagnostic info so we can see what's breaking
+      let errorMsg = '';
+      let errorPos = -1;
+      try { JSON.parse(clean); } catch(e) {
+        errorMsg = e.message;
+        const posMatch = e.message.match(/position\s+(\d+)/i);
+        if (posMatch) errorPos = parseInt(posMatch[1]);
+      }
+      const snippet = errorPos >= 0
+        ? clean.substring(Math.max(0, errorPos - 100), errorPos + 100)
+        : clean.substring(0, 500);
+      return res.status(500).json({
+        error: 'JSON parse failed — please try again',
+        debug_error: errorMsg,
+        debug_position: errorPos,
+        debug_snippet: snippet,
+        debug_raw_length: raw.length
+      });
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // POST-PARSE: Normalise 「」 back to "" in annotation text fields
-    // so highlights match the original essay text for string search
+    // POST-PARSE: Restore 「」 → "" for display and essay text matching
     // ═══════════════════════════════════════════════════════════════════
+    function rq(s) {
+      if (typeof s !== 'string') return s;
+      return s.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
+    }
+
     if (result.annotations && Array.isArray(result.annotations)) {
       result.annotations = result.annotations.map(function(ann) {
-        if (ann.text) {
-          ann.text = ann.text
-            .replace(/\u300c/g, '\u201c')   // 「 → "
-            .replace(/\u300d/g, '\u201d');   // 」 → "
-        }
+        if (ann.text) ann.text = rq(ann.text);
+        if (ann.comment) ann.comment = rq(ann.comment);
         return ann;
       });
     }
-    // Also normalise EASI extracted fields
     if (result.easi) {
       ['E','A','S','I'].forEach(function(k) {
-        if (result.easi[k] && Array.isArray(result.easi[k].extracted)) {
-          result.easi[k].extracted = result.easi[k].extracted.map(function(t) {
-            return t
-              .replace(/\u300c/g, '\u201c')
-              .replace(/\u300d/g, '\u201d');
-          });
+        if (result.easi[k]) {
+          if (result.easi[k].comment) result.easi[k].comment = rq(result.easi[k].comment);
+          if (Array.isArray(result.easi[k].extracted)) {
+            result.easi[k].extracted = result.easi[k].extracted.map(rq);
+          }
         }
       });
     }
-    // Normalise language_errors original/correction fields
     if (result.language_errors && Array.isArray(result.language_errors)) {
       result.language_errors = result.language_errors.map(function(err) {
-        if (err.original) err.original = err.original.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
-        if (err.correction) err.correction = err.correction.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
+        if (err.original) err.original = rq(err.original);
+        if (err.correction) err.correction = rq(err.correction);
+        if (err.reason) err.reason = rq(err.reason);
         return err;
       });
     }
+    if (result.content_feedback) result.content_feedback = rq(result.content_feedback);
+    if (result.language_feedback) result.language_feedback = rq(result.language_feedback);
+    if (result.examiner_comment) result.examiner_comment = rq(result.examiner_comment);
+    if (result.framework) {
+      Object.keys(result.framework).forEach(function(k) {
+        if (result.framework[k] && result.framework[k].comment) {
+          result.framework[k].comment = rq(result.framework[k].comment);
+        }
+      });
+    }
+    if (result.structure_notes && Array.isArray(result.structure_notes)) {
+      result.structure_notes = result.structure_notes.map(function(n) {
+        if (n.text) n.text = rq(n.text);
+        return n;
+      });
+    }
+    if (result.improvements && Array.isArray(result.improvements)) {
+      result.improvements = result.improvements.map(rq);
+    }
 
-    // Server-side grade recalculation — always accurate
+    // Server-side grade recalculation
     const total = (result.content_score || 0) + (result.language_score || 0);
     result.total_score = total;
     if (total >= 30) result.grade = 'A1';
