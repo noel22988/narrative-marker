@@ -61,15 +61,45 @@ Content and language scores should be within 2-3 marks of each other.
 GRADE BOUNDARIES: A1:30-40, A2:28-29, B3:26-27, B4:24-25, C5:22-23, C6:20-21, D7:18-19, E8:16-17, F9:≤15
 total_score MUST equal content_score + language_score.
 
-FRAMEWORK: Assign pass/warn/fail to each stage. Write 1-2 Chinese sentences per stage. ALL 8 keys MUST appear. Missing stage = "fail" with para_index:[].
-Status: "pass"=present+good, "warn"=weak/incomplete, "fail"=missing.
-para_index: ARRAY of 0-based paragraph indices (e.g. [2] or [5,6,7]). A stage can span multiple paragraphs. One paragraph = one stage only.
-For messy essays: assign paragraph to dominant stage, note problems in comment. Out-of-order = still identify stages.
+FRAMEWORK: For each stage, assign status and write 2-3 Chinese sentences explaining what the student wrote and what was done well/missing.
 
-Stages:
-P1开头: 抄题 or 倒叙. P2场景: Time+People+Place+Activity+Environment.
-P3.1过渡: Bridge to conflict. P3.2插叙: Backstory flashback (CONDITIONAL — expected if question has keywords: 原本/一向来/曾经/向来/从小/一直以来/本来/过去/以前. If no such keywords and no 插叙, P3.2 status="pass" comment="此题不需要插叙").
-P4高潮前: Trigger incident. P5-6高潮中: Main event with EASI, can span 2-4 paragraphs. P7高潮后: Resolution. P8结尾: Feelings + moral.
+STATUS CRITERIA:
+- "pass" — stage is clearly present and well-executed
+- "warn" — stage exists but is weak, incomplete, or poorly done (e.g. P2 missing environment, P8 has feelings but no moral)
+- "fail" — stage is entirely MISSING from the essay, or so poorly done it barely counts
+
+IMPORTANT: ALL 8 framework keys MUST appear in the output, even if the stage is missing. If a stage is missing, set status to "fail" and explain what is missing in the comment. Example: {"status":"fail","comment":"缺少过渡段，从场景描写直接跳入冲突，缺乏铺垫和人物背景介绍。","para_index":[]}
+
+HANDLING WEAK / MESSY / JUMBLED ESSAYS:
+- A paragraph may attempt multiple stages poorly → assign to DOMINANT stage, note mixing in comment.
+- Stages may appear OUT OF ORDER → still identify each stage, note structural problem.
+- Missing stages → "fail" with para_index:[].
+- Very short essays (3-4 paragraphs) → many stages will be "fail".
+- One paragraph = one stage only.
+
+FLEXIBLE PARAGRAPH MAPPING:
+The 8 stages map to STORY BEATS, not fixed paragraph counts. A stage can span 1-3 paragraphs.
+For "para_index": use an ARRAY of 0-based paragraph indices.
+- Single paragraph: "para_index": [2]
+- Two paragraphs: "para_index": [2, 3]
+- Three paragraphs: "para_index": [5, 6, 7]
+
+Example for a 10-paragraph essay:
+P1开头: [0], P2场景: [1], P3.1过渡: [2], P3.2插叙: [3], P4高潮前: [4], P5-6高潮中: [5,6,7], P7高潮后: [8], P8结尾: [9]
+
+Stage definitions:
+P1开头: 抄题 or 倒叙 (flashback/in-medias-res)
+P2场景: Time + People + Place + Activity + Environment
+P3.1过渡: Bridge from scene to conflict. Introduces key characters or situation.
+P3.2插叙: Flashback or backstory paragraph giving background context.
+  CONDITIONAL: P3.2 is EXPECTED when the essay question contains backstory keywords: 原本, 一向来, 曾经, 向来, 从小, 一直以来, 本来, 过去, 以前.
+  If question has these keywords and student has NO 插叙 → P3.2 status "warn" or "fail".
+  If question does NOT have these keywords and no 插叙 → P3.2 status "pass", comment "此题不需要插叙".
+  If student includes 插叙 even without keywords → "pass".
+P4高潮前: Trigger incident that starts the main conflict
+P5-6高潮中: Main event with rich EASI. Can span 2-4 paragraphs.
+P7高潮后: Resolution — what happens after the conflict
+P8结尾: Feelings (感受) + moral/insight (启示)
 
 ════════════════════════════════════════════════════════════
 EASI CLASSIFICATION RULES — FOLLOW THESE EXACTLY
@@ -168,9 +198,17 @@ ABSOLUTELY DO NOT FLAG any of these — they are NOT errors:
 These are input method differences, NOT language errors. If you flag any punctuation width difference, you are WRONG.
 Return language_errors: [] if no genuine errors exist.
 
-STRUCTURE_NOTES: Short label (2-4 words like 完整八段结构) + brief text (under 25 chars). Do NOT quote the essay.
+STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
+- {"label":"完整八段结构","text":"八段式记叙文结构完整，层次分明，过渡自然"}
+- {"label":"详略得当","text":"重点突出高潮部分的EASI描写，详略安排合理"}
+- {"label":"主题鲜明","text":"通过具体事件展现人间温情，升华到社会意义"}
+Bad examples (DO NOT DO THIS):
+- {"label":"倒叙开头","text":"每当我走进超市，听到收银机的扫描声，脑海中总会浮现..."} ← WRONG: quoting the essay
 
-IMPROVEMENTS: 3 specific suggestions targeting GENUINE weaknesses. Do NOT suggest things already done well. For strong essays, suggest subtle refinements referencing specific paragraphs.
+IMPROVEMENTS FORMAT: Give 3 specific, actionable suggestions. CRITICAL RULES:
+1. READ THE ESSAY CAREFULLY before suggesting. Do NOT suggest things the student has ALREADY done well.
+2. Each suggestion should target a GENUINE weakness — something actually missing or weak in this specific essay.
+3. For A1-level essays that are already excellent, focus on subtle refinements like: varying sentence rhythm, adding one more sensory detail in a specific paragraph, or strengthening a specific transition. Reference the specific paragraph or section.
 
 JSON SAFETY RULES:
 1. Return ONLY a JSON object. No markdown, no backticks.
@@ -188,7 +226,7 @@ TEMPLATE:
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4096, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] }),
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] }),
       signal: controller.signal
     });
     clearTimeout(timeout);
