@@ -81,18 +81,29 @@ export default function Home() {
       </div>`;
     }).join('');
 
+    // Pre-compute PDF EASI with global cross-category dedup
+    const pdfRuleAll = extractEASI(essay);
+    const pdfSeenGlobal = new Set();
+    const pdfEasiExtracted = {};
+    ['A','S','E','I'].forEach(function(k) {
+      const rule = pdfRuleAll[k] || [];
+      const ai = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
+      const merged = [...rule];
+      ai.forEach(function(t){ if(!merged.includes(t)) merged.push(t); });
+      pdfEasiExtracted[k] = merged.filter(function(t) {
+        if (!t || pdfSeenGlobal.has(t)) return false;
+        pdfSeenGlobal.add(t);
+        return true;
+      });
+    });
+
     const easiCards = ['E','A','S','I'].map(k => {
       const it = results.easi?.[k]||{};
       const isGood = it.rating==='good', isOk = it.rating==='ok';
       const bg = isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
       const border = isGood?'#1a6e40':isOk?'#a07820':'#b83222';
       const color = isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
-      // Rule-based extraction as primary source
-      const ruleEasi = extractEASI(essay)[k] || [];
-      const aiEasi = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
-      const mergedEasi = [...ruleEasi];
-      aiEasi.forEach(function(t){ if(!mergedEasi.includes(t)) mergedEasi.push(t); });
-      const extractedArr = mergedEasi;
+      const extractedArr = pdfEasiExtracted[k] || [];
       const extractedHtml = !extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
         : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:'Noto Serif SC',serif;font-size:11px">${ex}</span></div>`).join('');
@@ -621,7 +632,21 @@ export default function Home() {
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#fdf0ee',color:'#b83222',border:'1px solid #b83222'}}>🔴 错误</span>
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#fdf6e3',color:'#a07820',border:'1px solid #a07820'}}>🟡 可改善</span>
             </div>
-            <AnnotatedEssayWithFramework essay={essay} annotations={results?.annotations||[]} framework={results?.framework||{}} />
+            {(function(){
+              const _ruleAll = extractEASI(essay);
+              const _aiAnns = results?.annotations || [];
+              const _aiTexts = new Set(_aiAnns.map(function(a){return a.text;}));
+              const _extra = [];
+              ['E','A','S','I'].forEach(function(tech) {
+                (_ruleAll[tech]||[]).forEach(function(text) {
+                  if (text && !_aiTexts.has(text) && essay.includes(text)) {
+                    _extra.push({text:text, type:'good', technique:tech, comment:''});
+                  }
+                });
+              });
+              const _merged = [..._aiAnns, ..._extra];
+              return <AnnotatedEssayWithFramework essay={essay} annotations={_merged} framework={results?.framework||{}} />;
+            })()}
             <div style={{fontSize:'.78rem',color:'#8a7a60',marginTop:10,fontStyle:'italic'}}>
               悬停或点击高亮文字查看批注 · Hover over highlights to see comments
             </div>
@@ -649,16 +674,30 @@ export default function Home() {
 
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>✍️</div><div><div className="sec-title">EASI 人物描写手法</div><div className="sec-sub">E = Expressions & Appearance &nbsp;·&nbsp; A = Actions &nbsp;·&nbsp; S = Speech &nbsp;·&nbsp; I = Inner Thoughts & Feelings</div></div></div>
-            <div className="easi-grid">{easiItems.map(e=>{
+            <div className="easi-grid">{(function(){
+            // Pre-compute all 4 categories with global cross-category dedup
+            // Uses same merge logic as essay annotation — guarantees card↔highlight sync
+            const ruleAll = extractEASI(essay);
+            const _allAiAnns = results.annotations||[];
+            const _aiTextSet = new Set(_allAiAnns.map(function(a){return a.text;}));
+            const seenGlobal = new Set();
+            const easiExtracted = {};
+            ['A','S','E','I'].forEach(function(k) {
+              const rule = ruleAll[k] || [];
+              const ai = _allAiAnns.filter(function(a){return a.type==='good'&&a.technique===k;}).map(function(a){return a.text;}).filter(Boolean);
+              const merged = [...rule];
+              ai.forEach(function(t){ if(!merged.includes(t)) merged.push(t); });
+              // Dedup within category AND across categories
+              easiExtracted[k] = merged.filter(function(t) {
+                if (!t || seenGlobal.has(t)) return false;
+                seenGlobal.add(t);
+                return true;
+              });
+            });
+            return easiItems.map(e=>{
             const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
             const c=easiColor(item.rating);
-            // Rule-based extraction as primary — AI annotations as supplement
-            const ruleExtracted = extractEASI(essay)[e.k] || [];
-            const aiAnns = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===e.k).map(a=>a.text).filter(Boolean);
-            // Merge: rule-based first, then any AI items not already present
-            const merged = [...ruleExtracted];
-            aiAnns.forEach(function(t){ if(!merged.includes(t)) merged.push(t); });
-            const extracted = merged.length>0 ? merged : ['未发现相关描写'];
+            const extracted = easiExtracted[e.k] && easiExtracted[e.k].length>0 ? easiExtracted[e.k] : ['未发现相关描写'];
             return(<div key={e.k} className="easi-item" style={{background:c.bg,borderColor:c.border}}>
               <div className="easi-header"><div className="easi-letter" style={{color:c.border}}>{e.k}</div><div><div className="easi-name">{e.name}</div><div className="easi-en">{e.en}</div></div></div>
               <div className="easi-score" style={{color:c.border}}>{item.score_label}</div>
@@ -671,7 +710,7 @@ export default function Home() {
                 }
               </div>
             </div>);
-          })}</div>
+          });})()}</div>
           </div>
 
           <div className="card">
