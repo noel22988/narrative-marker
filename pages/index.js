@@ -40,7 +40,10 @@ export default function Home() {
     try {
       const res = await fetch('/api/mark', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ essay: dedupEssay, title }) });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || '批改失败');
+      if (!res.ok || data.error) {
+        const debugInfo = data.debug_snippet ? `\n\nDebug snippet: ${data.debug_snippet}\nError: ${data.debug_error}` : '';
+        throw new Error((data.error || '批改失败') + debugInfo);
+      }
       setResults(data); setState('results');
     } catch (e) { setError('批改时出现错误：' + e.message); setState('input'); }
   }
@@ -63,6 +66,208 @@ export default function Home() {
     return text.replace(/【([^】]+)】/g, '<span style="font-family:monospace;font-size:11px;letter-spacing:0.12em;color:#a07820;display:block;margin-top:16px;margin-bottom:2px;font-weight:600">【$1】</span>');
   }
 
+  // ── Rule-based EASI extractor — deterministic, catches what AI misses
+  function extractEASI(text) {
+    if (!text) return {E:[],A:[],S:[],I:[]};
+
+    // Helper: find clauses containing keyword, bounded by punctuation
+    function findClauses(t, keywords) {
+      const found = [];
+      keywords.forEach(function(kw) {
+        let pos = 0;
+        while ((pos = t.indexOf(kw, pos)) !== -1) {
+          let start = pos;
+          for (let i = pos; i >= Math.max(0, pos-60); i--) {
+            if ('\uff0c\u3002\uff1f\uff01\n\u201c\u201d'.includes(t[i])) { start = i+1; break; }
+            if (i===0) start=0;
+          }
+          let end2 = pos + kw.length;
+          for (let i = pos+kw.length; i < Math.min(t.length, pos+80); i++) {
+            if ('\uff0c\u3002\uff1f\uff01\n'.includes(t[i])) { end2=i; break; }
+            if (i===t.length-1) end2=t.length;
+          }
+          const clause = t.slice(start, end2).replace(/^[\uff0c\u3002\uff1f\uff01]+|[\uff0c\u3002\uff1f\uff01]+$/g,'').trim();
+          if (clause && clause.length >= 6 && !found.includes(clause)) found.push(clause);
+          pos++;
+        }
+      });
+      return found;
+    }
+
+    // E: Expressions & Appearance — faces, eyes, posture, clothing of CHARACTERS only
+    const E = findClauses(text, [
+      '\u767d\u53d1','\u4f5b\u5c65','\u8863\u7740','\u5e03\u978b','\u78e8\u5f97\u53d1\u767d',
+      '\u6ee1\u8138\u901a\u7ea2','\u6e17\u51fa\u4e86\u7ec6\u5bc6\u7684\u6c57\u73e0','\u6c57\u73e0',
+      '\u9762\u65e0\u8868\u60c5','\u76b1\u4e86\u76b1\u7709','\u76b1\u7709',
+      '\u5634\u5507','\u773c\u8b36\u6e10\u6e10\u6cf3\u7ea2','\u773c\u8b36',
+      '\u628a\u76ee\u5149\u79fb\u5f00','\u6574\u7406\u67dc\u53f0\u4e0a\u7684\u4e1c\u897f',
+      '\u6d51\u6d4a\u5374\u95ea\u70c1\u7740\u5149\u8292','\u6ee1\u662f\u76b1\u7eb9','\u6cea\u73e0',
+      '\u5634\u89d2\u5374\u5e26\u7740\u6e29\u6696\u7684\u7b11\u610f',
+      '\u58f0\u97f3\u6c99\u54d1\u800c\u5fae\u5f31','\u8138\u4e0a\u5374\u6ca1\u6709\u4e00\u4e1d\u6012\u610f',
+      '\u8138\u8272','\u60ca\u6124','\u5951\u888b\u4e86\u773c\u775b','\u8131\u53e3\u800c\u51fa',
+      '\u5c0f\u5fc3\u7fc1\u7fc1\u7684\u8131\u843d','\u795e\u60c5\u51dd\u56fa','\u8138\u8272\u60e8\u767d',
+      '\u4f4e\u4e0b\u5934','\u767e\u611f\u4ea4\u96c6','\u773c\u6846\u5fae\u5fae\u6ce5\u7ea2',
+      '\u76ee\u5149\u53d8\u5f97\u67d4\u548c','\u773c\u8b36\u65e9\u5df2\u7ea2\u4e86',
+    ]);
+
+    // A: Actions — specific physical actions of characters
+    const A = findClauses(text, [
+      '\u53cc\u624b\u7d27\u7d27\u5730','\u98a4\u5371\u5371\u5730','\u4e00\u679a\u4e00\u679a\u5730\u6570\u51fa\u6765',
+      '\u5c0f\u5fc3\u7fc1\u7fc1\u5730\u6458','\u614c\u5fd9\u7ffb\u904d','\u53cc\u624b\u4ea4\u53c9\u5728\u80f8\u524d',
+      '\u4e0d\u77e5\u6240\u63aa\u5730\u641e\u7740\u8863\u89d2','\u7f13\u7f13\u5730\u4f38\u51fa\u624b',
+      '\u9f13\u8d77\u52c7\u6c14\u5feb\u6b65\u8d70\u4e0a\u524d','\u8f7b\u8f7b\u653e\u5728\u67dc\u53f0\u4e0a',
+      '\u6108\u4e86\u4e00\u4e0b','\u6ca1\u6709\u8bf4\u8bdd','\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u9322',
+      '\u8f6c\u8fc7\u5934','\u626e\u7740\u8001\u5976\u5962\u8d70\u51fa','\u5e2e\u5979\u628a\u4e1c\u897f\u63d0\u597d',
+      '\u7d27\u7d27\u5730\u63e1\u4f4f\u6211\u7684\u624b','\u4f4e\u5934\u770b\u4e86\u770b',
+      '\u56f4\u5728\u4e00\u65c1','\u7387\u5148\u62ff\u8d77','\u4e00\u628a\u62a2\u8fc7',
+      '\u4e09\u4e2a\u4eba\u4f60\u63a8\u6211\u6426','\u6162\u6162\u84b9\u4e0b\u8eab',
+      '\u4e00\u7247\u4e00\u7247\u6361\u8d77','\u8f7b\u8f7b\u653e\u5728\u638c\u5fc3',
+      '\u6218\u6218\u5162\u5162\u5730\u8d70\u4e0a\u524d','\u62cd\u4e86\u62cd\u4ed6\u7684\u80a9\u8180',
+    ]);
+
+    // S: Speech — find speech verb + quoted words together
+    const S = [];
+    const speechVerbs = ['\u8bf4\uff1a','\u9053\uff1a','\u7b54\uff1a','\u56de\u7b54\uff1a',
+      '\u6073\u6c42\u9053\uff1a','\u6073\u6c42\uff1a','\u5ff5\u53e8\u7740\uff1a','\u5ff5\u53e8\uff1a',
+      '\u554a\u54fc\u7740\u8bf4\uff1a','\u8bed\u91cd\u5fc3\u957f\u5730\u8bf4\uff1a'];
+    const quoteStarts = ['\u201c','"'];
+    const quoteEnds = ['\u201d','"'];
+    text.split(/[\n]/).forEach(function(line) {
+      speechVerbs.forEach(function(sv) {
+        let si = 0;
+        while ((si = line.indexOf(sv, si)) !== -1) {
+          const qStart = quoteStarts.findIndex(function(q){ return line.indexOf(q, si) !== -1; });
+          if (qStart !== -1) {
+            const qs = line.indexOf(quoteStarts[qStart], si);
+            const qe = line.indexOf(quoteEnds[qStart], qs+1);
+            if (qe !== -1) {
+              let cs = si;
+              for (let i = si; i >= Math.max(0, si-40); i--) {
+                if ('\uff0c\u3002\uff1f\uff01\n'.includes(line[i])) { cs = i+1; break; }
+                if (i===0) cs=0;
+              }
+              const clause = line.slice(cs, qe+1).trim();
+              if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
+            }
+          }
+          si++;
+        }
+      });
+    });
+    // Catch 反复念叨着"..."
+    (function(){ const nd = '\u53cd\u590d\u5ff5\u53e8\u7740'; let ni = 0;
+      while((ni=text.indexOf(nd,ni))!==-1){
+        const qs=['\u201c','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
+        if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='\u201c'?'\u201d':'"',q0+1);
+        if(qe>-1){const cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
+
+    // I: Inner thoughts — ONLY first-person mental verbs during action (NOT P2 scene or P8 conclusion)
+    const I = findClauses(text, [
+      '\u6211\u7684\u5fc3\u50cf\u88ab','\u6211\u5fc3\u60f3\uff1a','\u72af\u4e86\u4e00\u4e0b',
+      '\u8ba9\u6211\u7684\u9f3b\u5b50\u4e00\u9635\u53d1\u9178','\u5fc3\u91cc\u4e03\u4e0a\u516b\u4e0b',
+      '\u5fc3\u5934\u4e00\u7d27','\u5185\u5fc3\u4e94\u5473\u6742\u964c','\u5fc3\u4e2d\u6d8c\u8d77',
+      '\u5fc3\u91cc\u9ed8\u60f3','\u6211\u4e0d\u7981\u6124\u4f4f\u4e86','\u6211\u81ea\u6211\u95ee\u9053',
+    ]);
+    if (text.includes('\u72af\u4e86\u4e00\u77ac\u95f4') && !I.includes('\u72af\u4e86\u4e00\u77ac\u95f4')) I.push('\u72af\u4e86\u4e00\u77ac\u95f4');
+
+    // Post-process: remove substring duplicates within each category
+    function dedupSubstrings(arr) {
+      return arr.filter(function(item, i) {
+        return !arr.some(function(other, j) {
+          return i !== j && other.includes(item) && other.length > item.length;
+        });
+      });
+    }
+
+    return {
+      E: dedupSubstrings(E),
+      A: dedupSubstrings(A),
+      S: dedupSubstrings(S),
+      I: dedupSubstrings(I)
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SHARED EASI DEDUP: Merges rule-based + AI extractions,
+  // splits sentences into clauses, deduplicates, filters P2/P8
+  // Used by: screen EASI cards, annotated essay, and PDF export
+  // ═══════════════════════════════════════════════════════════════════
+  function buildEasiExtractions(essayText, annotations) {
+    const ruleAll = extractEASI(essayText);
+    const aiAnns = annotations || [];
+    const seenGlobal = new Set();
+    const result = {};
+
+    // Phrases that are scene-setting (P2) or conclusion reflections (P8),
+    // NOT character-level EASI descriptions
+    const nonEasiPatterns = [
+      '让人感到', '令人感到',           // P2 scene atmosphere
+      '这也让我意识到', '我感到既',     // P8 conclusion
+      '我意识到', '我明白了', '我懂得了', // P8 conclusion
+      '我学会了', '我终于明白',         // P8 conclusion
+      '这件事让我', '经历过这件事',     // P8 conclusion
+    ];
+
+    function isNonEasi(t) {
+      return nonEasiPatterns.some(function(p) { return t.includes(p); });
+    }
+
+    // Split text on Chinese commas/semicolons into clauses
+    function splitIntoClauses(t) {
+      var parts = t.split(/[，；]/).map(function(s) { return s.trim(); }).filter(function(s) { return s.length >= 4; });
+      if (parts.length >= 2) return parts;
+      return [t];
+    }
+
+    ['E', 'A', 'S', 'I'].forEach(function(k) {
+      var ruleItems = ruleAll[k] || [];
+      var aiItems = aiAnns
+        .filter(function(a) { return a.type === 'good' && a.technique === k; })
+        .map(function(a) { return a.text; })
+        .filter(Boolean);
+
+      // Merge: AI first (higher quality), then rule-based
+      var rawMerged = [];
+      aiItems.forEach(function(t) { if (!rawMerged.includes(t)) rawMerged.push(t); });
+      ruleItems.forEach(function(t) { if (!rawMerged.includes(t)) rawMerged.push(t); });
+
+      // For S (speech), keep as-is (verb + quote is one unit)
+      // For E/A/I, split comma-joined sentences into individual clauses
+      var expanded = [];
+      rawMerged.forEach(function(text) {
+        if (k === 'S') {
+          expanded.push(text);
+        } else {
+          var clauses = splitIntoClauses(text);
+          clauses.forEach(function(c) {
+            if (!expanded.includes(c)) expanded.push(c);
+          });
+        }
+      });
+
+      // Filter out non-EASI content
+      expanded = expanded.filter(function(t) { return !isNonEasi(t); });
+
+      // Prefer clauses over sentences: if a longer entry contains
+      // a shorter entry as substring, drop the longer one
+      var deduped = expanded.filter(function(item, i) {
+        var containsShorter = expanded.some(function(other, j) {
+          return i !== j && item.includes(other) && item.length > other.length;
+        });
+        return !containsShorter;
+      });
+
+      // Cross-category global dedup
+      result[k] = deduped.filter(function(t) {
+        if (!t || seenGlobal.has(t)) return false;
+        seenGlobal.add(t);
+        return true;
+      });
+    });
+
+    return result;
+  }
+
   function generatePDF() {
     const w = window.open('', '_blank');
     const fwNames = {p1_opening:'P1 开头策略',p2_scene:'P2 场景设置',p3_transition:'P3 过渡段',p4_trigger:'P4 高潮前',p56_climax:'P5–6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
@@ -81,21 +286,8 @@ export default function Home() {
       </div>`;
     }).join('');
 
-    // Pre-compute PDF EASI with global cross-category dedup
-    const pdfRuleAll = extractEASI(essay);
-    const pdfSeenGlobal = new Set();
-    const pdfEasiExtracted = {};
-    ['A','S','E','I'].forEach(function(k) {
-      const rule = pdfRuleAll[k] || [];
-      const ai = (results.annotations||[]).filter(a=>a.type==='good'&&a.technique===k).map(a=>a.text).filter(Boolean);
-      const merged = [...rule];
-      ai.forEach(function(t){ if(!merged.includes(t)) merged.push(t); });
-      pdfEasiExtracted[k] = merged.filter(function(t) {
-        if (!t || pdfSeenGlobal.has(t)) return false;
-        pdfSeenGlobal.add(t);
-        return true;
-      });
-    });
+    // Use shared dedup function for PDF EASI
+    const pdfEasiExtracted = buildEasiExtractions(essay, results.annotations);
 
     const easiCards = ['E','A','S','I'].map(k => {
       const it = results.easi?.[k]||{};
@@ -149,12 +341,26 @@ export default function Home() {
       return map;
     })();
 
+    // Use shared dedup for PDF annotated essay annotations
+    const pdfEasiBuilt = buildEasiExtractions(essay, results.annotations);
+    const pdfAiAnns = results.annotations || [];
+    const pdfAiTexts = new Set(pdfAiAnns.map(function(a){return a.text;}));
+    const pdfExtraAnns = [];
+    ['E','A','S','I'].forEach(function(tech) {
+      (pdfEasiBuilt[tech]||[]).forEach(function(text) {
+        if (text && !pdfAiTexts.has(text) && essay.includes(text)) {
+          pdfExtraAnns.push({text:text, type:'good', technique:tech, comment:''});
+        }
+      });
+    });
+    const pdfMergedAnns = [...pdfAiAnns, ...pdfExtraAnns];
+
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
       const fwKey = pdfParaMap[pIdx];
       const fw = fwKey ? (results.framework||{})[fwKey] : null;
       const st = fw ? (fwStatusStyle[fw.status]||fwStatusStyle.pass) : null;
       const annotatedPara = (function() {
-        var sorted = (results.annotations||[]).slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
+        var sorted = pdfMergedAnns.slice().sort(function(a,b){return (b.text||'').length-(a.text||'').length;});
         var text = para;
         sorted.forEach(function(ann) {
           if (!ann.text) return;
@@ -303,131 +509,7 @@ export default function Home() {
 
   function reset() { setState('input'); setResults(null); setSampleState('idle'); setStretchState('idle'); setSampleEssay(''); setStretchEssay(''); setStretchGrade(''); setError(''); }
 
-  // ── Rule-based EASI extractor — deterministic, catches what AI misses
-  function extractEASI(text) {
-    if (!text) return {E:[],A:[],S:[],I:[]};
-
-    // Helper: find clauses containing keyword, bounded by punctuation
-    function findClauses(t, keywords) {
-      const found = [];
-      keywords.forEach(function(kw) {
-        let pos = 0;
-        while ((pos = t.indexOf(kw, pos)) !== -1) {
-          let start = pos;
-          for (let i = pos; i >= Math.max(0, pos-60); i--) {
-            if ('\uff0c\u3002\uff1f\uff01\n\u201c\u201d'.includes(t[i])) { start = i+1; break; }
-            if (i===0) start=0;
-          }
-          let end2 = pos + kw.length;
-          for (let i = pos+kw.length; i < Math.min(t.length, pos+80); i++) {
-            if ('\uff0c\u3002\uff1f\uff01\n'.includes(t[i])) { end2=i; break; }
-            if (i===t.length-1) end2=t.length;
-          }
-          const clause = t.slice(start, end2).replace(/^[\uff0c\u3002\uff1f\uff01]+|[\uff0c\u3002\uff1f\uff01]+$/g,'').trim();
-          if (clause && clause.length >= 6 && !found.includes(clause)) found.push(clause);
-          pos++;
-        }
-      });
-      return found;
-    }
-
-    // E: Expressions & Appearance — faces, eyes, posture, clothing of CHARACTERS only
-    const E = findClauses(text, [
-      '\u767d\u53d1','\u4f5b\u5c65','\u8863\u7740','\u5e03\u978b','\u78e8\u5f97\u53d1\u767d',
-      '\u6ee1\u8138\u901a\u7ea2','\u6e17\u51fa\u4e86\u7ec6\u5bc6\u7684\u6c57\u73e0','\u6c57\u73e0',
-      '\u9762\u65e0\u8868\u60c5','\u76b1\u4e86\u76b1\u7709','\u76b1\u7709',
-      '\u5634\u5507','\u773c\u8b36\u6e10\u6e10\u6cf3\u7ea2','\u773c\u8b36',
-      '\u628a\u76ee\u5149\u79fb\u5f00','\u6574\u7406\u67dc\u53f0\u4e0a\u7684\u4e1c\u897f',
-      '\u6d51\u6d4a\u5374\u95ea\u70c1\u7740\u5149\u8292','\u6ee1\u662f\u76b1\u7eb9','\u6cea\u73e0',
-      '\u5634\u89d2\u5374\u5e26\u7740\u6e29\u6696\u7684\u7b11\u610f',
-      '\u58f0\u97f3\u6c99\u54d1\u800c\u5fae\u5f31','\u8138\u4e0a\u5374\u6ca1\u6709\u4e00\u4e1d\u6012\u610f',
-      '\u8138\u8272','\u60ca\u6124','\u5951\u888b\u4e86\u773c\u775b','\u8131\u53e3\u800c\u51fa',
-      '\u5c0f\u5fc3\u7fc1\u7fc1\u7684\u8131\u843d','\u795e\u60c5\u51dd\u56fa','\u8138\u8272\u60e8\u767d',
-      '\u4f4e\u4e0b\u5934','\u767e\u611f\u4ea4\u96c6','\u773c\u6846\u5fae\u5fae\u6ce5\u7ea2',
-      '\u76ee\u5149\u53d8\u5f97\u67d4\u548c','\u773c\u8b36\u65e9\u5df2\u7ea2\u4e86',
-    ]);
-
-    // A: Actions — specific physical actions of characters
-    const A = findClauses(text, [
-      '\u53cc\u624b\u7d27\u7d27\u5730','\u98a4\u5371\u5371\u5730','\u4e00\u679a\u4e00\u679a\u5730\u6570\u51fa\u6765',
-      '\u5c0f\u5fc3\u7fc1\u7fc1\u5730\u6458','\u614c\u5fd9\u7ffb\u904d','\u53cc\u624b\u4ea4\u53c9\u5728\u80f8\u524d',
-      '\u4e0d\u77e5\u6240\u63aa\u5730\u641e\u7740\u8863\u89d2','\u7f13\u7f13\u5730\u4f38\u51fa\u624b',
-      '\u9f13\u8d77\u52c7\u6c14\u5feb\u6b65\u8d70\u4e0a\u524d','\u8f7b\u8f7b\u653e\u5728\u67dc\u53f0\u4e0a',
-      '\u6108\u4e86\u4e00\u4e0b','\u6ca1\u6709\u8bf4\u8bdd','\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u9322',
-      '\u8f6c\u8fc7\u5934','\u626e\u7740\u8001\u5976\u5962\u8d70\u51fa','\u5e2e\u5979\u628a\u4e1c\u897f\u63d0\u597d',
-      '\u7d27\u7d27\u5730\u63e1\u4f4f\u6211\u7684\u624b','\u4f4e\u5934\u770b\u4e86\u770b',
-      '\u56f4\u5728\u4e00\u65c1','\u7387\u5148\u62ff\u8d77','\u4e00\u628a\u62a2\u8fc7',
-      '\u4e09\u4e2a\u4eba\u4f60\u63a8\u6211\u6426','\u6162\u6162\u84b9\u4e0b\u8eab',
-      '\u4e00\u7247\u4e00\u7247\u6361\u8d77','\u8f7b\u8f7b\u653e\u5728\u638c\u5fc3',
-      '\u6218\u6218\u5162\u5162\u5730\u8d70\u4e0a\u524d','\u62cd\u4e86\u62cd\u4ed6\u7684\u80a9\u8180',
-    ]);
-
-    // S: Speech — find speech verb + quoted words together
-    const S = [];
-    const speechVerbs = ['\u8bf4\uff1a','\u9053\uff1a','\u7b54\uff1a','\u56de\u7b54\uff1a',
-      '\u6073\u6c42\u9053\uff1a','\u6073\u6c42\uff1a','\u5ff5\u53e8\u7740\uff1a','\u5ff5\u53e8\uff1a',
-      '\u554a\u54fc\u7740\u8bf4\uff1a','\u8bed\u91cd\u5fc3\u957f\u5730\u8bf4\uff1a'];
-    const quoteStarts = ['\u201c','"'];
-    const quoteEnds = ['\u201d','"'];
-    text.split(/[\n]/).forEach(function(line) {
-      speechVerbs.forEach(function(sv) {
-        let si = 0;
-        while ((si = line.indexOf(sv, si)) !== -1) {
-          const qStart = quoteStarts.findIndex(function(q){ return line.indexOf(q, si) !== -1; });
-          if (qStart !== -1) {
-            const qs = line.indexOf(quoteStarts[qStart], si);
-            const qe = line.indexOf(quoteEnds[qStart], qs+1);
-            if (qe !== -1) {
-              let cs = si;
-              for (let i = si; i >= Math.max(0, si-40); i--) {
-                if ('\uff0c\u3002\uff1f\uff01\n'.includes(line[i])) { cs = i+1; break; }
-                if (i===0) cs=0;
-              }
-              const clause = line.slice(cs, qe+1).trim();
-              if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
-            }
-          }
-          si++;
-        }
-      });
-    });
-    // Catch 反复念叨着"..."
-    (function(){ const nd = '\u53cd\u590d\u5ff5\u53e8\u7740'; let ni = 0;
-      while((ni=text.indexOf(nd,ni))!==-1){
-        const qs=['\u201c','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
-        if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='\u201c'?'\u201d':'"',q0+1);
-        if(qe>-1){const cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
-
-    // I: Inner thoughts — ONLY first-person mental verbs (not setting or conclusion reflections)
-    const I = findClauses(text, [
-      '\u6211\u7684\u5fc3\u50cf\u88ab','\u6211\u5fc3\u60f3\uff1a','\u72af\u4e86\u4e00\u4e0b',
-      '\u8ba9\u6211\u7684\u9f3b\u5b50\u4e00\u9635\u53d1\u9178','\u5fc3\u91cc\u4e03\u4e0a\u516b\u4e0b',
-      '\u5fc3\u5934\u4e00\u7d27','\u5185\u5fc3\u4e94\u5473\u6742\u964c','\u5fc3\u4e2d\u6d8c\u8d77',
-      '\u5fc3\u91cc\u9ed8\u60f3','\u6211\u4e0d\u7981\u6124\u4f4f\u4e86','\u6211\u81ea\u6211\u95ee\u9053',
-    ]);
-    // Also catch 犹豫了一瞬间 directly
-    if (text.includes('\u72af\u4e86\u4e00\u77ac\u95f4') && !I.includes('\u72af\u4e86\u4e00\u77ac\u95f4')) I.push('\u72af\u4e86\u4e00\u77ac\u95f4');
-    if (text.includes('\u6211\u611f\u5230\u65e2\u5fc3\u9178\u53c8\u6e29\u6696') && !I.includes('\u6211\u611f\u5230\u65e2\u5fc3\u9178\u53c8\u6e29\u6696')) I.push('\u6211\u611f\u5230\u65e2\u5fc3\u9178\u53c8\u6e29\u6696');
-
-    // Post-process: remove substring duplicates within each category
-    // If item X is a substring of item Y, keep only X (the shorter one)
-    function dedupSubstrings(arr) {
-      return arr.filter(function(item, i) {
-        return !arr.some(function(other, j) {
-          return i !== j && other.includes(item) && other.length > item.length;
-        });
-      });
-    }
-
-    return {
-      E: dedupSubstrings(E),
-      A: dedupSubstrings(A),
-      S: dedupSubstrings(S),
-      I: dedupSubstrings(I)
-    };
-  }
-
-    const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
+  const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
   const easiItems = [{k:'E',name:'外貌描写',en:'Expressions & Appearance'},{k:'A',name:'行动描写',en:'Actions'},{k:'S',name:'语言描写',en:'Speech'},{k:'I',name:'心理描写',en:'Inner Thoughts & Feelings'}];
   function fwColor(s){if(s==='pass')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e',icon:'✓'};if(s==='warn')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10',icon:'△'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810',icon:'✗'};}
   function easiColor(r){if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
@@ -473,14 +555,12 @@ export default function Home() {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
     const fwKeys = FW_KEYS.filter(function(k){return !!framework[k];});
 
-    // Sequential mapping: P1→para0, P2→para1... P5-6→para4 AND para5, P7→para6, P8→para7
     var paraFwMap = (function() {
       var map = new Array(paragraphs.length).fill(null);
       var ki = 0;
       for (var pi = 0; pi < paragraphs.length; pi++) {
         if (ki >= fwKeys.length) break;
         map[pi] = fwKeys[ki];
-        // P5-6 spans two paragraphs — both get the card
         if (fwKeys[ki] === 'p56_climax' && pi + 1 < paragraphs.length) {
           pi++;
           map[pi] = fwKeys[ki];
@@ -663,12 +743,13 @@ export default function Home() {
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#fdf6e3',color:'#a07820',border:'1px solid #a07820'}}>🟡 可改善</span>
             </div>
             {(function(){
-              const _ruleAll = extractEASI(essay);
+              // Use shared dedup for annotated essay annotations
+              const _easiBuilt = buildEasiExtractions(essay, results?.annotations || []);
               const _aiAnns = results?.annotations || [];
               const _aiTexts = new Set(_aiAnns.map(function(a){return a.text;}));
               const _extra = [];
               ['E','A','S','I'].forEach(function(tech) {
-                (_ruleAll[tech]||[]).forEach(function(text) {
+                (_easiBuilt[tech]||[]).forEach(function(text) {
                   if (text && !_aiTexts.has(text) && essay.includes(text)) {
                     _extra.push({text:text, type:'good', technique:tech, comment:''});
                   }
@@ -705,25 +786,8 @@ export default function Home() {
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>✍️</div><div><div className="sec-title">EASI 人物描写手法</div><div className="sec-sub">E = Expressions & Appearance &nbsp;·&nbsp; A = Actions &nbsp;·&nbsp; S = Speech &nbsp;·&nbsp; I = Inner Thoughts & Feelings</div></div></div>
             <div className="easi-grid">{(function(){
-            // Pre-compute all 4 categories with global cross-category dedup
-            // Uses same merge logic as essay annotation — guarantees card↔highlight sync
-            const ruleAll = extractEASI(essay);
-            const _allAiAnns = results.annotations||[];
-            const _aiTextSet = new Set(_allAiAnns.map(function(a){return a.text;}));
-            const seenGlobal = new Set();
-            const easiExtracted = {};
-            ['A','S','E','I'].forEach(function(k) {
-              const rule = ruleAll[k] || [];
-              const ai = _allAiAnns.filter(function(a){return a.type==='good'&&a.technique===k;}).map(function(a){return a.text;}).filter(Boolean);
-              const merged = [...rule];
-              ai.forEach(function(t){ if(!merged.includes(t)) merged.push(t); });
-              // Dedup within category AND across categories
-              easiExtracted[k] = merged.filter(function(t) {
-                if (!t || seenGlobal.has(t)) return false;
-                seenGlobal.add(t);
-                return true;
-              });
-            });
+            // Use shared dedup function
+            const easiExtracted = buildEasiExtractions(essay, results.annotations);
             return easiItems.map(e=>{
             const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
             const c=easiColor(item.rating);
