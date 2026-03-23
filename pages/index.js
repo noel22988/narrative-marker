@@ -244,13 +244,21 @@ export default function Home() {
     }
 
     // Cross-category correction: detect misclassified items
-    // If an item contains a speech verb + quote → it belongs in S, not E or A
-    var speechMarkers = ['说：', '道：', '答：', '回答：', '恳求道：', '念叨着', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：'];
-    var quoteChars = ['"', '"', '「', '」'];
+    // If an item contains a speech verb → it belongs in S, not E or A
+    // Note: AI sometimes strips closing quotes, so we detect speech verbs alone
+    var speechVerbMarkers = ['说：', '道：', '答：', '回答：', '恳求道：', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：', '冷淡地回答：', '小声地说：', '对收银员说：'];
+    // Also match patterns like X地说："... or X着说："...
+    var speechVerbPatterns = [/[地着]说[：:]/,  /[地着]道[：:]/,  /[地着]答[：:]/,  /[地着]回答[：:]/];
     function isSpeech(t) {
-      var hasSpeechVerb = speechMarkers.some(function(sv) { return t.includes(sv); });
-      var hasQuote = quoteChars.some(function(q) { return t.includes(q); });
-      return hasSpeechVerb && hasQuote;
+      // Check explicit speech verb markers
+      var hasExplicitVerb = speechVerbMarkers.some(function(sv) { return t.includes(sv); });
+      if (hasExplicitVerb) return true;
+      // Check speech verb patterns (e.g. 面无表情地说：)
+      var hasPattern = speechVerbPatterns.some(function(p) { return p.test(t); });
+      if (hasPattern) return true;
+      // Check for 念叨着 (with or without colon/quote)
+      if (t.includes('念叨着')) return true;
+      return false;
     }
 
     // If an item is clearly an action (body doing something), it shouldn't be in E
@@ -309,10 +317,26 @@ export default function Home() {
         return !containsShorter;
       });
 
-      // Cross-category global dedup
+      // Near-match dedup: normalize punctuation before comparing
+      // Catches: 反复念叨着："好孩子" vs 反复念叨着"好孩子"
+      function normalize(t) {
+        return t.replace(/[：:]/g, '').replace(/[""「」""]/g, '').replace(/\s+/g, '');
+      }
+      var seenNormalized = new Set();
+      deduped = deduped.filter(function(t) {
+        var n = normalize(t);
+        if (seenNormalized.has(n)) return false;
+        seenNormalized.add(n);
+        return true;
+      });
+
+      // Cross-category global dedup (also using normalized form)
       result[k] = deduped.filter(function(t) {
-        if (!t || seenGlobal.has(t)) return false;
+        if (!t) return false;
+        var n = normalize(t);
+        if (seenGlobal.has(t) || seenGlobal.has(n)) return false;
         seenGlobal.add(t);
+        seenGlobal.add(n);
         return true;
       });
     });
