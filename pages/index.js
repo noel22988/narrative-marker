@@ -307,14 +307,14 @@ export default function Home() {
       if (k === 'E') {
         // Remove speech items from E: speech verb ALWAYS takes precedence over appearance
         expanded = expanded.filter(function(t) {
-          // Direct character check — most reliable
-          if (t.includes('\u8bf4\uff1a') || t.includes('\u8bf4:') || t.includes('\u8bf4\u201c') || t.includes('\u8bf4\u300c')) return false;  // 说 + colon/quote
-          if (t.includes('\u9053\uff1a') || t.includes('\u9053:') || t.includes('\u9053\u201c') || t.includes('\u9053\u300c')) return false;  // 道 + colon/quote
-          if (t.includes('\u7b54\uff1a') || t.includes('\u7b54:') || t.includes('\u7b54\u201c') || t.includes('\u7b54\u300c')) return false;  // 答 + colon/quote
-          if (t.includes('\u56de\u7b54')) return false;  // 回答
-          if (t.includes('\u6073\u6c42\u9053')) return false;  // 恳求道
-          if (t.includes('\u5ff5\u53e8')) return false;  // 念叨
-          if (t.includes('\u5ff5\u5ff5\u6709\u8bcd')) return false;  // 念念有词
+          // Direct character check using actual Chinese chars
+          if (t.includes('说：') || t.includes('说:') || t.includes('说"') || t.includes('说「') || t.includes('说“')) return false;
+          if (t.includes('道：') || t.includes('道:') || t.includes('道"') || t.includes('道「') || t.includes('道“')) return false;
+          if (t.includes('答：') || t.includes('答:') || t.includes('答"') || t.includes('答「') || t.includes('答“')) return false;
+          if (t.includes('回答')) return false;
+          if (t.includes('恳求道')) return false;
+          if (t.includes('念叨')) return false;
+          if (t.includes('念念有词')) return false;
           if (isSpeech(t)) return false;
           return true;
         });
@@ -324,12 +324,12 @@ export default function Home() {
       if (k === 'A') {
         // Remove speech items from A
         expanded = expanded.filter(function(t) {
-          if (t.includes('\u8bf4\uff1a') || t.includes('\u8bf4:') || t.includes('\u8bf4\u201c') || t.includes('\u8bf4\u300c')) return false;
-          if (t.includes('\u9053\uff1a') || t.includes('\u9053:') || t.includes('\u9053\u201c') || t.includes('\u9053\u300c')) return false;
-          if (t.includes('\u7b54\uff1a') || t.includes('\u7b54:') || t.includes('\u7b54\u201c') || t.includes('\u7b54\u300c')) return false;
-          if (t.includes('\u56de\u7b54')) return false;
-          if (t.includes('\u6073\u6c42\u9053')) return false;
-          if (t.includes('\u5ff5\u53e8')) return false;
+          if (t.includes('说：') || t.includes('说:') || t.includes('说"') || t.includes('说「') || t.includes('说“')) return false;
+          if (t.includes('道：') || t.includes('道:') || t.includes('道"') || t.includes('道「') || t.includes('道“')) return false;
+          if (t.includes('答：') || t.includes('答:') || t.includes('答"') || t.includes('答「') || t.includes('答“')) return false;
+          if (t.includes('回答')) return false;
+          if (t.includes('恳求道')) return false;
+          if (t.includes('念叨')) return false;
           if (isSpeech(t)) return false;
           return true;
         });
