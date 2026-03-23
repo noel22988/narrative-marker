@@ -246,7 +246,7 @@ export default function Home() {
     // Cross-category correction: detect misclassified items
     // If an item contains a speech verb → it belongs in S, not E or A
     // Note: AI sometimes strips closing quotes, so we detect speech verbs alone
-    var speechVerbMarkers = ['说：', '道：', '答：', '回答：', '恳求道：', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：', '冷淡地回答：', '小声地说：', '对收银员说：'];
+    var speechVerbMarkers = ['说：', '说:', '道：', '道:', '答：', '回答：', '恳求道：', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：', '冷淡地回答：', '小声地说：', '对收银员说：', '面无表情地说'];
     // Also match patterns like X地说："... or X着说："...
     var speechVerbPatterns = [/[地着]说[：:]/,  /[地着]道[：:]/,  /[地着]答[：:]/,  /[地着]回答[：:]/];
     function isSpeech(t) {
