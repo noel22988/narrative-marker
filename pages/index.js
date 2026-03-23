@@ -243,6 +243,22 @@ export default function Home() {
       return [t];
     }
 
+    // Cross-category correction: detect misclassified items
+    // If an item contains a speech verb + quote → it belongs in S, not E or A
+    var speechMarkers = ['说：', '道：', '答：', '回答：', '恳求道：', '念叨着', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：'];
+    var quoteChars = ['"', '"', '「', '」'];
+    function isSpeech(t) {
+      var hasSpeechVerb = speechMarkers.some(function(sv) { return t.includes(sv); });
+      var hasQuote = quoteChars.some(function(q) { return t.includes(q); });
+      return hasSpeechVerb && hasQuote;
+    }
+
+    // If an item is clearly an action (body doing something), it shouldn't be in E
+    var actionIndicators = ['抱着', '掏出', '数出来', '摆在', '翻遍', '翻出', '交叉在胸前', '搓着', '整理', '伸出手', '走上前', '放在', '收下', '扶着', '提好', '握住', '愣住', '愣了', '僵在', '后退', '低下头', '蹲下', '捡起', '走去', '凑了', '拿起', '抢过', '推我搡', '举过', '转过头', '拍了拍'];
+    function isAction(t) {
+      return actionIndicators.some(function(kw) { return t.includes(kw); });
+    }
+
     ['E', 'A', 'S', 'I'].forEach(function(k) {
       var ruleItems = ruleAll[k] || [];
       var aiItems = aiAnns
@@ -271,6 +287,18 @@ export default function Home() {
 
       // Filter out non-EASI content
       expanded = expanded.filter(function(t) { return !isNonEasi(t); });
+
+      // Cross-category correction: remove misclassified items
+      if (k === 'E') {
+        // Remove speech items from E (speech verb + quote = S, not E)
+        expanded = expanded.filter(function(t) { return !isSpeech(t); });
+        // Remove action items from E (body doing something = A, not E)
+        expanded = expanded.filter(function(t) { return !isAction(t); });
+      }
+      if (k === 'A') {
+        // Remove speech items from A
+        expanded = expanded.filter(function(t) { return !isSpeech(t); });
+      }
 
       // Prefer clauses over sentences: if a longer entry contains
       // a shorter entry as substring, drop the longer one
@@ -315,10 +343,10 @@ export default function Home() {
 
     const easiCards = ['E','A','S','I'].map(k => {
       const it = results.easi?.[k]||{};
-      const isGood = it.rating==='good', isOk = it.rating==='ok';
-      const bg = isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
-      const border = isGood?'#1a6e40':isOk?'#a07820':'#b83222';
-      const color = isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
+      const isExcellent = it.rating==='excellent', isGood = it.rating==='good', isOk = it.rating==='ok';
+      const bg = isExcellent?'#eaf2fb':isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
+      const border = isExcellent?'#1a4a70':isGood?'#1a6e40':isOk?'#a07820':'#b83222';
+      const color = isExcellent?'#0d2d44':isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
       const extractedArr = pdfEasiExtracted[k] || [];
       const extractedHtml = !extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
@@ -546,7 +574,7 @@ export default function Home() {
     const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p3_transition',label:'P3 过渡段'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
   const easiItems = [{k:'E',name:'外貌描写',en:'Expressions & Appearance'},{k:'A',name:'行动描写',en:'Actions'},{k:'S',name:'语言描写',en:'Speech'},{k:'I',name:'心理描写',en:'Inner Thoughts & Feelings'}];
   function fwColor(s){if(s==='pass')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e',icon:'✓'};if(s==='warn')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10',icon:'△'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810',icon:'✗'};}
-  function easiColor(r){if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
+  function easiColor(r){if(r==='excellent')return{bg:'#eaf2fb',border:'#1a4a70',text:'#0d2d44'};if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
   function barColor(p){if(p>=80)return'#1a6e40';if(p>=65)return'#1a4a70';if(p>=50)return'#a07820';return'#b83222';}
 
   const FW_KEYS = ['p1_opening','p2_scene','p3_transition','p4_trigger','p56_climax','p7_resolution','p8_conclusion'];
@@ -781,7 +809,7 @@ export default function Home() {
 
         {state==='loading'&&(<div className="card fade"><div className="loading-wrap">
           <div className="loading-char">批改中…</div>
-          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (40–60 seconds)</div>
+          <div className="loading-msg">Marking your essay · 正在批改，约需 20–30 秒… (20–30 seconds)</div>
           <div className="loading-steps">{['检查框架结构','评估内容层次','分析语文结构','EASI手法评估','撰写考官评语'].map((s,i)=><span key={i} className="lstep">{s}</span>)}</div>
         </div></div>)}
 
