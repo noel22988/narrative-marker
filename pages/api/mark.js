@@ -57,9 +57,58 @@ Content and language scores should be within 2-3 marks of each other.
 GRADE BOUNDARIES: A1:30-40, A2:28-29, B3:26-27, B4:24-25, C5:22-23, C6:20-21, D7:18-19, E8:16-17, F9:≤15
 total_score MUST equal content_score + language_score.
 
-FRAMEWORK: pass/warn/fail. For each, write 2-3 Chinese sentences naming what the student wrote and what was done well/missing.
-P1开头: 抄题 or 倒叙. P2场景: Time+People+Place+Activity+Environment. P3过渡: bridge to conflict. P4高潮前: trigger incident. P5-6高潮中: main event with EASI. P7高潮后: resolution. P8结尾: feelings + moral.
-Include "para_index" (0-based) for each key.
+FRAMEWORK: For each stage, assign status and write 2-3 Chinese sentences explaining what the student wrote and what was done well/missing.
+
+STATUS CRITERIA:
+- "pass" — stage is clearly present and well-executed
+- "warn" — stage exists but is weak, incomplete, or poorly done (e.g. P2 missing environment, P8 has feelings but no moral)
+- "fail" — stage is entirely MISSING from the essay, or so poorly done it barely counts
+
+IMPORTANT: ALL 8 framework keys MUST appear in the output, even if the stage is missing. If a stage is missing, set status to "fail" and explain what is missing in the comment. Example: {"status":"fail","comment":"缺少过渡段，从场景描写直接跳入冲突，缺乏铺垫和人物背景介绍。","para_index":[]}
+
+HANDLING WEAK / MESSY / JUMBLED ESSAYS:
+Not every essay follows a clear 8-stage structure. For weak students:
+- A paragraph may attempt multiple stages poorly (e.g. scene + trigger in one paragraph). Assign it to the DOMINANT stage and note the mixing in the comment.
+- Stages may appear OUT OF ORDER (e.g. climax before scene). Still identify each stage where it appears and note the structural problem in the comment (e.g. "高潮部分出现在场景描写之前，结构混乱").
+- Some stages may be completely absent. Mark as "fail" with empty para_index [].
+- If the essay is so short or chaotic that you cannot identify a stage at all, mark it "fail".
+- A single paragraph can only belong to ONE stage. Choose the best fit.
+- If the essay has only 3-4 paragraphs, many stages will be "fail" — that is correct and expected.
+
+IMPORTANT — FLEXIBLE PARAGRAPH MAPPING:
+The 8 stages map to STORY BEATS, not fixed paragraph counts. A stage can span 1-3 paragraphs.
+- P3过渡 may have a 插叙 (flashback/backstory) sub-paragraph — this is still P3
+- P5-6高潮中 can span 2-4 paragraphs depending on the essay
+- There may be extra transitional paragraphs between stages
+
+For "para_index": use an ARRAY of 0-based paragraph indices that the stage covers.
+- Single paragraph: "para_index": [2]
+- Two paragraphs: "para_index": [2, 3]
+- Three paragraphs: "para_index": [5, 6, 7]
+
+Example for a 10-paragraph essay with flashback and extended climax:
+P1开头: para_index [0] — opening paragraph
+P2场景: para_index [1] — scene setting
+P3.1过渡: para_index [2] — transition to conflict
+P3.2插叙: para_index [3] — backstory flashback (if applicable)
+P4高潮前: para_index [4] — trigger incident
+P5-6高潮中: para_index [5, 6, 7] — climax spanning 3 paragraphs
+P7高潮后: para_index [8] — resolution/aftermath
+P8结尾: para_index [9] — reflection and moral
+
+Stage definitions:
+P1开头: 抄题 or 倒叙 (flashback/in-medias-res)
+P2场景: Time + People + Place + Activity + Environment
+P3.1过渡: Bridge from scene to conflict. Introduces key characters or situation that leads to the main event.
+P3.2插叙: Flashback or backstory paragraph. Gives background context (e.g. how characters met, why a trait exists, past events that matter).
+  CONDITIONAL: P3.2 is EXPECTED when the essay question contains backstory keywords like: 原本, 一向来, 曾经, 向来, 从小, 一直以来, 本来, 过去, 以前.
+  If the question has these keywords and the student has NO 插叙, set P3.2 status to "warn" or "fail".
+  If the question does NOT have these keywords and the student has no 插叙, set P3.2 status to "pass" with comment "此题不需要插叙".
+  If the student includes a 插叙 even without keywords, still mark it as "pass".
+P4高潮前: Trigger incident that starts the main conflict
+P5-6高潮中: Main event with rich EASI. Can span multiple paragraphs
+P7高潮后: Resolution — what happens after the conflict
+P8结尾: Feelings (感受) + moral/insight (启示)
 
 ════════════════════════════════════════════════════════════
 EASI CLASSIFICATION RULES — FOLLOW THESE EXACTLY
@@ -179,7 +228,7 @@ JSON SAFETY RULES:
 5. No trailing commas before } or ].
 
 TEMPLATE:
-{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":0},"p2_scene":{"status":"pass","comment":"...","para_index":1},"p3_transition":{"status":"pass","comment":"...","para_index":2},"p4_trigger":{"status":"pass","comment":"...","para_index":3},"p56_climax":{"status":"warn","comment":"...","para_index":4},"p7_resolution":{"status":"pass","comment":"...","para_index":6},"p8_conclusion":{"status":"pass","comment":"...","para_index":7}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
+{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
