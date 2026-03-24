@@ -1,18 +1,15 @@
 export const config = {
-  runtime: 'edge',
+  maxDuration: 60,
 };
 
-export default async function handler(request) {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const body = await request.json();
-    const { essay: rawEssay, title } = body;
+    const { essay: rawEssay, title } = req.body;
 
     if (!rawEssay || rawEssay.replace(/\s/g, '').length < 80) {
-      return new Response(JSON.stringify({ error: '请提供至少80字的作文。' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+      return res.status(400).json({ error: '请提供至少80字的作文。' });
     }
 
     const essay = (function(text) {
@@ -245,7 +242,7 @@ TEMPLATE:
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[{"label":"错别字","original":"说到","correction":"说道","reason":"到是方向词，道是说话的道"}],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 24000);
+    const timeout = setTimeout(() => controller.abort(), 55000);
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
@@ -256,12 +253,12 @@ TEMPLATE:
 
     if (!response.ok) {
       const errBody = await response.text();
-      return new Response(JSON.stringify({ error: 'API error: ' + response.status + ' ' + errBody.substring(0, 200) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      return res.status(500).json({ error: 'API error: ' + response.status + ' ' + errBody.substring(0, 200) });
     }
 
     const data = await response.json();
     if (data.error) {
-      return new Response(JSON.stringify({ error: data.error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+      return res.status(500).json({ error: data.error.message });
     }
     const raw = data.content.find(b => b.type === 'text')?.text || '';
 
@@ -269,7 +266,7 @@ let clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 const jsonStart = clean.indexOf('{');
 const jsonEnd = clean.lastIndexOf('}');
 if (jsonStart === -1 || jsonEnd === -1) {
-  return new Response(JSON.stringify({ error: 'No JSON found', debug_raw_start: raw.substring(0, 500) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  return res.status(500).json({ error: 'No JSON found', debug_raw_start: raw.substring(0, 500) });
 }
 clean = clean.substring(jsonStart, jsonEnd + 1);
 
@@ -372,7 +369,7 @@ if (!result) {
     if (posMatch) errorPos = parseInt(posMatch[1]);
   }
   const snippet = errorPos >= 0 ? clean.substring(Math.max(0, errorPos - 100), errorPos + 100) : clean.substring(0, 500);
-  return new Response(JSON.stringify({ error: 'JSON parse failed — please try again', debug_error: errorMsg, debug_position: errorPos, debug_snippet: snippet }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+  return res.status(500).json({ error: 'JSON parse failed — please try again', debug_error: errorMsg, debug_position: errorPos, debug_snippet: snippet });
 }
 
 // Post-parse: restore corner brackets to curly quotes for display
@@ -441,11 +438,11 @@ if (result.action_sequences && Array.isArray(result.action_sequences)) {
     else result.grade = 'F9';
     const labels = { A1:'优秀', A2:'优良', B3:'良好', B4:'良', C5:'及格', C6:'及格', D7:'及格边缘', E8:'不及格', F9:'不及格' };
     result.grade_label = labels[result.grade];
-    return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return res.status(200).json(result);
   } catch (err) {
     if (err.name === 'AbortError') {
-      return new Response(JSON.stringify({ error: '批改超时，请再试一次。The AI took too long — please try again.' }), { status: 504, headers: { 'Content-Type': 'application/json' } });
+      return res.status(504).json({ error: '批改超时，请再试一次。The AI took too long — please try again.' });
     }
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return res.status(500).json({ error: err.message });
   }
 }
