@@ -171,7 +171,9 @@ export default function Home() {
       '嚷着','喊着','吼道','骂道','叫道','问道','问：','问:',
       '笑着说','笑着回答','着急的说','生气的说',
       '开心的回答','尴尬的说','骄傲的对','冷冷地回答',
-      '悄悄地跟'];
+      '悄悄地跟',
+      '说"','说“','道"','道“','问"','问“',
+      '回答"','回答“'];
     const quoteStarts = ['\u201c','"'];
     const quoteEnds = ['\u201d','"'];
     text.split(/[\n]/).forEach(function(line) {
@@ -255,6 +257,7 @@ export default function Home() {
       '她的声音沙哑而微弱',
       '每当我', '脑海中总会', '听到收银机',
       '总会浮现', '那是一个',
+      '浮现那位', '当时的情况',
     ];
 
     // Patterns that are narration/action, not inner thoughts — filter from I
@@ -421,9 +424,13 @@ export default function Home() {
           return true;
         });
       }
-      // Strip surrounding quote marks from extracted items
+      // Strip outer wrapping quotes only (when entire item is wrapped)
       final = final.map(function(t) {
-        return t.replace(/^[""“”「」]+/, '').replace(/[""“”「」]+$/, '').trim();
+        t = t.trim();
+        if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith('“') && t.endsWith('”')) || (t.startsWith('「') && t.endsWith('」'))) {
+          t = t.slice(1, -1).trim();
+        }
+        return t;
       }).filter(function(t) { return t.length >= 3; });
       result[k] = final;
     });
