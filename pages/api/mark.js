@@ -1,12 +1,21 @@
 export const config = {
-  maxDuration: 60,
+  runtime: 'edge',
 };
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const { essay: rawEssay, title } = req.body;
-  if (!rawEssay || rawEssay.replace(/\s/g, '').length < 80) return res.status(400).json({ error: '请提供至少80字的作文。' });
-  const essay = (function(text) {
+export default async function handler(request) {
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  try {
+    const body = await request.json();
+    const { essay: rawEssay, title } = body;
+
+    if (!rawEssay || rawEssay.replace(/\s/g, '').length < 80) {
+      return new Response(JSON.stringify({ error: '请提供至少80字的作文。' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    const essay = (function(text) {
     const paras = text.split('\n').filter(p => p.trim().length > 0);
     if (paras.length < 4) return text;
     const half = Math.floor(paras.length / 2);
@@ -21,9 +30,10 @@ export default async function handler(req, res) {
     }
     return (matches / shorter.length) > 0.85 ? paras.slice(0, half).join('\n') : text;
   })(rawEssay);
-  const charCount = essay.replace(/\s/g, '').length;
 
-  const system = `You are Teacher Leon (林纯隆老师), a Singapore O Level Chinese (1160) examiner with 15+ years experience. You are a generous but accurate marker.
+    const charCount = essay.replace(/\s/g, '').length;
+
+    const system = `You are Teacher Leon (林纯隆老师), a Singapore O Level Chinese (1160) examiner with 15+ years experience. You are a generous but accurate marker.
 
 SEAB 1160 RUBRIC (记叙文, Total 40 marks):
 
@@ -170,7 +180,10 @@ NOT annotated: 经历过这件事情，我感到无比触动(P8), 这也让我�
 动作流程 (ACTION SEQUENCES)
 ════════════════════════════════════════════════════════════
 
-When 3+ consecutive EASI clauses appear in a row (within the same sentence or across adjacent clauses separated by commas), this forms a 动作流程. MINIMUM 3 clauses — never report sequences of only 2. You MUST detect and return ALL such sequences in the essay. Scan every paragraph systematically.
+A 动作流程 requires EXACTLY 3 or more consecutive EASI clauses. NEVER include sequences with only 2 clauses — any sequence with fewer than 3 clauses is NOT a 动作流程 and must NOT appear in action_sequences.
+Correct: E→A→E (3 clauses) ✓, A→A→A→A (4 clauses) ✓
+WRONG: A→A (2 clauses) ✗, I→A (2 clauses) ✗ — these are NOT 动作流程
+Detect ALL sequences of 3+ in the essay. If the essay has no sequences of 3+, return action_sequences: [].
 
 Reference sequences from the worked examples (these are the COMPLETE lists, not samples):
 Supermarket essay: A→A→A(掏钱包→数零钱→摆柜台), A→A→A(愣住→翻口袋→翻出硬币), E→A→S(皱眉→交叉胸前→冷淡回答), E→A→E(嘴唇发抖→搓衣角→泛红), A→I→A(看零钱→犹豫→走上前), A→A→A(愣了→没说话→收下钱), E→E→E(阳光皱纹→泪珠→笑意)
@@ -231,183 +244,188 @@ JSON SAFETY RULES:
 TEMPLATE:
 {"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[{"label":"错别字","original":"说到","correction":"说道","reason":"到是方向词，道是说话的道"}],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}]}`;
 
-  try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 55000);
+    const timeout = setTimeout(() => controller.abort(), 24000);
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] }),
+      body: JSON.stringify({ model: 'claude-opus-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] }),
       signal: controller.signal
     });
     clearTimeout(timeout);
+
     if (!response.ok) {
       const errBody = await response.text();
-      return res.status(500).json({ error: 'API error: ' + response.status + ' ' + errBody.substring(0, 200) });
+      return new Response(JSON.stringify({ error: 'API error: ' + response.status + ' ' + errBody.substring(0, 200) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
+
     const data = await response.json();
-    if (data.error) return res.status(500).json({ error: data.error.message });
+    if (data.error) {
+      return new Response(JSON.stringify({ error: data.error.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    }
     const raw = data.content.find(b => b.type === 'text')?.text || '';
 
-    let clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    const jsonStart = clean.indexOf('{');
-    const jsonEnd = clean.lastIndexOf('}');
-    if (jsonStart === -1 || jsonEnd === -1) {
-      return res.status(500).json({ error: 'No JSON found in API response', debug_raw_start: raw.substring(0, 500) });
+let clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+const jsonStart = clean.indexOf('{');
+const jsonEnd = clean.lastIndexOf('}');
+if (jsonStart === -1 || jsonEnd === -1) {
+  return new Response(JSON.stringify({ error: 'No JSON found', debug_raw_start: raw.substring(0, 500) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+}
+clean = clean.substring(jsonStart, jsonEnd + 1);
+
+// Pre-repair: neutralise Chinese quotes before parsing
+clean = clean.replace(/\u201c([^\u201d]*)\u201d/g, '\u300c$1\u300d');
+clean = clean.replace(/\u00ab([^\u00bb]*)\u00bb/g, '\u300c$1\u300d');
+clean = clean.replace(/\uff02([^\uff02]*)\uff02/g, '\u300c$1\u300d');
+clean = clean.replace(/\u2018([^\u2019]*)\u2019/g, '\u300c$1\u300d');
+
+// Second pass: catch any remaining Chinese-style quotes that the first pass
+// might miss (e.g. mismatched pairs, or quotes that span oddly)
+// Replace ："...anything..." patterns (colon + quote inside JSON strings)
+clean = clean.replace(/\uff1a\u201c/g, '\uff1a\u300c');
+clean = clean.replace(/\u201d/g, '\u300d');
+clean = clean.replace(/\u201c/g, '\u300c');
+
+// Handle truncated JSON: if response was cut off, close open structures
+if (clean.lastIndexOf('}') < clean.lastIndexOf('"')) {
+  // JSON was likely truncated mid-string — try to salvage
+  // Find last complete object by looking for last "}}" or "}]}"
+  const lastGoodBrace = clean.lastIndexOf('}');
+  if (lastGoodBrace > 0) {
+    clean = clean.substring(0, lastGoodBrace + 1);
+    // Count open brackets and close them
+    let opens = 0, closes = 0, openArr = 0, closeArr = 0;
+    for (let i = 0; i < clean.length; i++) {
+      if (clean[i] === '{') opens++;
+      if (clean[i] === '}') closes++;
+      if (clean[i] === '[') openArr++;
+      if (clean[i] === ']') closeArr++;
     }
-    clean = clean.substring(jsonStart, jsonEnd + 1);
+    while (closeArr < openArr) { clean += ']'; closeArr++; }
+    while (closes < opens) { clean += '}'; closes++; }
+  }
+}
 
-    // Pre-repair: neutralise Chinese quotes before parsing
-    clean = clean.replace(/\u201c([^\u201d]*)\u201d/g, '\u300c$1\u300d');
-    clean = clean.replace(/\u00ab([^\u00bb]*)\u00bb/g, '\u300c$1\u300d');
-    clean = clean.replace(/\uff02([^\uff02]*)\uff02/g, '\u300c$1\u300d');
-    clean = clean.replace(/\u2018([^\u2019]*)\u2019/g, '\u300c$1\u300d');
-
-    // Second pass: catch any remaining Chinese-style quotes that the first pass
-    // might miss (e.g. mismatched pairs, or quotes that span oddly)
-    // Replace ："...anything..." patterns (colon + quote inside JSON strings)
-    clean = clean.replace(/\uff1a\u201c/g, '\uff1a\u300c');
-    clean = clean.replace(/\u201d/g, '\u300d');
-    clean = clean.replace(/\u201c/g, '\u300c');
-
-    // Handle truncated JSON: if response was cut off, close open structures
-    if (clean.lastIndexOf('}') < clean.lastIndexOf('"')) {
-      // JSON was likely truncated mid-string — try to salvage
-      // Find last complete object by looking for last "}}" or "}]}"
-      const lastGoodBrace = clean.lastIndexOf('}');
-      if (lastGoodBrace > 0) {
-        clean = clean.substring(0, lastGoodBrace + 1);
-        // Count open brackets and close them
-        let opens = 0, closes = 0, openArr = 0, closeArr = 0;
-        for (let i = 0; i < clean.length; i++) {
-          if (clean[i] === '{') opens++;
-          if (clean[i] === '}') closes++;
-          if (clean[i] === '[') openArr++;
-          if (clean[i] === ']') closeArr++;
-        }
-        while (closeArr < openArr) { clean += ']'; closeArr++; }
-        while (closes < opens) { clean += '}'; closes++; }
-      }
+function tryParse(s) {
+  try { return JSON.parse(s); } catch(e) {}
+  try { return JSON.parse(s.replace(/,(\s*[}\]])/g, '$1')); } catch(e) {}
+  // Fix newlines inside strings
+  try {
+    let out = '', inStr = false, esc = false;
+    const s3 = s.replace(/,(\s*[}\]])/g, '$1');
+    for (let i = 0; i < s3.length; i++) {
+      const ch = s3[i];
+      if (esc) { out += ch; esc = false; continue; }
+      if (ch === '\\') { out += ch; esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; out += ch; continue; }
+      if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
+      out += ch;
     }
-
-    function tryParse(s) {
-      try { return JSON.parse(s); } catch(e) {}
-      try { return JSON.parse(s.replace(/,(\s*[}\]])/g, '$1')); } catch(e) {}
-      // Fix newlines inside strings
-      try {
-        let out = '', inStr = false, esc = false;
-        const s3 = s.replace(/,(\s*[}\]])/g, '$1');
-        for (let i = 0; i < s3.length; i++) {
-          const ch = s3[i];
-          if (esc) { out += ch; esc = false; continue; }
-          if (ch === '\\') { out += ch; esc = true; continue; }
-          if (ch === '"') { inStr = !inStr; out += ch; continue; }
-          if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
-          out += ch;
-        }
-        return JSON.parse(out);
-      } catch(e) {}
-      // Char-by-char rogue quote repair
-      try {
-        let out = '', inStr = false, esc = false;
-        for (let i = 0; i < s.length; i++) {
-          const ch = s[i];
-          if (esc) { out += ch; esc = false; continue; }
-          if (ch === '\\') { out += ch; esc = true; continue; }
-          if (ch === '"') {
-            if (!inStr) { inStr = true; out += ch; continue; }
-            let j = i + 1;
-            while (j < s.length && (s[j] === ' ' || s[j] === '\t' || s[j] === '\r' || s[j] === '\n')) j++;
-            const nx = j < s.length ? s[j] : '';
-            const structural = (nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '"' || nx === '');
-            if (structural) { inStr = false; out += ch; }
-            else {
-              out += '\u300c';
-              let segment = '';
-              for (let k = i + 1; k < s.length; k++) {
-                if (s[k] === '\\') { segment += s[k] + (s[k+1]||''); k++; continue; }
-                if (s[k] === '"') {
-                  let m = k + 1;
-                  while (m < s.length && (s[m] === ' ' || s[m] === '\t' || s[m] === '\r' || s[m] === '\n')) m++;
-                  const nx2 = m < s.length ? s[m] : '';
-                  const structural2 = (nx2 === ':' || nx2 === ',' || nx2 === '}' || nx2 === ']' || nx2 === '"' || nx2 === '');
-                  if (structural2) { out += segment + '\u300d'; i = k - 1; break; }
-                  else { segment += '\u300c'; }
-                } else if (s[k] === '\n' || s[k] === '\r') { segment += ' '; }
-                else { segment += s[k]; }
-              }
-            }
-            continue;
+    return JSON.parse(out);
+  } catch(e) {}
+  // Char-by-char rogue quote repair
+  try {
+    let out = '', inStr = false, esc = false;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (esc) { out += ch; esc = false; continue; }
+      if (ch === '\\') { out += ch; esc = true; continue; }
+      if (ch === '"') {
+        if (!inStr) { inStr = true; out += ch; continue; }
+        let j = i + 1;
+        while (j < s.length && (s[j] === ' ' || s[j] === '\t' || s[j] === '\r' || s[j] === '\n')) j++;
+        const nx = j < s.length ? s[j] : '';
+        const structural = (nx === ':' || nx === ',' || nx === '}' || nx === ']' || nx === '"' || nx === '');
+        if (structural) { inStr = false; out += ch; }
+        else {
+          out += '\u300c';
+          let segment = '';
+          for (let k = i + 1; k < s.length; k++) {
+            if (s[k] === '\\') { segment += s[k] + (s[k+1]||''); k++; continue; }
+            if (s[k] === '"') {
+              let m = k + 1;
+              while (m < s.length && (s[m] === ' ' || s[m] === '\t' || s[m] === '\r' || s[m] === '\n')) m++;
+              const nx2 = m < s.length ? s[m] : '';
+              const structural2 = (nx2 === ':' || nx2 === ',' || nx2 === '}' || nx2 === ']' || nx2 === '"' || nx2 === '');
+              if (structural2) { out += segment + '\u300d'; i = k - 1; break; }
+              else { segment += '\u300c'; }
+            } else if (s[k] === '\n' || s[k] === '\r') { segment += ' '; }
+            else { segment += s[k]; }
           }
-          if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
-          out += ch;
         }
-        return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
-      } catch(e) {}
-      return null;
-    }
-
-    let result = tryParse(clean);
-    if (!result) {
-      let errorMsg = '', errorPos = -1;
-      try { JSON.parse(clean); } catch(e) {
-        errorMsg = e.message;
-        const posMatch = e.message.match(/position\s+(\d+)/i);
-        if (posMatch) errorPos = parseInt(posMatch[1]);
+        continue;
       }
-      const snippet = errorPos >= 0 ? clean.substring(Math.max(0, errorPos - 100), errorPos + 100) : clean.substring(0, 500);
-      return res.status(500).json({ error: 'JSON parse failed — please try again', debug_error: errorMsg, debug_position: errorPos, debug_snippet: snippet });
+      if (inStr && (ch === '\n' || ch === '\r')) { out += ' '; continue; }
+      out += ch;
     }
+    return JSON.parse(out.replace(/,(\s*[}\]])/g, '$1'));
+  } catch(e) {}
+  return null;
+}
 
-    // Post-parse: restore corner brackets to curly quotes for display
-    function rq(s) {
-      if (typeof s !== 'string') return s;
-      return s.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
+let result = tryParse(clean);
+if (!result) {
+  let errorMsg = '', errorPos = -1;
+  try { JSON.parse(clean); } catch(e) {
+    errorMsg = e.message;
+    const posMatch = e.message.match(/position\s+(\d+)/i);
+    if (posMatch) errorPos = parseInt(posMatch[1]);
+  }
+  const snippet = errorPos >= 0 ? clean.substring(Math.max(0, errorPos - 100), errorPos + 100) : clean.substring(0, 500);
+  return new Response(JSON.stringify({ error: 'JSON parse failed — please try again', debug_error: errorMsg, debug_position: errorPos, debug_snippet: snippet }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+}
+
+// Post-parse: restore corner brackets to curly quotes for display
+function rq(s) {
+  if (typeof s !== 'string') return s;
+  return s.replace(/\u300c/g, '\u201c').replace(/\u300d/g, '\u201d');
+}
+if (result.annotations && Array.isArray(result.annotations)) {
+  result.annotations = result.annotations.map(function(ann) {
+    if (ann.text) ann.text = rq(ann.text);
+    if (ann.comment) ann.comment = rq(ann.comment);
+    return ann;
+  });
+}
+if (result.easi) {
+  ['E','A','S','I'].forEach(function(k) {
+    if (result.easi[k]) {
+      if (result.easi[k].comment) result.easi[k].comment = rq(result.easi[k].comment);
+      if (Array.isArray(result.easi[k].extracted)) result.easi[k].extracted = result.easi[k].extracted.map(rq);
     }
-    if (result.annotations && Array.isArray(result.annotations)) {
-      result.annotations = result.annotations.map(function(ann) {
-        if (ann.text) ann.text = rq(ann.text);
-        if (ann.comment) ann.comment = rq(ann.comment);
-        return ann;
-      });
-    }
-    if (result.easi) {
-      ['E','A','S','I'].forEach(function(k) {
-        if (result.easi[k]) {
-          if (result.easi[k].comment) result.easi[k].comment = rq(result.easi[k].comment);
-          if (Array.isArray(result.easi[k].extracted)) result.easi[k].extracted = result.easi[k].extracted.map(rq);
-        }
-      });
-    }
-    if (result.language_errors && Array.isArray(result.language_errors)) {
-      result.language_errors = result.language_errors.map(function(err) {
-        if (err.original) err.original = rq(err.original);
-        if (err.correction) err.correction = rq(err.correction);
-        if (err.reason) err.reason = rq(err.reason);
-        return err;
-      });
-    }
-    if (result.content_feedback) result.content_feedback = rq(result.content_feedback);
-    if (result.language_feedback) result.language_feedback = rq(result.language_feedback);
-    if (result.examiner_comment) result.examiner_comment = rq(result.examiner_comment);
-    if (result.framework) {
-      Object.keys(result.framework).forEach(function(k) {
-        if (result.framework[k] && result.framework[k].comment) result.framework[k].comment = rq(result.framework[k].comment);
-      });
-    }
-    if (result.structure_notes && Array.isArray(result.structure_notes)) {
-      result.structure_notes = result.structure_notes.map(function(n) { if (n.text) n.text = rq(n.text); return n; });
-    }
-    if (result.improvements && Array.isArray(result.improvements)) {
-      result.improvements = result.improvements.map(rq);
-    }
-    if (result.action_sequences && Array.isArray(result.action_sequences)) {
-      result.action_sequences = result.action_sequences.map(function(seq) {
-        if (seq.text) seq.text = rq(seq.text);
-        if (seq.comment) seq.comment = rq(seq.comment);
-        return seq;
-      });
-    }
+  });
+}
+if (result.language_errors && Array.isArray(result.language_errors)) {
+  result.language_errors = result.language_errors.map(function(err) {
+    if (err.original) err.original = rq(err.original);
+    if (err.correction) err.correction = rq(err.correction);
+    if (err.reason) err.reason = rq(err.reason);
+    return err;
+  });
+}
+if (result.content_feedback) result.content_feedback = rq(result.content_feedback);
+if (result.language_feedback) result.language_feedback = rq(result.language_feedback);
+if (result.examiner_comment) result.examiner_comment = rq(result.examiner_comment);
+if (result.framework) {
+  Object.keys(result.framework).forEach(function(k) {
+    if (result.framework[k] && result.framework[k].comment) result.framework[k].comment = rq(result.framework[k].comment);
+  });
+}
+if (result.structure_notes && Array.isArray(result.structure_notes)) {
+  result.structure_notes = result.structure_notes.map(function(n) { if (n.text) n.text = rq(n.text); return n; });
+}
+if (result.improvements && Array.isArray(result.improvements)) {
+  result.improvements = result.improvements.map(rq);
+}
+if (result.action_sequences && Array.isArray(result.action_sequences)) {
+  result.action_sequences = result.action_sequences.map(function(seq) {
+    if (seq.text) seq.text = rq(seq.text);
+    if (seq.comment) seq.comment = rq(seq.comment);
+    return seq;
+  });
+}
+
+
 
     // Server-side grade recalculation
     const total = (result.content_score || 0) + (result.language_score || 0);
@@ -423,9 +441,11 @@ TEMPLATE:
     else result.grade = 'F9';
     const labels = { A1:'优秀', A2:'优良', B3:'良好', B4:'良', C5:'及格', C6:'及格', D7:'及格边缘', E8:'不及格', F9:'不及格' };
     result.grade_label = labels[result.grade];
-    return res.status(200).json(result);
+    return new Response(JSON.stringify(result), { status: 200, headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
-    if (err.name === 'AbortError') return res.status(504).json({ error: '批改超时，请再试一次。The AI took too long — please try again.' });
-    return res.status(500).json({ error: err.message });
+    if (err.name === 'AbortError') {
+      return new Response(JSON.stringify({ error: '批改超时，请再试一次。The AI took too long — please try again.' }), { status: 504, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 }
