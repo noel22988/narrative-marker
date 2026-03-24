@@ -58,8 +58,12 @@ CRITICAL: Be GENEROUS. When in doubt, award the HIGHER band.
 
 LANGUAGE SCORING ANCHORS (out of 20):
 - 0-1 minor errors, varied sentences, rich vocab → Band 1 (17-18)
-- 2-3 minor errors, varied vocab → Band 1 (17)
-- 3-5 minor errors → Band 2 (15-16)
+- 2-3 minor errors, varied vocab → Band 2 (15-16)
+- 4-8 errors → Band 3 (11-13)
+- 9-14 errors → Band 4 (8-10)
+- 15+ errors → Band 5 (5-7)
+IMPORTANT: Count ALL 错别字, grammar errors, and wrong word usage. Each distinct error counts as 1. Be STRICT on language scoring — do not inflate.
+If content is Band 2 but language has 5+ errors, language score MUST be lower than content score.
 - DO NOT penalise stylistic choices or minor punctuation variations
 - DO NOT flag ASCII vs fullwidth punctuation differences (e.g. : vs ：, " vs ", . vs 。) — these are typing/input method issues, not language errors
 
@@ -210,6 +214,7 @@ The goal: the EASI cards should contain ALL instances from the essay. Missing it
 LANGUAGE ERRORS: Only flag GENUINE errors — wrong characters (错别字), clearly wrong grammar (语法错误), wrong word usage (用词不当).
 Each error MUST have these exact fields: "label" (error type), "original" (exact wrong text from essay, use 「」), "correction" (correct version), "reason" (brief explanation).
 Example: {"label":"错别字","original":"「说到」","correction":"说道","reason":"到是方向词，道是说话的道"}
+Report ALL errors found — there is NO limit. If the essay has 15 errors, report all 15. Do not truncate or summarise.
 ABSOLUTELY DO NOT FLAG any of these — they are NOT errors:
 - Colon width: : vs ： (NEVER flag this)
 - Quote style: " vs " vs " (NEVER flag this)
