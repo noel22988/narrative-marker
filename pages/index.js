@@ -257,6 +257,14 @@ export default function Home() {
       '总会浮现', '那是一个',
     ];
 
+    // Patterns that are narration/action, not inner thoughts — filter from I
+    const nonIPatterns = [
+      '我就去', '我就说', '我就问', '我就跑', '我就走',
+      '我马上', '我赶紧', '我连忙', '我立刻',
+      '我对他', '我对她', '我对老师', '我对奶奶',
+      '反正', '所以我就',
+    ];
+
     function isNonEasi(t) {
       return nonEasiPatterns.some(function(p) { return t.includes(p); });
     }
@@ -341,6 +349,12 @@ export default function Home() {
         // Remove action items from E (body doing something = A, not E)
         expanded = expanded.filter(function(t) { return !isAction(t); });
       }
+      if (k === 'I') {
+        // Remove narration/action items from I
+        expanded = expanded.filter(function(t) {
+          return !nonIPatterns.some(function(p) { return t.includes(p); });
+        });
+      }
       if (k === 'A') {
         // Remove speech items from A
         expanded = expanded.filter(function(t) {
@@ -407,6 +421,10 @@ export default function Home() {
           return true;
         });
       }
+      // Strip surrounding quote marks from extracted items
+      final = final.map(function(t) {
+        return t.replace(/^[""“”「」]+/, '').replace(/[""“”「」]+$/, '').trim();
+      }).filter(function(t) { return t.length >= 3; });
       result[k] = final;
     });
 
