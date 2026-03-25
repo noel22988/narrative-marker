@@ -11,9 +11,6 @@ export default async function handler(req, res) {
     if (!rawEssay || rawEssay.replace(/\s/g, '').length < 80) {
       return res.status(400).json({ error: '请提供至少80字的作文。' });
     }
-    if (rawEssay.length > 3000) {
-      return res.status(400).json({ error: '作文内容过长，请限制在3000字以内。' });
-    }
 
     const essay = (function(text) {
     const paras = text.split('\n').filter(p => p.trim().length > 0);
@@ -320,7 +317,7 @@ let clean = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 const jsonStart = clean.indexOf('{');
 const jsonEnd = clean.lastIndexOf('}');
 if (jsonStart === -1 || jsonEnd === -1) {
-  return res.status(500).json({ error: 'AI返回格式异常，请再试一次。' });
+  return res.status(500).json({ error: 'No JSON found', debug_raw_start: raw.substring(0, 500) });
 }
 clean = clean.substring(jsonStart, jsonEnd + 1);
 
@@ -423,7 +420,7 @@ if (!result) {
     if (posMatch) errorPos = parseInt(posMatch[1]);
   }
   const snippet = errorPos >= 0 ? clean.substring(Math.max(0, errorPos - 100), errorPos + 100) : clean.substring(0, 500);
-  return res.status(500).json({ error: 'AI返回格式异常，请再试一次。' });
+  return res.status(500).json({ error: 'JSON parse failed — please try again', debug_error: errorMsg, debug_position: errorPos, debug_snippet: snippet });
 }
 
 // Post-parse: restore corner brackets to curly quotes for display
