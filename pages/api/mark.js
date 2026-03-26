@@ -122,31 +122,70 @@ E (外貌描写 Expressions & Appearance):
 How someone LOOKS — face, eyes, skin colour, posture, clothing, gaze direction.
 Examples: 脸上却没有一丝怒意, 满头白发, 她佝偻着腰, 衣着十分朴素, 她急得满脸通红, 额头上渗出了细密的汗珠, 收银员扫了一眼, 眼眶渐渐泛红, 目光变得柔和而深沉, 她说完便把目光移开, 阳光洒在她满是皱纹的脸上
 KEY: Gaze shifts (把目光移开, 目光落在) = E. Facial colour changes = E. Eye descriptions = E.
+NOT E: If the clause ALSO contains a speech verb (说/道/喊/骂/回答/叫/问), it is S, not E. Examples:
+× 奶奶生气喊着 → this is S (喊着 = speech verb), NOT E
+× 妈妈着急的说 → this is S (说 = speech verb), NOT E
+× 笑了笑的回答 → this is S (回答 = speech verb), NOT E
+NOT E: Narration about someone's mental state or disbelief is NOT E. Examples:
+× 奶奶不能相信我在说的话 → this is narration, NOT E (no visual description)
 
 A (行动描写 Actions):
 Physical movement — body DOING something. Includes freeze reactions.
 Examples: 双手紧紧地抱着, 颤巍巍地掏出, 慌忙翻遍了每一个口袋, 双手交叉在胸前, 布满皱纹的双手不知所措地搓着衣角, 开始整理柜台上的东西, 她缓缓地伸出手, 便鼓起勇气快步走上前, 老奶奶愣住了, 收银员愣了一下, 没有说话, 默默地收下了钱, 脚步明显顿了一下, 三人战战兢兢地走上前, 伟杰双手僵在半空中, 低下头不敢看
 KEY: If hands/body are DOING something (搓着衣角, 整理东西) = A, even if body part has descriptive words. Freeze/stunned reactions (愣住了, 僵在半空中) = A.
+NOT A: Plain narration or story-linking is NOT A. Examples:
+× 奶奶听到我的话时 → narration/bridging, NOT A
+× 就去吃我们叫的食物 → basic narration, NOT A
+× 我们到了爷爷奶奶家 → scene transition, NOT A
+A must describe HOW a physical action was performed, not just that something happened.
 
 S (语言描写 Speech):
 Speech verb/manner + FULL quoted dialogue as ONE unit. NEVER split speech.
 Examples: 面无表情地说：「还差三块五。」, 老奶奶低声恳求道：「姑娘，我今天出门忘了多带钱……」, 语气冷淡地回答：「不行，这是规定，少一分钱都不能结账。」, 微笑着对收银员说：「阿姨，剩下的我来付。」, 反复念叨着：「好孩子、好孩子」, 嘴唇颤抖着说：「孩子……谢谢你……谢谢你啊……」
 KEY: If clause has 说/道/回答/恳求/念叨 + quoted words → ALWAYS S, even if there is a facial descriptor before it. The speech manner tag is part of S. NEVER split quoted speech into separate fragments.
 
+CRITICAL — S EXTRACTION FOR WEAK ESSAYS:
+Weak essays often have poor punctuation. The speech may look like: 奶奶说，"好的，反正我们也有点儿饿。" or 我没礼貌的说到"奶奶..." — with commas before quotes, wrong quote marks, or missing quotes entirely.
+RULE: EVERY S annotation MUST include BOTH the speech verb AND the full quoted content. NEVER return just the verb (e.g. 「奶奶说」alone is WRONG). Always include: speech manner + verb + full quote.
+Examples of CORRECT S extraction from weak essays:
+✓ 我没礼貌的说到「奶奶，您别跟这种没用的人说话。」
+✓ 奶奶说，「好的，反正我们也有点儿饿。」
+✓ 奶奶笑着回答我问题说「就是那个很善良的送餐员啊。」
+✓ 送餐员尴尬的说「别骂他吧，他还小，没关系。」
+Examples of WRONG S extraction:
+✗ 奶奶说 ← missing the quoted content!
+✗ 我就问爷爷奶奶 ← missing what was asked!
+✗ 送餐员说 ← missing what was said!
+If punctuation is messy, find the speech content by context — look for what follows the speech verb until the next sentence break or speaker change.
+
 I (心理描写 Inner Thoughts & Feelings):
 First-person mental state DURING the action (P3-P7 only).
 Examples: 我的心像被什么东西狠狠揪了一下, 我心想：不过是三块五毛钱, 犹豫了一瞬间, 让我的鼻子一阵发酸
-NOT EASI: P2 scene atmosphere (让人感到一阵舒适), P8 conclusions (我感到既心酸又温暖, 这也让我意识到), narrator bridging text (她的声音沙哑而微弱). These are narration, NOT character-level EASI techniques.
+NOT EASI — exclude ALL of these:
+- P2 scene atmosphere (让人感到一阵舒适) → narration
+- P8 conclusions and reflections (我感到既心酸又温暖, 这也让我意识到, 我感到很羞愧[if in final paragraph], 我知道我不应该...) → conclusion, NOT I
+- Narrator bridging text (她的声音沙哑而微弱) → narration
+RULE: Check which PARAGRAPH the feeling appears in. If it is in the LAST paragraph (结尾), it is P8 reflection, NOT I. Only feelings in P3-P7 count as I.
 
 COMMON MISCLASSIFICATION ERRORS — DO NOT MAKE THESE:
 × 面无表情地说："还差三块五。" classified as E → WRONG. This is S (speech verb + quote)
 × 嘴唇颤抖着说："孩子……谢谢你……" classified as E → WRONG. This is S (speech verb + quote)
+× 奶奶生气喊着 classified as E → WRONG. This is S (喊着 = speech verb)
+× 妈妈着急的说 classified as E → WRONG. This is S (说 = speech verb)
+× 笑了笑的回答 classified as E → WRONG. This is S (回答 = speech verb)
+× 奶奶不能相信我在说的话 classified as E → WRONG. This is narration (no visual)
 × 双手紧紧地抱着一小袋米和一瓶酱油 classified as E → WRONG. This is A (hands doing)
 × 布满皱纹的双手不知所措地搓着衣角 classified as E → WRONG. This is A (hands doing)
 × 开始整理柜台上的东西 classified as E → WRONG. This is A (body doing)
 × 语气冷淡地回答："不行..." split into separate fragments → WRONG. Keep as one S entry.
-RULE: If a clause has 说/道/答/恳求/念叨 + quoted speech → it is ALWAYS S, period.
+× 奶奶说 returned as S without the quoted content → WRONG. Must include full quote.
+× 奶奶听到我的话时 classified as A → WRONG. This is narration/bridging.
+× 就去吃我们叫的食物 classified as A → WRONG. This is narration.
+× 我感到很羞愧 in the LAST paragraph classified as I → WRONG. P8 feelings are conclusions, not I.
+RULE: If a clause has 说/道/答/恳求/念叨/喊/骂/叫/问 + quoted speech → it is ALWAYS S, period.
 RULE: If hands or body are performing a physical action → it is ALWAYS A, even if body part is described.
+RULE: Any clause with a speech verb (说/道/喊/骂/叫/问/回答) → cannot be E, even if there is an emotion word before the verb.
+RULE: S annotations MUST include both verb and quoted content. Verb alone = WRONG.
 
 EASI RATINGS: Use these exact values:
 - "excellent" with score_label "✓✓ 运用出色" — rich, varied, multiple instances across paragraphs
@@ -204,17 +243,24 @@ For each annotation:
 
 ANNOTATION COVERAGE — BE THOROUGH:
 Annotate EVERY instance of EASI in the essay, not just the best ones. For weak essays:
-- Even simple/clumsy descriptions count. 「笑了笑的回答」is still S. 「我感到很丢脸」is still I. 「低着头惭愧的说」has both A (低着头) and S (说).
-- Annotate ALL dialogue as S, even poorly punctuated ones. Every line of speech with a speech verb (说/道/问/喊/骂/回答/叫) + quoted words = S.
-- Any physical action = A. 「把食物从手里抢出」= A. 「我跑到门口」= A. 「把门打开」= A.
-- Any facial expression, emotion shown physically, appearance detail = E. 「微笑这说」has E (微笑). 「生气喊着」has E (生气).
-- Any first-person feeling/thought = I. 「我感到很好奇」= I. 「我感到很不耐心」= I.
+- Even simple/clumsy descriptions count. 「我感到很丢脸」is still I. 「低着头惭愧的说」has both A (低着头) and S (惭愧的说 + quoted content).
+- Annotate ALL dialogue as S, even poorly punctuated ones. Every line of speech with a speech verb (说/道/问/喊/骂/回答/叫) MUST include the full quoted content. Never return just the verb.
+- If the speech verb is followed by a comma then a quote (说，"..."), still include everything from verb to closing quote as one S unit.
+- Any DESCRIBED physical action = A. 「把食物从手里抢出」= A. 「我跑到门口」= A. 「把门打开」= A. But plain narration (我们到了, 就去吃) is NOT A.
+- Any facial expression or appearance detail = E, BUT if the same clause contains a speech verb, it is S not E. 「生气喊着」= S (not E). 「微笑着」alone without speech verb = E.
+- Any first-person feeling/thought in P3-P7 = I. But feelings in the LAST paragraph (P8) are conclusions, NOT I.
 The goal: the EASI cards should contain ALL instances from the essay. Missing items = marking failure.
 
 LANGUAGE ERRORS: Only flag GENUINE errors — wrong characters (错别字), clearly wrong grammar (语法错误), wrong word usage (用词不当).
 Each error MUST have these exact fields: "label" (error type), "original" (exact wrong text from essay, use 「」), "correction" (correct version), "reason" (brief explanation).
 Example: {"label":"错别字","original":"「说到」","correction":"说道","reason":"到是方向词，道是说话的道"}
 Report ALL errors found — there is NO limit. If the essay has 15 errors, report all 15. Do not truncate or summarise.
+
+CRITICAL — VERIFY BEFORE FLAGGING:
+Before flagging any error, re-read the FULL surrounding sentence. Do NOT flag partial fragments of correct phrases.
+Example: if the student wrote 「当时的情况是这样子的」, do NOT flag 「子的」as missing 「样」— the word 「样子」is already present in context.
+Example: if the student wrote 「我们可也买食物马」, the error is 「也」should be 「以」(可以), NOT that 「也」should be 「叫」.
+Always quote enough surrounding context in "original" so the error is clear (at least 4-6 characters).
 ABSOLUTELY DO NOT FLAG any of these — they are NOT errors:
 - Colon width: : vs ： (NEVER flag this)
 - Quote style: " vs " vs " (NEVER flag this)
@@ -250,7 +296,7 @@ TEMPLATE:
     const timeout = setTimeout(() => controller.abort(), 290000);
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key':'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', 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-opus-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] }),
       signal: controller.signal
     });
