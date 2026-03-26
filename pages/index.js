@@ -110,17 +110,30 @@ export default function Home() {
       '\u76ee\u5149\u53d8\u5f97\u67d4\u548c','\u773c\u6846\u65e9\u5df2\u7ea2\u4e86',
       '\u6536\u94f6\u5458\u626b\u4e86\u4e00\u773c','\u76ee\u5149\u843d\u5728',
       '\u9633\u5149\u6d12\u5728','\u8138\u4e0a\u7684\u7b11\u5bb9\u77ac\u95f4\u51dd\u56fa',
-      '笑了笑','生气','开心的','尬尬的','着急的','伤心的','难过的',
+      '笑了笑','开心的','尬尬的','伤心的','难过的',
       '眼泪','流泪','红了眼','哭了','笑了','脸红','微笑着',
-      '不能相信','惊讶','沉默了','感动','愤怒',
+      '惊讶','沉默了','感动','愤怒',
       '惭愧的','惭愚的',
     ]);
 
     // Post-filter E: if an extracted E clause also contains a speech verb, it's S not E
     // Rule: speech verb takes precedence over appearance descriptor
-    const speechVerbsInE = ['说：','说:','道：','道:','回答：','回答:','恳求道：','恳求道:','念叨','念念有词'];
+    // Also filter out narration (不能相信X在说的话 = narration, not E)
+    const speechVerbsInE = [
+      '说：','说:','道：','道:','回答：','回答:','恳求道：','恳求道:','念叨','念念有词',
+      '喊着','喊道','骂道','叫道','吼道','问道',
+      '的说','地说','着说','的问','地问','着问',
+      '的回答','地回答','着回答','的喊','地喊','着喊',
+      '说，','说"','说"','说「',
+    ];
+    const narrationInE = ['不能相信', '在说的话', '听到'];
     const E_filtered = E.filter(function(clause) {
-      return !speechVerbsInE.some(function(sv) { return clause.includes(sv); });
+      if (speechVerbsInE.some(function(sv) { return clause.includes(sv); })) return false;
+      if (narrationInE.some(function(nv) { return clause.includes(nv); })) return false;
+      // Also filter: if clause contains 生气 or 着急 BUT also a speech verb, it's S
+      if ((clause.includes('生气') || clause.includes('着急')) && 
+          (clause.includes('喊') || clause.includes('说') || clause.includes('骂') || clause.includes('叫'))) return false;
+      return true;
     });
 
     // A: Actions — physical movement, body DOING something, freeze reactions
@@ -173,21 +186,45 @@ export default function Home() {
       '开心的回答','尴尬的说','骄傲的对','冷冷地回答',
       '悄悄地跟',
       '说"','说“','道"','道“','问"','问“',
-      '回答"','回答“'];
-    const quoteStarts = ['\u201c','"'];
-    const quoteEnds = ['\u201d','"'];
+      '回答"','回答“',
+      // Weak essay: comma before quote, or direct quote after verb
+      '说，"','说，“','说,"','说,“',
+      '道，"','道，“','问，"','问，“',
+      '回答，"','回答，“',
+      '喊，"','喊，“','骂，"','骂，“',
+      '说「','道「','问「','回答「','喊「','骂「',
+    ];
+    const quoteStarts = ['“','"','「'];
+    const quoteEnds = ['”','"','」'];
     text.split(/[\n]/).forEach(function(line) {
       speechVerbs.forEach(function(sv) {
         let si = 0;
         while ((si = line.indexOf(sv, si)) !== -1) {
-          const qStart = quoteStarts.findIndex(function(q){ return line.indexOf(q, si) !== -1; });
-          if (qStart !== -1) {
-            const qs = line.indexOf(quoteStarts[qStart], si);
-            const qe = line.indexOf(quoteEnds[qStart], qs+1);
+          // Look for nearest opening quote after the speech verb
+          let bestQs = -1, bestQIdx = -1;
+          for (var qi = 0; qi < quoteStarts.length; qi++) {
+            var qPos = line.indexOf(quoteStarts[qi], si);
+            // Quote must be within 6 chars of speech verb end
+            if (qPos !== -1 && qPos <= si + sv.length + 6) {
+              if (bestQs === -1 || qPos < bestQs) {
+                bestQs = qPos;
+                bestQIdx = qi;
+              }
+            }
+          }
+          if (bestQs !== -1) {
+            var qe = line.indexOf(quoteEnds[bestQIdx], bestQs + 1);
+            // If no matching close quote, find sentence end instead
+            if (qe === -1) {
+              for (var ci = bestQs + 1; ci < Math.min(line.length, bestQs + 200); ci++) {
+                if ('。？！'.includes(line[ci])) { qe = ci; break; }
+              }
+            }
             if (qe !== -1) {
               let cs = si;
               for (let i = si; i >= Math.max(0, si-40); i--) {
-                if ('\uff0c\u3002\uff1f\uff01\n'.includes(line[i])) { cs = i+1; break; }
+                if ('。？！\n'.includes(line[i])) { cs = i+1; break; }
+                if (line[i] === '，' && si - i > 3) { cs = i+1; break; }
                 if (i===0) cs=0;
               }
               const clause = line.slice(cs, qe+1).trim();
@@ -199,10 +236,12 @@ export default function Home() {
       });
     });
     // Catch 反复念叨着"..."
-    (function(){ const nd = '\u53cd\u590d\u5ff5\u53e8\u7740'; let ni = 0;
+    (function(){ const nd = '反复念叨着'; let ni = 0;
       while((ni=text.indexOf(nd,ni))!==-1){
-        const qs=['\u201c','"'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
-        if(qs.length){const q0=Math.min.apply(null,qs); const qe=text.indexOf(text[q0]==='\u201c'?'\u201d':'"',q0+1);
+        const qs=['“','"','「'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
+        if(qs.length){const q0=Math.min.apply(null,qs);
+        var matchEnd = text[q0]==='“'?'”':text[q0]==='「'?'」':'"';
+        const qe=text.indexOf(matchEnd,q0+1);
         if(qe>-1){const cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
 
     // I: Inner thoughts — ONLY first-person mental verbs DURING action (P3-P7)
@@ -282,14 +321,19 @@ export default function Home() {
     // Cross-category correction: detect misclassified items
     // If an item contains a speech verb → it belongs in S, not E or A
     // Note: AI sometimes strips closing quotes, so we detect speech verbs alone
-    var speechVerbMarkers = ['说：', '说:', '道：', '道:', '答：', '回答：', '恳求道：', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：', '冷淡地回答：', '小声地说：', '对收银员说：', '面无表情地说'];
-    // Also match patterns like X地说："... or X着说："...
-    var speechVerbPatterns = [/[地着]说[：:]/,  /[地着]道[：:]/,  /[地着]答[：:]/,  /[地着]回答[：:]/];
+    var speechVerbMarkers = ['说：', '说:', '道：', '道:', '答：', '回答：', '恳求道：', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：', '冷淡地回答：', '小声地说：', '对收银员说：', '面无表情地说',
+      // Weak essay patterns: verb + comma + quote, verb + direct quote
+      '说，"', '说，\u201c', '道，"', '问，"', '回答，"',
+      '说"', '说\u201c', '道"', '道\u201c', '问"', '问\u201c',
+    ];
+    // Also match patterns like X地说："... or X着说："... or X的说 or 喊着 etc.
+    var speechVerbPatterns = [/[地着的]说[：:，,""\u201c]?/, /[地着的]道[：:，,]?/, /[地着的]答[：:，,]?/, /[地着的]回答/, /[地着的]喊/, /[地着的]骂/, /[地着的]叫/, /[地着的]问/,
+      /喊着/, /骂道/, /叫道/, /吼道/, /问道/];
     function isSpeech(t) {
       // Check explicit speech verb markers
       var hasExplicitVerb = speechVerbMarkers.some(function(sv) { return t.includes(sv); });
       if (hasExplicitVerb) return true;
-      // Check speech verb patterns (e.g. 面无表情地说：)
+      // Check speech verb patterns
       var hasPattern = speechVerbPatterns.some(function(p) { return p.test(t); });
       if (hasPattern) return true;
       // Check for 念叨着 (with or without colon/quote)
@@ -301,6 +345,14 @@ export default function Home() {
     var actionIndicators = ['抱着', '掏出', '数出来', '摆在', '翻遍', '翻出', '交叉在胸前', '搓着', '整理', '伸出手', '走上前', '放在', '收下', '扶着', '提好', '握住', '愣住', '愣了', '僵在', '后退', '低下头', '蹲下', '捡起', '走去', '凑了', '拿起', '抢过', '推我搡', '举过', '转过头', '拍了拍'];
     function isAction(t) {
       return actionIndicators.some(function(kw) { return t.includes(kw); });
+    }
+
+    // Narration patterns that should NOT be in A
+    var narrationPatterns = ['听到', '到了', '就去吃', '就去买', '就去找', '我们到', '就走了', '就回家', '就离开'];
+    function isNarration(t) {
+      // Only flag as narration if the clause LACKS descriptive action verbs
+      if (actionIndicators.some(function(kw) { return t.includes(kw); })) return false;
+      return narrationPatterns.some(function(p) { return t.includes(p); });
     }
 
     ['E', 'A', 'S', 'I'].forEach(function(k) {
@@ -351,6 +403,12 @@ export default function Home() {
         });
         // Remove action items from E (body doing something = A, not E)
         expanded = expanded.filter(function(t) { return !isAction(t); });
+        // Remove narration from E (不能相信X在说的话 = narration, not E)
+        expanded = expanded.filter(function(t) {
+          if (t.includes('不能相信') && t.includes('说的话')) return false;
+          if (t.includes('听到') && t.includes('的话')) return false;
+          return true;
+        });
       }
       if (k === 'I') {
         // Remove narration/action items from I
@@ -368,6 +426,8 @@ export default function Home() {
           if (t.includes('恳求道')) return false;
           if (t.includes('念叨')) return false;
           if (isSpeech(t)) return false;
+          // Remove narration from A
+          if (isNarration(t)) return false;
           return true;
         });
       }
@@ -417,10 +477,18 @@ export default function Home() {
       if (k === 'E') {
         final = final.filter(function(t) {
           if (t.indexOf('地说') !== -1) return false;
+          if (t.indexOf('的说') !== -1) return false;
+          if (t.indexOf('着说') !== -1) return false;
           if (t.indexOf('地道') !== -1) return false;
           if (t.indexOf('地答') !== -1) return false;
           if (t.indexOf('恳求道') !== -1) return false;
           if (t.indexOf('念叨') !== -1) return false;
+          if (t.indexOf('喊着') !== -1) return false;
+          if (t.indexOf('骂道') !== -1) return false;
+          if (t.indexOf('叫道') !== -1) return false;
+          if (t.indexOf('吼道') !== -1) return false;
+          // Emotion + speech verb combo (e.g. 生气喊着, 着急的说)
+          if ((t.includes('生气') || t.includes('着急')) && (t.includes('喊') || t.includes('说') || t.includes('骂') || t.includes('叫'))) return false;
           return true;
         });
       }
