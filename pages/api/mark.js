@@ -250,7 +250,8 @@ TEMPLATE:
     const timeout = setTimeout(() => controller.abort(), 290000);
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json', 'x-api-key':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
+, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-opus-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: `题目：${title || '（无题目）'}\n\n学生作文：\n${essay}` }] }),
       signal: controller.signal
     });
