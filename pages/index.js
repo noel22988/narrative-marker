@@ -1058,7 +1058,7 @@ export default function Home() {
           </div>
         </div>
         )}
-        </div>)}</div>)
+        </div>)}
 
         {state==='loading'&&(<div className="card fade"><div className="loading-wrap">
           <div className="loading-char">批改中…</div>
