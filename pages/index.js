@@ -789,7 +789,59 @@ export default function Home() {
     const gradeColors = {A1:'#1a6e40',A2:'#1a6e40',B3:'#1a4a70',B4:'#1a4a70',C5:'#a07820',C6:'#a07820',D7:'#b83222',E8:'#b83222',F9:'#b83222'};
     const gc = gradeColors[r.grade]||'#1a4a70';
     const w = window.open('','_blank');
-    w.document.write('<html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f8f5ef;display:flex;justify-content:center;align-items:flex-start;padding:40px 20px;font-family:sans-serif}.cert{background:white;width:640px;border:3px solid '+gc+';border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}.cert-top{background:'+gc+';padding:28px 32px;color:white;text-align:center}.cert-eye{font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-bottom:6px}.cert-title{font-size:1.4rem;font-weight:700;margin-bottom:4px}.cert-sub{font-size:.82rem;opacity:.7}.cert-body{padding:28px 32px}.cert-grade{text-align:center;margin-bottom:20px}.cert-letter{font-size:5rem;font-weight:900;color:'+gc+';line-height:1}.cert-pts{font-size:1rem;color:#555;margin-top:4px}.cert-scores{display:flex;gap:16px;justify-content:center;margin-bottom:20px}.score-box{text-align:center;background:#f8f8f8;border-radius:10px;padding:12px 20px;border:1px solid #eee}.score-val{font-size:1.5rem;font-weight:700;color:'+gc+'}.score-lbl{font-size:.75rem;color:#888;margin-top:2px}.cert-comment{background:#f8f8f8;border-radius:8px;border-left:4px solid '+gc+';padding:14px 16px;margin-bottom:20px;font-size:.88rem;color:#333;line-height:1.7;font-style:italic}.cert-footer{text-align:center;font-size:.78rem;color:#888;padding-top:16px;border-top:1px solid #eee}.cert-teacher{font-weight:700;color:#1c1710;font-size:.85rem}.print-btn{display:block;width:100%;background:'+gc+';color:white;border:none;padding:12px;font-size:.9rem;cursor:pointer;margin-top:0;font-weight:600}@media print{.print-btn{display:none}.cert{box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}.cert-top{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="cert"><div class="cert-top"><div class="cert-eye">林老师双语学堂 · Teacher Leon's Bilingual Academy</div><div class="cert-title">记叙文批改成绩单</div><div class="cert-sub">O Level Chinese Narrative Composition · SEAB 1160</div></div><div class="cert-body"><div class="cert-grade"><div class="cert-letter">'+r.grade+'</div><div class="cert-pts">'+r.grade_label+' · '+r.total_score+'/40</div></div><div class="cert-scores"><div class="score-box"><div class="score-val">'+r.content_score+'/20</div><div class="score-lbl">内容 Content</div></div><div class="score-box"><div class="score-val">'+r.language_score+'/20</div><div class="score-lbl">语文与结构 Language</div></div></div><div class="cert-comment">'+r.examiner_comment.substring(0,180)+(r.examiner_comment.length>180?'…':'')+'</div>'+(title?'<p style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">题目：'+title+'</p>':'')+'<div class="cert-footer"><div class="cert-teacher">林纯隆老师 · Leon Lim</div><div style="margin-top:2px">BA Chinese Studies NTU · PGDE NIE · 17 years · O Level Examiner</div><div style="margin-top:4px;font-size:.72rem">'+new Date().toLocaleDateString('zh-CN')+' · narrative-marker.vercel.app</div></div></div><button class="print-btn" onclick="window.print()">📄 Save / Print Certificate</button></div></body></html>');
+    const safeComment = (r.examiner_comment||'').substring(0,180).replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');
+    const safeTitle = (title||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');
+    const certParts = [
+      '<!DOCTYPE html><html><head><meta charset="UTF-8">',
+      '<style>',
+      '*{box-sizing:border-box;margin:0;padding:0}',
+      'body{background:#f8f5ef;display:flex;justify-content:center;padding:40px 20px;font-family:sans-serif}',
+      '.cert{background:white;width:640px;border:3px solid ' + gc + ';border-radius:16px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.12)}',
+      '.cert-top{background:' + gc + ';padding:28px 32px;color:white;text-align:center}',
+      '.cert-eye{font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;margin-bottom:6px}',
+      '.cert-title{font-size:1.4rem;font-weight:700;margin-bottom:4px}',
+      '.cert-sub{font-size:.82rem;opacity:.7}',
+      '.cert-body{padding:28px 32px}',
+      '.cert-grade{text-align:center;margin-bottom:20px}',
+      '.cert-letter{font-size:5rem;font-weight:900;color:' + gc + ';line-height:1}',
+      '.cert-pts{font-size:1rem;color:#555;margin-top:4px}',
+      '.cert-scores{display:flex;gap:16px;justify-content:center;margin-bottom:20px}',
+      '.score-box{text-align:center;background:#f8f8f8;border-radius:10px;padding:12px 20px;border:1px solid #eee}',
+      '.score-val{font-size:1.5rem;font-weight:700;color:' + gc + '}',
+      '.score-lbl{font-size:.75rem;color:#888;margin-top:2px}',
+      '.cert-comment{background:#f8f8f8;border-radius:8px;border-left:4px solid ' + gc + ';padding:14px 16px;margin-bottom:20px;font-size:.88rem;color:#333;line-height:1.7;font-style:italic}',
+      '.cert-footer{text-align:center;font-size:.78rem;color:#888;padding-top:16px;border-top:1px solid #eee}',
+      '.cert-teacher{font-weight:700;color:#1c1710;font-size:.85rem}',
+      '.print-btn{display:block;width:100%;background:' + gc + ';color:white;border:none;padding:12px;font-size:.9rem;cursor:pointer;font-weight:600}',
+      '@media print{.print-btn{display:none}.cert{-webkit-print-color-adjust:exact;print-color-adjust:exact}}',
+      '</style></head><body>',
+      '<div class="cert">',
+      '<div class="cert-top">',
+      '<div class="cert-eye">&#26519;&#32769;&#24072;&#21452;&#35821;&#23398;&#22530; &middot; Teacher Leon&#39;s Bilingual Academy</div>',
+      '<div class="cert-title">&#35760;&#21叙;&#25991;&#25209;&#25913;&#25104;&#32489;&#21333;</div>',
+      '<div class="cert-sub">O Level Chinese Narrative Composition &middot; SEAB 1160</div>',
+      '</div>',
+      '<div class="cert-body">',
+      '<div class="cert-grade">',
+      '<div class="cert-letter">' + r.grade + '</div>',
+      '<div class="cert-pts">' + r.grade_label + ' &middot; ' + r.total_score + '/40</div>',
+      '</div>',
+      '<div class="cert-scores">',
+      '<div class="score-box"><div class="score-val">' + r.content_score + '/20</div><div class="score-lbl">&#20869;&#23481; Content</div></div>',
+      '<div class="score-box"><div class="score-val">' + r.language_score + '/20</div><div class="score-lbl">&#35821;&#25991; Language</div></div>',
+      '</div>',
+      '<div class="cert-comment">' + safeComment + (r.examiner_comment&&r.examiner_comment.length>180?'&hellip;':'') + '</div>',
+      (safeTitle ? '<p style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">&#39064;&#30446;&#65306;' + safeTitle + '</p>' : ''),
+      '<div class="cert-footer">',
+      '<div class="cert-teacher">&#26519;&#32553;&#38534;&#32769;&#24072; &middot; Leon Lim</div>',
+      '<div style="margin-top:2px">BA Chinese Studies NTU &middot; PGDE NIE &middot; 17 years &middot; O Level Examiner</div>',
+      '<div style="margin-top:4px;font-size:.72rem">' + new Date().toLocaleDateString('zh-CN') + ' &middot; narrative-marker.vercel.app</div>',
+      '</div>',
+      '</div>',
+      '<button class="print-btn" onclick="window.print()">&#128196; Save / Print Certificate</button>',
+      '</div></body></html>'
+    ];
+    w.document.write(certParts.join(''));
     w.document.close();
   }
 
