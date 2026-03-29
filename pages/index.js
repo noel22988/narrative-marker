@@ -278,6 +278,31 @@ export default function Home() {
     ]);
     if (text.includes('\u72b9\u8c6b\u4e86\u4e00\u77ac\u95f4') && !I.includes('\u72b9\u8c6b\u4e86\u4e00\u77ac\u95f4')) I.push('\u72b9\u8c6b\u4e86\u4e00\u77ac\u95f4');
 
+    // Extend 心想：XXX entries — find full thought up to sentence-ending punctuation
+    // so "心想：不过是三块五，难道就没有人..." is captured as one unit not cut at ，
+    var xinxiangMarkers = ['\u5fc3\u60f3\uff1a', '\u5fc3\u91cc\u60f3\uff1a', '\u5fc3\u60f3:'];
+    xinxiangMarkers.forEach(function(marker) {
+      var mi = 0;
+      while ((mi = text.indexOf(marker, mi)) !== -1) {
+        // Find end: next 。？！or end of text
+        var end = text.length;
+        for (var ei = mi + marker.length; ei < text.length; ei++) {
+          if ('\u3002\uff1f\uff01'.includes(text[ei])) { end = ei + 1; break; }
+        }
+        var fullThought = text.slice(mi, end).trim();
+        if (fullThought && fullThought.length >= 4 && !I.includes(fullThought)) {
+          // Remove shorter version if it was already added by findClauses
+          for (var ii = I.length - 1; ii >= 0; ii--) {
+            if (fullThought.startsWith(I[ii]) && fullThought.length > I[ii].length) {
+              I.splice(ii, 1);
+            }
+          }
+          I.push(fullThought);
+        }
+        mi++;
+      }
+    });
+
     // Post-process: remove substring duplicates within each category
     function dedupSubstrings(arr) {
       return arr.filter(function(item, i) {
@@ -325,6 +350,10 @@ export default function Home() {
       '我马上', '我赶紧', '我连忙', '我立刻',
       '我对他', '我对她', '我对老师', '我对奶奶',
       '反正', '所以我就',
+      // Narration/bridging — not inner thoughts
+      '听了', '听到', '不能相信', '在说的话',
+      // P8 conclusion reflections — not I
+      '从这件事情', '经历过这件事', '从这次',
     ];
 
     function isNonEasi(t) {
@@ -368,7 +397,13 @@ export default function Home() {
     }
 
     // Narration patterns that should NOT be in A
-    var narrationPatterns = ['听到', '到了', '就去吃', '就去买', '就去找', '我们到', '就走了', '就回家', '就离开'];
+    var narrationPatterns = [
+      '听到', '到了', '就去吃', '就去买', '就去找', '我们到', '就走了', '就回家', '就离开',
+      // Passive — someone else acting on narrator
+      '把我骂了', '被骂了', '被打了', '把他骂了',
+      // Pure narration
+      '就去吃我们', '就去了', '回到家',
+    ];
     function isNarration(t) {
       // Only flag as narration if the clause LACKS descriptive action verbs
       if (actionIndicators.some(function(kw) { return t.includes(kw); })) return false;
@@ -464,7 +499,13 @@ export default function Home() {
       // Near-match dedup: normalize punctuation before comparing
       // Catches: 反复念叨着："好孩子" vs 反复念叨着"好孩子"
       function normalize(t) {
-        return t.replace(/[：:]/g, '').replace(/[""「」""]/g, '').replace(/\s+/g, '');
+        // Strip all quote styles, colons, whitespace so that
+        // 「quote」 and "quote" and "quote" all collapse to the same key
+        return t
+          .replace(/[：:：]/g, '')
+          .replace(/[""“”「」‘’]/g, '')
+          .replace(/\s+/g, '')
+          .replace(/…/g, '...'); // normalize ellipsis too
       }
       var seenNormalized = new Set();
       deduped = deduped.filter(function(t) {
@@ -817,8 +858,8 @@ export default function Home() {
       '</style></head><body>',
       '<div class="cert">',
       '<div class="cert-top">',
-      '<div class="cert-eye">&#26519;&#32769;&#24072;&#21452;&#35821;&#23398;&#22530; &middot; Teacher Leon&#39;s Bilingual Academy</div>',
-      '<div class="cert-title">&#35760;&#21叙;&#25991;&#25209;&#25913;&#25104;&#32489;&#21333;</div>',
+      '<div class="cert-eye">' + '林老师双语学堂' + ' &middot; Teacher Leon&#39;s Bilingual Academy</div>',
+      '<div class="cert-title">' + '记叙文批改成绩单' + '</div>',
       '<div class="cert-sub">O Level Chinese Narrative Composition &middot; SEAB 1160</div>',
       '</div>',
       '<div class="cert-body">',
@@ -827,13 +868,13 @@ export default function Home() {
       '<div class="cert-pts">' + r.grade_label + ' &middot; ' + r.total_score + '/40</div>',
       '</div>',
       '<div class="cert-scores">',
-      '<div class="score-box"><div class="score-val">' + r.content_score + '/20</div><div class="score-lbl">&#20869;&#23481; Content</div></div>',
-      '<div class="score-box"><div class="score-val">' + r.language_score + '/20</div><div class="score-lbl">&#35821;&#25991; Language</div></div>',
+      '<div class="score-box"><div class="score-val">' + r.content_score + '/20</div><div class="score-lbl">' + '内容' + ' Content</div></div>',
+      '<div class="score-box"><div class="score-val">' + r.language_score + '/20</div><div class="score-lbl">' + '语文' + ' Language</div></div>',
       '</div>',
       '<div class="cert-comment">' + safeComment + (r.examiner_comment&&r.examiner_comment.length>180?'&hellip;':'') + '</div>',
-      (safeTitle ? '<p style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">&#39064;&#30446;&#65306;' + safeTitle + '</p>' : ''),
+      (safeTitle ? '<p style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">' + '题目：' + safeTitle + '</p>' : ''),
       '<div class="cert-footer">',
-      '<div class="cert-teacher">&#26519;&#32553;&#38534;&#32769;&#24072; &middot; Leon Lim</div>',
+      '<div class="cert-teacher">' + '林纯隆老师' + ' &middot; Leon Lim</div>',
       '<div style="margin-top:2px">BA Chinese Studies NTU &middot; PGDE NIE &middot; 17 years &middot; O Level Examiner</div>',
       '<div style="margin-top:4px;font-size:.72rem">' + new Date().toLocaleDateString('zh-CN') + ' &middot; narrative-marker.vercel.app</div>',
       '</div>',
