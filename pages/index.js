@@ -189,80 +189,76 @@ export default function Home() {
       '\u5c06\u4e00\u5f20\u4e94\u5143\u7eb8\u5e01\u8f7b\u8f7b\u653e\u5728', // 将一张五元纸币轻轻放在
       '\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u94b1', // 默默地收下了钱
       '跑到','把门打开','把门关','背着','拿起','放下','抢过','抢出',
+      '邀请我','我看着','我望着','看着送餐员','望着老师','邀请他','邀请她',
       '推了','拉了','站在那里','坐在','走到','走向','跑了过来',
       '转身离开','低着头','抬起头','点了点头','摇了摇头',
     ]);
 
-    // S: Speech — find speech verb + quoted words together
+    // S: Speech — middle ground: rule-based ONLY if both verb AND closing quote on same line
+    // Handles verb→quote AND quote→verb (quote-first) patterns
+    // AI annotations are primary source; this supplements with complete lines only
     const S = [];
-    const speechVerbs = [
-      '说：','说:','道：','道:','答：','答:','回答：','回答:',
-      '恳求道：','恳求：','念叨着：','念叨：',
-      '啊哼着说：','语重心长地说：',
-      '念念有词：','平和地说：',
-      '哽咽着说：','摇头说：',
-      '嚷着','喊着','吼道','骂道','叫道','问道','问：','问:',
-      '笑着说','笑着回答','着急的说','生气的说',
-      '开心的回答','尴尬的说','骄傲的对','冷冷地回答',
-      '悄悄地跟',
-      '说"','说“','道"','道“','问"','问“',
-      '回答"','回答“',
-      // Weak essay: comma before quote, or direct quote after verb
-      '说，"','说，“','说,"','说,“',
-      '道，"','道，“','问，"','问，“',
-      '回答，"','回答，“',
-      '喊，"','喊，“','骂，"','骂，“',
-      '说「','道「','问「','回答「','喊「','骂「',
-    ];
-    const quoteStarts = ['“','"','「'];
-    const quoteEnds = ['”','"','」'];
-    text.split(/[\n]/).forEach(function(line) {
-      speechVerbs.forEach(function(sv) {
-        let si = 0;
-        while ((si = line.indexOf(sv, si)) !== -1) {
-          // Look for nearest opening quote after the speech verb
-          let bestQs = -1, bestQIdx = -1;
-          for (var qi = 0; qi < quoteStarts.length; qi++) {
-            var qPos = line.indexOf(quoteStarts[qi], si);
-            // Quote must be within 6 chars of speech verb end
-            if (qPos !== -1 && qPos <= si + sv.length + 6) {
-              if (bestQs === -1 || qPos < bestQs) {
-                bestQs = qPos;
-                bestQIdx = qi;
-              }
-            }
-          }
-          if (bestQs !== -1) {
-            var qe = line.indexOf(quoteEnds[bestQIdx], bestQs + 1);
-            // If no matching close quote, find sentence end instead
-            if (qe === -1) {
-              for (var ci = bestQs + 1; ci < Math.min(line.length, bestQs + 200); ci++) {
-                if ('。？！'.includes(line[ci])) { qe = ci; break; }
-              }
-            }
-            if (qe !== -1) {
-              let cs = si;
-              for (let i = si; i >= Math.max(0, si-40); i--) {
-                if ('。？！\n'.includes(line[i])) { cs = i+1; break; }
-                if (line[i] === '，' && si - i > 3) { cs = i+1; break; }
-                if (i===0) cs=0;
-              }
-              const clause = line.slice(cs, qe+1).trim();
-              if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
-            }
-          }
-          si++;
-        }
+    const sQuoteStarts = ['“','‘','「','"'];
+    const sQuoteEnds   = ['”','’','」','"'];
+    const sVerbList = ['说','道','答','回答','恳求','念叨','喊','骂','叫','问','嚷','吼'];
+
+    text.split('\n').forEach(function(line) {
+      var ln = line.trim();
+      if (!ln) return;
+      // Must have at least one speech verb
+      var hasVerb = sVerbList.some(function(v) { return ln.includes(v); });
+      if (!hasVerb) return;
+      // Must have a complete quote pair on this line
+      var openIdx = -1, closeIdx = -1, pairQi = -1;
+      for (var qi = 0; qi < sQuoteStarts.length; qi++) {
+        var oi = ln.indexOf(sQuoteStarts[qi]);
+        if (oi === -1) continue;
+        var ci = ln.indexOf(sQuoteEnds[qi], oi + 1);
+        if (ci === -1) continue;
+        if (openIdx === -1 || oi < openIdx) { openIdx = oi; closeIdx = ci; pairQi = qi; }
+      }
+      if (openIdx === -1) return; // no complete pair
+
+      var clause = '';
+      // Check for verb before opening quote (verb→quote)
+      var verbBeforeOpen = -1;
+      sVerbList.forEach(function(v) {
+        var vp = ln.lastIndexOf(v, openIdx);
+        if (vp !== -1 && (verbBeforeOpen === -1 || vp > verbBeforeOpen)) verbBeforeOpen = vp;
       });
+
+      if (verbBeforeOpen !== -1) {
+        // verb→quote: extract from sentence start to closing quote
+        var cs = 0;
+        for (var i = verbBeforeOpen - 1; i >= 0; i--) {
+          if ('。？！'.includes(ln[i])) { cs = i + 1; break; }
+        }
+        clause = ln.slice(cs, closeIdx + 1).trim();
+      } else {
+        // quote→verb: extract from opening quote through verb phrase
+        var afterClose = ln.slice(closeIdx + 1);
+        var hasVerbAfter = sVerbList.some(function(v) { return afterClose.includes(v); });
+        if (hasVerbAfter) {
+          var verbEnd = closeIdx + 1;
+          for (var j = closeIdx + 1; j < Math.min(ln.length, closeIdx + 25); j++) {
+            if ('。？！，'.includes(ln[j])) { verbEnd = j; break; }
+            verbEnd = j + 1;
+          }
+          clause = ln.slice(openIdx, verbEnd).trim();
+        }
+      }
+
+      if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
     });
-    // Catch 反复念叨着"..."
-    (function(){ const nd = '反复念叨着'; let ni = 0;
+
+    // Catch 反复念叨着"..." across lines
+    (function(){ var nd = '反复念叨着'; var ni = 0;
       while((ni=text.indexOf(nd,ni))!==-1){
-        const qs=['“','"','「'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
-        if(qs.length){const q0=Math.min.apply(null,qs);
-        var matchEnd = text[q0]==='“'?'”':text[q0]==='「'?'」':'"';
-        const qe=text.indexOf(matchEnd,q0+1);
-        if(qe>-1){const cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
+        var qs=['“','‘','「'].map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
+        if(qs.length){var q0=Math.min.apply(null,qs);
+        var matchEnd=text[q0]==='“'?'”':text[q0]==='「'?'」':'’';
+        var qe=text.indexOf(matchEnd,q0+1);
+        if(qe>-1){var cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
 
     // I: Inner thoughts — ONLY first-person mental verbs DURING action (P3-P7)
     // NOT P2 scene feelings, NOT P8 conclusion reflections, NOT narrator bridging
@@ -776,6 +772,26 @@ export default function Home() {
     ${results.rewrite_examples && results.rewrite_examples.length ? `<div class="sec"><h2>✏️ 改写示范<span class="sec-sub-label">SENTENCE REWRITES</span></h2><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f5f5f5"><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:35%">原句</th><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:40%">改写后</th><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:25%">改写要点</th></tr></thead><tbody>${results.rewrite_examples.map(r=>'<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#c0392b;vertical-align:top;font-family:Noto Serif SC,serif">'+r.original+'</td><td style="padding:8px 10px;color:#1a6e40;vertical-align:top;font-weight:500;font-family:Noto Serif SC,serif">'+r.rewrite+'</td><td style="padding:8px 10px;color:#555;vertical-align:top;font-size:11px">'+r.note+'</td></tr>').join('')}</tbody></table></div>` : ''}
     ${sampleSection}
     ${stretchSection}
+    ${revisedResults ? `<div class="sec"><h2>🔄 修改版对比<span class="sec-sub-label">REVISION COMPARISON</span></h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+        <div style="background:#f8f8f8;border-radius:8px;padding:14px;border:1px solid #e0e0e0;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:4px">第一稿 First Draft</div>
+          <div style="font-size:2rem;font-weight:900;color:#1a4a70">${results.grade}</div>
+          <div style="font-size:12px;color:#555">${results.total_score}/40 · 内容${results.content_score} 语文${results.language_score}</div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:8px;padding:14px;border:1px solid #e0e0e0;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:4px">修改版 Revised</div>
+          <div style="font-size:2rem;font-weight:900;color:${revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#1a4a70'}">${revisedResults.grade}</div>
+          <div style="font-size:12px;color:#555">${revisedResults.total_score}/40 · 内容${revisedResults.content_score} 语文${revisedResults.language_score}</div>
+        </div>
+      </div>
+      <div style="padding:10px 14px;border-radius:8px;background:${revisedResults.total_score>results.total_score?'#edf7f1':revisedResults.total_score<results.total_score?'#fdf0ee':'#f5f5f5'};border:1px solid ${revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#ddd'};font-size:12px;color:${revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#555'}">
+        ${revisedResults.total_score>results.total_score?'✅ 提升了 '+(revisedResults.total_score-results.total_score)+' 分！从 '+results.grade+' 进步到 '+revisedResults.grade:revisedResults.total_score<results.total_score?'⚠️ 分数下降了 '+(results.total_score-revisedResults.total_score)+' 分':'✔️ 分数持平'}
+      </div>
+    </div>` : ''}
+    ${chatMessages.length>0?`<div class="sec"><h2>💬 问答记录<span class="sec-sub-label">Q&A TRANSCRIPT</span></h2>
+      ${chatMessages.map(function(m){return '<div style="margin-bottom:10px;display:flex;flex-direction:column;align-items:'+(m.role==='user'?'flex-end':'flex-start')+'"><div style="max-width:85%;background:'+(m.role==='user'?'#1c1710':'#f5f5f5')+';color:'+(m.role==='user'?'#e8d090':'#1c1710')+';padding:8px 12px;border-radius:'+(m.role==='user'?'12px 12px 4px 12px':'12px 12px 12px 4px')+';font-size:12px;line-height:1.6">'+m.content+'</div></div>';}).join('')}
+    </div>`:''}
     <div class="marketing">
       <div class="mkt-title">👨‍🏫 Found this useful? Learn directly with Teacher Leon.</div>
       <div class="mkt-cred">BA (Hons) Chinese Studies, NTU · PGDE, NIE · 17 years teaching · 10 years O-Level marker</div>
@@ -954,9 +970,13 @@ export default function Home() {
   function annotateEssay(text, annotations) {
     if (!annotations || annotations.length === 0) return text.replace(/\n/g, '<br/>');
     const sorted = [...annotations].sort((a,b) => (b.text||'').length - (a.text||'').length);
+    // Build set of texts that have error annotations — red takes priority over green
+    const errorTexts = new Set(sorted.filter(function(a){return a.type==='error';}).map(function(a){return a.text;}));
     let result = text;
     sorted.forEach((ann) => {
       if (!ann.text || !result.includes(ann.text)) return;
+      // If this is a good/improve annotation but the same text is also flagged as error, skip it
+      if ((ann.type==='good'||ann.type==='improve') && errorTexts.has(ann.text)) return;
       const colors = {
         error: { bg:'#fff0ee', underline:'#b83222', dot:'🔴' },
         good:  { bg:'#edfaf3', underline:'#1a6e40', dot:'🟢' },
@@ -1073,7 +1093,13 @@ export default function Home() {
           </div>
           <textarea value={essay} onChange={e=>setEssay(e.target.value)} placeholder="在此粘贴你的记叙文… Paste your essay here…" />
           <div className="row">
-            <span className={`wc ${wordCount>=350?'ok':wordCount>100?'':'low'}`}>{wordCount} 字</span>
+            <div style={{display:'flex',flexDirection:'column',gap:4}}>
+              <span className={`wc ${wordCount>=350?'ok':wordCount>100?'':'low'}`}>{wordCount} 字</span>
+              {wordCount>0&&wordCount<200&&<span style={{fontSize:'.72rem',color:'#b83222'}}>⚠️ 字数偏少，建议至少350字 · Too short, aim for 350+</span>}
+              {wordCount>=200&&wordCount<350&&<span style={{fontSize:'.72rem',color:'#a07820'}}>△ 字数稍少，建议350字以上 · A little short</span>}
+              {wordCount>=350&&wordCount<=500&&<span style={{fontSize:'.72rem',color:'#1a6e40'}}>✓ 字数合适 · Good length</span>}
+              {wordCount>500&&<span style={{fontSize:'.72rem',color:'#1a6e40'}}>✓ 字数充足 · Sufficient length</span>}
+            </div>
             <button className="btn-main" onClick={markEssay} disabled={wordCount<80}>开始批改 · Mark My Essay →</button>
           </div>
           {error&&<div className="error">{error}</div>}
@@ -1356,6 +1382,15 @@ export default function Home() {
           </div>
         </div>)}
       </div>
+      {/* Floating WhatsApp button */}
+      <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank" rel="noopener noreferrer"
+        style={{position:'fixed',bottom:24,right:24,zIndex:999,width:52,height:52,borderRadius:'50%',background:'#25D366',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,.25)',textDecoration:'none',transition:'transform .2s'}}
+        title="WhatsApp Teacher Leon"
+        onMouseEnter={function(e){e.currentTarget.style.transform='scale(1.1)';}}
+        onMouseLeave={function(e){e.currentTarget.style.transform='scale(1)';}}
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      </a>
     </>
   );
 }
