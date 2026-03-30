@@ -644,7 +644,7 @@ export default function Home() {
 
         {state==='loading'&&(<div className="card fade"><div className="loading-wrap">
           <div className="loading-char">批改中…</div>
-          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (20–30 seconds)</div>
+          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (40–60 seconds)</div>
           <div className="loading-steps">{['检查框架结构','评估内容层次','分析语文结构','EASI手法评估','撰写考官评语'].map((s,i)=><span key={i} className="lstep">{s}</span>)}</div>
         </div></div>)}
 
