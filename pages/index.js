@@ -73,8 +73,15 @@ export default function Home() {
         // Fix 3: E/A entries with speech verb → move to S
         // Move to S only if has BOTH speech verb AND quote — pure verb-only fragments stay in A or get dropped
         var eToS = eArr.filter(hasCompleteSpeech); eArr = eArr.filter(function(t){return !hasSV(t);});
-        var aToS = aArr.filter(hasCompleteSpeech); aArr = aArr.filter(function(t){return !hasCompleteSpeech(t);});
-        // Drop verb-only A entries (has speech verb but no quote — e.g. 把我骂了起来 stays in A as action)
+        var aToS = aArr.filter(hasCompleteSpeech);
+        // Remove from A: entries with speech verb but no quote (e.g. 低着头惭愧的说 — verb-only manner tag)
+        // Keep in A: entries with 骂/叫 used as action verbs WITH action context (把我骂了起来 = being scolded = action)
+        aArr = aArr.filter(function(t){
+          if (!hasSV(t)) return true; // no speech verb → keep in A
+          // Has speech verb — check if it's a genuine action (被 passive or 了起来 pattern = action, not speech)
+          if (t.includes('了起来') || t.includes('被')) return true; // 了起来 or 被 = passive action
+          return false; // verb-only manner tag like 低着头惭愧的说 — drop from A
+        });
         eToS.concat(aToS).forEach(function(t){ if (!sArr.includes(t)) sArr.push(t); });
         // Remove from S any entry with no quote at all (verb-only fragment like 低着头惭愧的说)
         sArr = sArr.filter(function(t){
@@ -577,7 +584,10 @@ export default function Home() {
         tooltipBase = '改写：' + rewriteMap[ann.text];
       }
       const tooltip = tooltipBase;
-      const highlighted = `<span class="ann-mark ann-${ann.type}" style="background:${c.bg};border-bottom:2px solid ${c.underline};border-radius:3px;padding:1px 2px;cursor:pointer;position:relative" title="${tooltip}" data-comment="${tooltip}">${ann.text}<sup style="font-size:9px;color:${c.underline};margin-left:1px">${c.dot}</sup></span>`;
+      // Escape HTML special chars to prevent broken attributes or invisible text
+      function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      const safeTooltip = escAttr(tooltip);
+      const highlighted = `<span class="ann-mark ann-${ann.type}" style="background:${c.bg};border-bottom:2px solid ${c.underline};border-radius:3px;padding:1px 2px;cursor:pointer;position:relative" title="${safeTooltip}" data-comment="${safeTooltip}">${ann.text}<sup style="font-size:9px;color:${c.underline};margin-left:1px">${c.dot}</sup></span>`;
       var idx0 = result.indexOf(ann.text);
       if (idx0 !== -1) { result = result.slice(0,idx0) + highlighted + result.slice(idx0+ann.text.length); }
     });
