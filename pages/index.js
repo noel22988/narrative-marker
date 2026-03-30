@@ -56,6 +56,62 @@ export default function Home() {
         const debugInfo = data.debug_snippet ? `\n\nDebug snippet: ${data.debug_snippet}\nError: ${data.debug_error}` : '';
         throw new Error((data.error || '批改失败') + debugInfo);
       }
+      // ── Post-process EASI: fix misclassifications and supplement gaps ──
+      if (data.easi) {
+        var speechVerbs = ['说','道','回答','恳求','念叨','喊','骂','叫','问','嚷','吼'];
+        function hasSV(t) { return speechVerbs.some(function(v){return t.includes(v);}); }
+        var eArr = (data.easi.E && data.easi.E.extracted) ? data.easi.E.extracted.slice() : [];
+        var aArr = (data.easi.A && data.easi.A.extracted) ? data.easi.A.extracted.slice() : [];
+        var sArr = (data.easi.S && data.easi.S.extracted) ? data.easi.S.extracted.slice() : [];
+        var iArr = (data.easi.I && data.easi.I.extracted) ? data.easi.I.extracted.slice() : [];
+
+        // Fix 3: E/A entries with speech verb → move to S
+        var eToS = eArr.filter(hasSV); eArr = eArr.filter(function(t){return !hasSV(t);});
+        var aToS = aArr.filter(hasSV); aArr = aArr.filter(function(t){return !hasSV(t);});
+        eToS.concat(aToS).forEach(function(t){ if (!sArr.includes(t)) sArr.push(t); });
+
+        // Fix 4: I entries from last paragraph → remove
+        var paras = essay.split(/\n+/).filter(function(p){return p.trim().length>0;});
+        var lastPara = paras.length>0 ? paras[paras.length-1] : '';
+        iArr = iArr.filter(function(t){ return !lastPara.includes(t); });
+
+        // Fix 5: I keyword supplement
+        var iKW = ['我感到','我觉得','心想：','我心想','我不知','我开始感到','我很好奇','心里想','内心','我不禁','我感觉','心中想','犹豫'];
+        paras.slice(0, paras.length-1).forEach(function(para) {
+          iKW.forEach(function(kw) {
+            var pos = 0;
+            while (true) {
+              var found = para.indexOf(kw, pos); if (found===-1) break;
+              var end = found+kw.length;
+              for (var ci=end; ci<Math.min(para.length,found+80); ci++) {
+                if ('。？！'.includes(para[ci])) { end=ci+1; break; } end=ci+1;
+              }
+              var cl = para.slice(found, end).trim();
+              if (cl.length>=4 && !iArr.some(function(e){return e.includes(cl)||cl.includes(e);})) iArr.push(cl);
+              pos = found+1;
+            }
+          });
+        });
+
+        // Fix 6: E keyword supplement
+        var eKW = ['面无表情','脸色苍白','眼眶','嘴唇','佝偻着腰','面色变得','眼神','脸上','面容','眼角','脸红','满脸','眉头紧皱','目光','嘴角','脸色','额头'];
+        paras.forEach(function(para) {
+          eKW.forEach(function(kw) {
+            if (!para.includes(kw)) return;
+            var pos2 = para.indexOf(kw);
+            var st=0; for (var i=pos2-1;i>=Math.max(0,pos2-30);i--) { if ('。？！，
+'.includes(para[i])){st=i+1;break;} }
+            var en=para.length; for (var j=pos2+kw.length;j<Math.min(para.length,pos2+50);j++) { if ('。？！，'.includes(para[j])){en=j+1;break;} }
+            var cl2 = para.slice(st, en).trim();
+            if (cl2.length>=4 && !hasSV(cl2) && !eArr.some(function(e){return e.includes(cl2)||cl2.includes(e);})) eArr.push(cl2);
+          });
+        });
+
+        if (data.easi.E) data.easi.E.extracted = eArr;
+        if (data.easi.A) data.easi.A.extracted = aArr;
+        if (data.easi.S) data.easi.S.extracted = sArr;
+        if (data.easi.I) data.easi.I.extracted = iArr;
+      }
       setResults(data); setState('results');
       // Save to localStorage history
       try {
@@ -501,7 +557,8 @@ export default function Home() {
       }
       const tooltip = tooltipBase;
       const highlighted = `<span class="ann-mark ann-${ann.type}" style="background:${c.bg};border-bottom:2px solid ${c.underline};border-radius:3px;padding:1px 2px;cursor:pointer;position:relative" title="${tooltip}" data-comment="${tooltip}">${ann.text}<sup style="font-size:9px;color:${c.underline};margin-left:1px">${c.dot}</sup></span>`;
-      result = result.replace(ann.text, highlighted);
+      var idx0 = result.indexOf(ann.text);
+      if (idx0 !== -1) { result = result.slice(0,idx0) + highlighted + result.slice(idx0+ann.text.length); }
     });
     return result.replace(/\n/g, '<br/>');
   }
