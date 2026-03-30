@@ -86,575 +86,6 @@ export default function Home() {
     return text.replace(/【([^】]+)】/g, '<span style="font-family:monospace;font-size:11px;letter-spacing:0.12em;color:#a07820;display:block;margin-top:16px;margin-bottom:2px;font-weight:600">【$1】</span>');
   }
 
-  // ── Rule-based EASI extractor — deterministic, catches what AI misses ──
-  function extractEASI(text) {
-    if (!text) return {E:[],A:[],S:[],I:[]};
-
-    // Helper: find clauses containing keyword, bounded by punctuation
-    function findClauses(t, keywords) {
-      const found = [];
-      keywords.forEach(function(kw) {
-        let pos = 0;
-        while ((pos = t.indexOf(kw, pos)) !== -1) {
-          let start = pos;
-          for (let i = pos; i >= Math.max(0, pos-60); i--) {
-            if ('\uff0c\u3002\uff1f\uff01\n\u201c\u201d'.includes(t[i])) { start = i+1; break; }
-            if (i===0) start=0;
-          }
-          let end2 = pos + kw.length;
-          for (let i = pos+kw.length; i < Math.min(t.length, pos+80); i++) {
-            if ('\uff0c\u3002\uff1f\uff01\n'.includes(t[i])) { end2=i; break; }
-            if (i===t.length-1) end2=t.length;
-          }
-          const clause = t.slice(start, end2).replace(/^[\uff0c\u3002\uff1f\uff01]+|[\uff0c\u3002\uff1f\uff01]+$/g,'').trim();
-          if (clause && clause.length >= 4 && !found.includes(clause)) found.push(clause);
-          pos++;
-        }
-      });
-      return found;
-    }
-
-    // E: Expressions & Appearance — how someone LOOKS (face, eyes, skin, posture, clothing, gaze)
-    const E = findClauses(text, [
-      '\u767d\u53d1','\u4f5b\u5c65','\u8863\u7740','\u5e03\u978b','\u78e8\u5f97\u53d1\u767d',
-      '\u6ee1\u8138\u901a\u7ea2','\u6e17\u51fa\u4e86\u7ec6\u5bc6\u7684\u6c57\u73e0','\u6c57\u73e0',
-      '\u9762\u65e0\u8868\u60c5','\u76b1\u4e86\u76b1\u7709','\u76b1\u7709',
-      '\u5634\u5507','\u773c\u8b36\u6e10\u6e10\u6cf3\u7ea2','\u773c\u8b36',
-      '\u628a\u76ee\u5149\u79fb\u5f00',
-      '\u6d51\u6d4a\u5374\u95ea\u70c1\u7740\u5149\u8292','\u6ee1\u662f\u76b1\u7eb9','\u6cea\u73e0',
-      '\u5634\u89d2\u5374\u5e26\u7740\u6e29\u6696\u7684\u7b11\u610f',
-      '\u8138\u4e0a\u5374\u6ca1\u6709\u4e00\u4e1d\u6012\u610f',
-      '\u8138\u8272','\u60ca\u6124','\u7634\u5927\u4e86\u773c\u775b',
-      '\u795e\u60c5\u51dd\u56fa','\u8138\u8272\u60e8\u767d',
-      '\u767e\u611f\u4ea4\u96c6','\u773c\u6846\u5fae\u5fae\u6ce5\u7ea2',
-      '\u76ee\u5149\u53d8\u5f97\u67d4\u548c','\u773c\u6846\u65e9\u5df2\u7ea2\u4e86',
-      '\u6536\u94f6\u5458\u626b\u4e86\u4e00\u773c','\u76ee\u5149\u843d\u5728',
-      '\u9633\u5149\u6d12\u5728','\u8138\u4e0a\u7684\u7b11\u5bb9\u77ac\u95f4\u51dd\u56fa',
-      '笑了笑','开心的','尬尬的','伤心的','难过的',
-      '眼泪','流泪','红了眼','哭了','笑了','脸红','微笑着',
-      '惊讶','沉默了','感动','愤怒',
-      '惭愧的','惭愚的',
-    ]);
-
-    // Post-filter E: if an extracted E clause also contains a speech verb, it's S not E
-    // Rule: speech verb takes precedence over appearance descriptor
-    // Also filter out narration (不能相信X在说的话 = narration, not E)
-    const speechVerbsInE = [
-      '说：','说:','道：','道:','回答：','回答:','恳求道：','恳求道:','念叨','念念有词',
-      '喊着','喊道','骂道','叫道','吼道','问道',
-      '的说','地说','着说','的问','地问','着问',
-      '的回答','地回答','着回答','的喊','地喊','着喊',
-      '说，','说"','说"','说「',
-    ];
-    const narrationInE = ['不能相信', '在说的话', '听到'];
-    const E_filtered = E.filter(function(clause) {
-      if (speechVerbsInE.some(function(sv) { return clause.includes(sv); })) return false;
-      if (narrationInE.some(function(nv) { return clause.includes(nv); })) return false;
-      // Also filter: if clause contains 生气 or 着急 BUT also a speech verb, it's S
-      if ((clause.includes('生气') || clause.includes('着急')) && 
-          (clause.includes('喊') || clause.includes('说') || clause.includes('骂') || clause.includes('叫'))) return false;
-      return true;
-    });
-
-    // A: Actions — physical movement, body DOING something, freeze reactions
-    const A = findClauses(text, [
-      '\u53cc\u624b\u7d27\u7d27\u5730','\u98a4\u5371\u5371\u5730','\u4e00\u679a\u4e00\u679a\u5730\u6570\u51fa\u6765',
-      '\u5c0f\u5fc3\u7fc1\u7fc1\u5730\u6458','\u614c\u5fd9\u7ffb\u904d','\u53cc\u624b\u4ea4\u53c9\u5728\u80f8\u524d',
-      '\u4e0d\u77e5\u6240\u63aa\u5730\u641e\u7740\u8863\u89d2','\u7f13\u7f13\u5730\u4f38\u51fa\u624b',
-      '\u9f13\u8d77\u52c7\u6c14\u5feb\u6b65\u8d70\u4e0a\u524d','\u8f7b\u8f7b\u653e\u5728\u67dc\u53f0\u4e0a',
-      '\u6108\u4e86\u4e00\u4e0b','\u6ca1\u6709\u8bf4\u8bdd','\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u94b1',
-      '\u8f6c\u8fc7\u5934','\u5e2e\u5979\u628a\u4e1c\u897f\u63d0\u597d',
-      '\u7d27\u7d27\u5730\u63e1\u4f4f\u6211\u7684\u624b','\u4f4e\u5934\u770b\u4e86\u770b',
-      '\u56f4\u5728\u4e00\u65c1','\u7387\u5148\u62ff\u8d77','\u4e00\u628a\u62a2\u8fc7',
-      '\u4e09\u4e2a\u4eba\u4f60\u63a8\u6211\u6426','\u6162\u6162\u84b9\u4e0b\u8eab',
-      '\u4e00\u7247\u4e00\u7247\u6361\u8d77','\u8f7b\u8f7b\u653e\u5728\u638c\u5fc3',
-      '\u6218\u6218\u5162\u5162\u5730\u8d70\u4e0a\u524d','\u62cd\u4e86\u62cd\u4ed6\u7684\u80a9\u8180',
-      // NEW: actions the AI was missing
-      '\u8001\u5976\u5976\u6114\u4f4f\u4e86', // 老奶奶愣住了
-      '\u6536\u94f6\u5458\u6114\u4e86\u4e00\u4e0b', // 收银员愣了一下
-      '\u5f00\u59cb\u6574\u7406\u67dc\u53f0\u4e0a\u7684\u4e1c\u897f', // 开始整理柜台上的东西
-      '\u5e03\u6ee1\u76b1\u7eb9\u7684\u53cc\u624b', // 布满皱纹的双手
-      '\u4fbf\u671d\u6536\u94f6\u53f0\u8d70\u53bb', // 便朝收银台走去
-      '\u7acb\u523b\u51d1\u4e86\u8fc7\u53bb', // 立刻凑了过去
-      '\u7709\u7740\u773c\u775b\u5047\u88c5\u62cd\u7167', // 眯着眼睛假装拍照
-      '\u7b11\u563b\u563b\u5730\u4e3e\u8fc7\u5934\u9876', // 笑嘻嘻地举过头顶
-      '\u7b11\u5f97\u524d\u4ef0\u540e\u5408', // 笑得前仰后合
-      '\u9ed8\u9ed8\u6361\u8d77', // 默默捡起
-      '\u53cc\u624b\u50f5\u5728\u534a\u7a7a\u4e2d', // 双手僵在半空中
-      '\u540e\u9000\u4e86\u4e24\u6b65', // 后退了两步
-      '\u4f4e\u4e0b\u5934\u4e0d\u6562\u770b', // 低下头不敢看
-      '\u811a\u6b65\u660e\u663e\u987f\u4e86\u4e00\u4e0b', // 脚步明显顿了一下
-      '\u6211\u8fde\u5fd9\u6276\u7740', // 我连忙扶着
-      '\u5374\u53ea\u7ffb\u51fa\u51e0\u679a\u786c\u5e01', // 却只翻出几枚硬币
-      '\u5c06\u4e00\u5f20\u4e94\u5143\u7eb8\u5e01\u8f7b\u8f7b\u653e\u5728', // 将一张五元纸币轻轻放在
-      '\u9ed8\u9ed8\u5730\u6536\u4e0b\u4e86\u94b1', // 默默地收下了钱
-      '跑到','把门打开','把门关','背着','拿起','放下','抢过','抢出',
-      '邀请我','我看着','我望着','看着送餐员','望着老师','邀请他','邀请她',
-      '推了','拉了','站在那里','坐在','走到','走向','跑了过来',
-      '转身离开','低着头','抬起头','点了点头','摇了摇头',
-    ]);
-
-    // S: Speech — extract complete speech unit: [manner+verb] + [quote] or [quote] + [manner+verb]
-    // Handles: colon/comma/no-punctuation between verb and quote
-    // Handles: verb-first and quote-first patterns
-    // Handles: multiple speeches on same line (each pair processed independently)
-    // Handles: verb on one line, quote on next line (cross-line speeches)
-    // AI annotations are primary; rule-based supplements with complete units only
-    const S = [];
-    const sQS = ['\u201c','\u2018','\u300c','"']; // opening quotes
-    const sQE = ['\u201d','\u2019','\u300d','"']; // closing quotes
-    // Speech verbs — order matters: longer first to avoid partial matches
-    const sVerbs = ['\u56de\u7b54','\u6070\u6c42','\u5ff5\u53e8','\u5c0f\u58f0\u5730\u8bf4','\u8bed\u91cd\u5fc3\u957f\u5730\u8bf4',
-      '\u54fd\u548f\u7740\u8bf4','\u6447\u5934\u8bf4','\u5192\u5931\u7684\u8bf4','\u9aa84\u508d\u7684\u8bf4',
-      '\u8bf4','\u9053','\u7b54','\u559f','\u9a82','\u53eb','\u95ee','\u5631','\u543c'];
-
-    // Pre-process: join lines where a speech verb ends a line and a quote starts the next
-    // This handles cross-line speeches like: 妈妈说\n"小明..."
-    var lines = text.split('\n');
-    var mergedLines = [];
-    for (var li = 0; li < lines.length; li++) {
-      var cur = lines[li].trim();
-      if (!cur) { mergedLines.push(cur); continue; }
-      // Check if this line ends with a speech verb (possibly with punctuation like ：,)
-      // and next line starts with a quote
-      var nextLine = li + 1 < lines.length ? lines[li+1].trim() : '';
-      var curEndsWithVerb = sVerbs.some(function(v) {
-        var trimmed = cur.replace(/[\uff1a:\uff0c,\uff01\uff1f]$/, '');
-        return trimmed.endsWith(v);
-      });
-      var nextStartsWithQuote = nextLine && sQS.some(function(q) { return nextLine.startsWith(q); });
-      if (curEndsWithVerb && nextStartsWithQuote) {
-        // Merge: verb line + quote line
-        mergedLines.push(cur + nextLine);
-        li++; // skip next line
-      } else {
-        mergedLines.push(cur);
-      }
-    }
-
-    mergedLines.forEach(function(line) {
-      var ln = line.trim();
-      if (!ln) return;
-      // Must have at least one speech verb
-      var hasVerb = sVerbs.some(function(v) { return ln.includes(v); });
-      if (!hasVerb) return;
-
-      // Find ALL complete quote pairs on this line (nearest close after each open)
-      var pairs = [];
-      for (var qi = 0; qi < sQS.length; qi++) {
-        var searchFrom = 0;
-        while (true) {
-          var oi = ln.indexOf(sQS[qi], searchFrom);
-          if (oi === -1) break;
-          // Find NEAREST matching close quote (not any close quote later)
-          var ci = ln.indexOf(sQE[qi], oi + 1);
-          if (ci === -1) break;
-          // Sanity: closing quote should be within reasonable distance
-          if (ci - oi > 300) { searchFrom = oi + 1; continue; }
-          pairs.push({open: oi, close: ci, qi: qi});
-          searchFrom = ci + 1; // next pair starts after this close
-        }
-      }
-      if (pairs.length === 0) return;
-      // Sort by open position, remove overlapping pairs
-      pairs.sort(function(a,b){return a.open-b.open;});
-      var cleanPairs = [];
-      var lastClose = -1;
-      pairs.forEach(function(p) {
-        if (p.open > lastClose) { cleanPairs.push(p); lastClose = p.close; }
-      });
-
-      cleanPairs.forEach(function(pair) {
-        var openIdx = pair.open, closeIdx = pair.close;
-        var clause = '';
-
-        // Find the NEAREST speech verb BEFORE this opening quote
-        var verbBeforeOpen = -1;
-        var verbBeforeOpenPos = -1;
-        sVerbs.forEach(function(v) {
-          // Find last occurrence of verb before openIdx
-          var pos = -1, searchP = 0;
-          while (true) {
-            var found = ln.indexOf(v, searchP);
-            if (found === -1 || found >= openIdx) break;
-            pos = found; searchP = found + 1;
-          }
-          if (pos !== -1 && pos > verbBeforeOpenPos) {
-            verbBeforeOpenPos = pos;
-            verbBeforeOpen = pos;
-          }
-        });
-
-        // Also check if there's a sentence boundary between verb and quote
-        // (if there is, this verb belongs to a previous sentence, not this quote)
-        if (verbBeforeOpen !== -1) {
-          var between = ln.slice(verbBeforeOpen, openIdx);
-          if ('\u3002\uff1f\uff01'.split('').some(function(p){ return between.includes(p); })) {
-            verbBeforeOpen = -1; // sentence ended between verb and quote — verb not related
-          }
-        }
-
-        if (verbBeforeOpen !== -1) {
-          // verb→quote: find start of speech unit (sentence boundary before verb)
-          var cs = 0;
-          for (var i = verbBeforeOpen - 1; i >= 0; i--) {
-            if ('\u3002\uff1f\uff01'.includes(ln[i])) { cs = i + 1; break; }
-          }
-          clause = ln.slice(cs, closeIdx + 1).trim();
-        } else {
-          // quote-first: find verb AFTER closing quote (up to 40 chars for long manner tags)
-          var afterClose = ln.slice(closeIdx + 1, Math.min(ln.length, closeIdx + 41));
-          var foundVerbAfter = false;
-          var verbEndPos = closeIdx + 1;
-          sVerbs.forEach(function(v) {
-            var vp = afterClose.indexOf(v);
-            if (vp !== -1 && !foundVerbAfter) {
-              foundVerbAfter = true;
-              // Find end of verb phrase: next sentence punctuation
-              var absStart = closeIdx + 1;
-              var absEnd = absStart + afterClose.length;
-              for (var j = absStart; j < Math.min(ln.length, absStart + 41); j++) {
-                if ('\u3002\uff1f\uff01\u3001'.includes(ln[j])) { verbEndPos = j; break; }
-                verbEndPos = j + 1;
-              }
-            }
-          });
-          if (foundVerbAfter) {
-            clause = ln.slice(openIdx, verbEndPos).trim();
-          }
-        }
-
-        if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
-      });
-    });
-
-    // Catch 反复念叨着"..." across lines
-    (function(){ var nd = '\u53cd\u590d\u5ff5\u53e8\u7740'; var ni = 0;
-      while((ni=text.indexOf(nd,ni))!==-1){
-        var qs=sQS.map(function(q){return text.indexOf(q,ni);}).filter(function(x){return x>-1;});
-        if(qs.length){var q0=Math.min.apply(null,qs);
-        var qi2=sQS.indexOf(text[q0]);
-        var matchEnd=qi2>=0?sQE[qi2]:'\u201d';
-        var qe=text.indexOf(matchEnd,q0+1);
-        if(qe>-1){var cl=text.slice(ni,qe+1); if(cl.length>=6&&!S.includes(cl))S.push(cl);}}ni++;}})();
-
-    // I: Inner thoughts — ONLY first-person mental verbs DURING action (P3-P7)
-    // NOT P2 scene feelings, NOT P8 conclusion reflections, NOT narrator bridging
-    const I = findClauses(text, [
-      '我感到','我觉得','心想','我不知','我开始感到',
-      '我很好奇','很丢脸','很羞愧','很惭愧','很不耐心',
-      '我不禁','内心','心里犹豫','心如刀绞',
-
-      '\u6211\u7684\u5fc3\u50cf\u88ab','\u6211\u5fc3\u60f3\uff1a',
-      '\u8ba9\u6211\u7684\u9f3b\u5b50\u4e00\u9635\u53d1\u9178','\u5fc3\u91cc\u4e03\u4e0a\u516b\u4e0b',
-      '\u5fc3\u5934\u4e00\u7d27','\u5185\u5fc3\u4e94\u5473\u6742\u964c','\u5fc3\u4e2d\u6d8c\u8d77',
-      '\u5fc3\u91cc\u9ed8\u60f3','\u6211\u4e0d\u7981\u6124\u4f4f\u4e86','\u6211\u81ea\u6211\u95ee\u9053',
-    ]);
-    if (text.includes('\u72b9\u8c6b\u4e86\u4e00\u77ac\u95f4') && !I.includes('\u72b9\u8c6b\u4e86\u4e00\u77ac\u95f4')) I.push('\u72b9\u8c6b\u4e86\u4e00\u77ac\u95f4');
-
-    // Extend 心想：XXX entries — find full thought up to sentence-ending punctuation
-    // so "心想：不过是三块五，难道就没有人..." is captured as one unit not cut at ，
-    var xinxiangMarkers = ['\u5fc3\u60f3\uff1a', '\u5fc3\u91cc\u60f3\uff1a', '\u5fc3\u60f3:'];
-    xinxiangMarkers.forEach(function(marker) {
-      var mi = 0;
-      while ((mi = text.indexOf(marker, mi)) !== -1) {
-        // Find end: next 。？！or end of text
-        var end = text.length;
-        for (var ei = mi + marker.length; ei < text.length; ei++) {
-          if ('\u3002\uff1f\uff01'.includes(text[ei])) { end = ei + 1; break; }
-        }
-        var fullThought = text.slice(mi, end).trim();
-        if (fullThought && fullThought.length >= 4 && !I.includes(fullThought)) {
-          // Remove shorter version if it was already added by findClauses
-          for (var ii = I.length - 1; ii >= 0; ii--) {
-            if (fullThought.startsWith(I[ii]) && fullThought.length > I[ii].length) {
-              I.splice(ii, 1);
-            }
-          }
-          I.push(fullThought);
-        }
-        mi++;
-      }
-    });
-
-    // Post-process: remove substring duplicates within each category
-    function dedupSubstrings(arr) {
-      return arr.filter(function(item, i) {
-        return !arr.some(function(other, j) {
-          return i !== j && other.includes(item) && other.length > item.length;
-        });
-      });
-    }
-
-    return {
-      E: dedupSubstrings(E_filtered),
-      A: dedupSubstrings(A),
-      S: dedupSubstrings(S),
-      I: dedupSubstrings(I)
-    };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // SHARED EASI DEDUP — merges rule-based + AI extractions,
-  // splits sentences into clauses, deduplicates, filters P2/P8
-  // Used by: screen EASI cards, annotated essay, and PDF export
-  // ═══════════════════════════════════════════════════════════════════
-  function buildEasiExtractions(essayText, annotations) {
-    const ruleAll = extractEASI(essayText);
-    // Dedup annotations by text — AI sometimes returns the same phrase twice
-    const _rawAnns = annotations || [];
-    const _seenAnnText = new Set();
-    const aiAnns = _rawAnns.filter(function(a) {
-      if (!a.text) return true;
-      var key = (a.text||'') + '|' + (a.technique||'') + '|' + (a.type||'');
-      if (_seenAnnText.has(key)) return false;
-      _seenAnnText.add(key);
-      return true;
-    });
-    const seenGlobal = new Set();
-    const result = {};
-
-    // Phrases that are scene-setting (P2), conclusion (P8), or narrator bridging — NOT EASI
-    const nonEasiPatterns = [
-      '让人感到', '令人感到',
-      '这也让我意识到', '我感到既',
-      '我意识到', '我明白了', '我懂得了',
-      '我学会了', '我终于明白',
-      '这件事让我', '经历过这件事',
-      '她的声音沙哑而微弱',
-      '每当我', '脑海中总会', '听到收银机',
-      '总会浮现', '那是一个',
-      '浮现那位', '当时的情况',
-    ];
-
-    // Patterns that are narration/action, not inner thoughts — filter from I
-    const nonIPatterns = [
-      '我就去', '我就说', '我就问', '我就跑', '我就走',
-      '我马上', '我赶紧', '我连忙', '我立刻',
-      '我对他', '我对她', '我对老师', '我对奶奶',
-      '反正', '所以我就',
-      // Narration/bridging — not inner thoughts
-      '听了', '听到', '不能相信', '在说的话',
-      // P8 conclusion reflections — not I
-      '从这件事情', '经历过这件事', '从这次',
-    ];
-
-    function isNonEasi(t) {
-      return nonEasiPatterns.some(function(p) { return t.includes(p); });
-    }
-
-    // Split text on Chinese commas/semicolons into clauses
-    function splitIntoClauses(t) {
-      var parts = t.split(/[，；]/).map(function(s) { return s.trim(); }).filter(function(s) { return s.length >= 4; });
-      if (parts.length >= 2) return parts;
-      return [t];
-    }
-
-    // Cross-category correction: detect misclassified items
-    // If an item contains a speech verb → it belongs in S, not E or A
-    // Note: AI sometimes strips closing quotes, so we detect speech verbs alone
-    var speechVerbMarkers = ['说：', '说:', '道：', '道:', '答：', '回答：', '恳求道：', '念念有词：', '哽咽着说：', '摇头说：', '平和地说：', '语重心长地说：', '冷淡地回答：', '小声地说：', '对收银员说：', '面无表情地说',
-      // Weak essay patterns: verb + comma + quote, verb + direct quote
-      '说，"', '说，\u201c', '道，"', '问，"', '回答，"',
-      '说"', '说\u201c', '道"', '道\u201c', '问"', '问\u201c',
-    ];
-    // Also match patterns like X地说："... or X着说："... or X的说 or 喊着 etc.
-    var speechVerbPatterns = [/[地着的]说[：:，,""\u201c]?/, /[地着的]道[：:，,]?/, /[地着的]答[：:，,]?/, /[地着的]回答/, /[地着的]喊/, /[地着的]骂/, /[地着的]叫/, /[地着的]问/,
-      /喊着/, /骂道/, /叫道/, /吼道/, /问道/];
-    function isSpeech(t) {
-      // Check explicit speech verb markers
-      var hasExplicitVerb = speechVerbMarkers.some(function(sv) { return t.includes(sv); });
-      if (hasExplicitVerb) return true;
-      // Check speech verb patterns
-      var hasPattern = speechVerbPatterns.some(function(p) { return p.test(t); });
-      if (hasPattern) return true;
-      // Check for 念叨着 (with or without colon/quote)
-      if (t.includes('念叨着')) return true;
-      return false;
-    }
-
-    // If an item is clearly an action (body doing something), it shouldn't be in E
-    var actionIndicators = ['抱着', '掏出', '数出来', '摆在', '翻遍', '翻出', '交叉在胸前', '搓着', '整理', '伸出手', '走上前', '放在', '收下', '扶着', '提好', '握住', '愣住', '愣了', '僵在', '后退', '低下头', '蹲下', '捡起', '走去', '凑了', '拿起', '抢过', '推我搡', '举过', '转过头', '拍了拍'];
-    function isAction(t) {
-      return actionIndicators.some(function(kw) { return t.includes(kw); });
-    }
-
-    // Narration patterns that should NOT be in A
-    var narrationPatterns = [
-      '听到', '到了', '就去吃', '就去买', '就去找', '我们到', '就走了', '就回家', '就离开',
-      // Passive — someone else acting on narrator
-      '把我骂了', '被骂了', '被打了', '把他骂了',
-      // Pure narration
-      '就去吃我们', '就去了', '回到家',
-    ];
-    function isNarration(t) {
-      // Only flag as narration if the clause LACKS descriptive action verbs
-      if (actionIndicators.some(function(kw) { return t.includes(kw); })) return false;
-      return narrationPatterns.some(function(p) { return t.includes(p); });
-    }
-
-    ['E', 'A', 'S', 'I'].forEach(function(k) {
-      var ruleItems = ruleAll[k] || [];
-      var aiItems = aiAnns
-        .filter(function(a) { return a.type === 'good' && a.technique === k; })
-        .map(function(a) { return a.text; })
-        .filter(Boolean);
-
-      // Merge: AI first (higher quality), then rule-based
-      var rawMerged = [];
-      aiItems.forEach(function(t) { if (!rawMerged.includes(t)) rawMerged.push(t); });
-      ruleItems.forEach(function(t) { if (!rawMerged.includes(t)) rawMerged.push(t); });
-
-      // For S (speech), keep as-is (verb + quote is one unit)
-      // For E/A/I, split comma-joined sentences into individual clauses
-      var expanded = [];
-      rawMerged.forEach(function(text) {
-        if (k === 'S') {
-          expanded.push(text);
-        } else {
-          var clauses = splitIntoClauses(text);
-          clauses.forEach(function(c) {
-            if (!expanded.includes(c)) expanded.push(c);
-          });
-        }
-      });
-
-      // Filter out non-EASI content
-      expanded = expanded.filter(function(t) { return !isNonEasi(t); });
-
-      // Cross-category correction: remove misclassified items
-      if (k === 'E') {
-        // Remove speech items from E: speech verb ALWAYS takes precedence over appearance
-        expanded = expanded.filter(function(t) {
-          // HARD BLOCK: any E item containing 面无表情地说 is S, not E
-          if (t.indexOf('面无表情地说') !== -1) return false;
-          // Direct character check using actual Chinese chars
-          if (t.includes('说：') || t.includes('说:') || t.includes('说"') || t.includes('说「') || t.includes('说“')) return false;
-          if (t.includes('道：') || t.includes('道:') || t.includes('道"') || t.includes('道「') || t.includes('道“')) return false;
-          if (t.includes('答：') || t.includes('答:') || t.includes('答"') || t.includes('答「') || t.includes('答“')) return false;
-          if (t.includes('回答')) return false;
-          if (t.includes('恳求道')) return false;
-          if (t.includes('念叨')) return false;
-          if (t.includes('念念有词')) return false;
-          if (isSpeech(t)) return false;
-          return true;
-        });
-        // Remove action items from E (body doing something = A, not E)
-        expanded = expanded.filter(function(t) { return !isAction(t); });
-        // Remove narration from E (不能相信X在说的话 = narration, not E)
-        expanded = expanded.filter(function(t) {
-          if (t.includes('不能相信') && t.includes('说的话')) return false;
-          if (t.includes('听到') && t.includes('的话')) return false;
-          return true;
-        });
-      }
-      if (k === 'I') {
-        // Remove narration/action items from I
-        expanded = expanded.filter(function(t) {
-          return !nonIPatterns.some(function(p) { return t.includes(p); });
-        });
-      }
-      if (k === 'A') {
-        // Remove speech items from A
-        expanded = expanded.filter(function(t) {
-          if (t.includes('说：') || t.includes('说:') || t.includes('说"') || t.includes('说「') || t.includes('说“')) return false;
-          if (t.includes('道：') || t.includes('道:') || t.includes('道"') || t.includes('道「') || t.includes('道“')) return false;
-          if (t.includes('答：') || t.includes('答:') || t.includes('答"') || t.includes('答「') || t.includes('答“')) return false;
-          if (t.includes('回答')) return false;
-          if (t.includes('恳求道')) return false;
-          if (t.includes('念叨')) return false;
-          if (isSpeech(t)) return false;
-          // Remove narration from A
-          if (isNarration(t)) return false;
-          return true;
-        });
-      }
-
-      // Prefer clauses over sentences: if a longer entry contains
-      // a shorter entry as substring, drop the longer one
-      var deduped = expanded.filter(function(item, i) {
-        var containsShorter = expanded.some(function(other, j) {
-          return i !== j && item.includes(other) && item.length > other.length;
-        });
-        return !containsShorter;
-      });
-
-      // Near-match dedup: normalize punctuation before comparing
-      // Catches: 反复念叨着："好孩子" vs 反复念叨着"好孩子"
-      function normalize(t) {
-        var stripped = t
-          .replace(/[：:]/g, '')
-          .replace(/[“”‘’「」"]/g, '')
-          .replace(/\s+/g, '')
-          .replace(/…/g, '...');
-        // For S: deduplicate by quoted content only
-        // so verb-first and quote-first versions collapse to same key
-        if (k === 'S') {
-          var qm = t.match(/[“「"]([\s\S]+?)[”」"]/);
-          if (qm) return qm[1].replace(/\s+/g, '').replace(/…/g, '...');
-        }
-        return stripped;
-      }
-      var seenNormalized = new Set();
-      deduped = deduped.filter(function(t) {
-        var n = normalize(t);
-        if (seenNormalized.has(n)) return false;
-        seenNormalized.add(n);
-        return true;
-      });
-
-      // Cross-category global dedup (also using normalized form)
-      var final = deduped.filter(function(t) {
-        if (!t) return false;
-        var n = normalize(t);
-        if (seenGlobal.has(t) || seenGlobal.has(n)) return false;
-        seenGlobal.add(t);
-        seenGlobal.add(n);
-        return true;
-      });
-
-      // Sort by essay order: items appearing earlier in the essay come first
-      final.sort(function(a, b) {
-        var posA = essayText.indexOf(a);
-        var posB = essayText.indexOf(b);
-        if (posA === -1) posA = 999999;
-        if (posB === -1) posB = 999999;
-        return posA - posB;
-      });
-
-      // NUCLEAR: final pass — remove any E item that contains a speech verb
-      if (k === 'E') {
-        final = final.filter(function(t) {
-          if (t.indexOf('地说') !== -1) return false;
-          if (t.indexOf('的说') !== -1) return false;
-          if (t.indexOf('着说') !== -1) return false;
-          if (t.indexOf('地道') !== -1) return false;
-          if (t.indexOf('地答') !== -1) return false;
-          if (t.indexOf('恳求道') !== -1) return false;
-          if (t.indexOf('念叨') !== -1) return false;
-          if (t.indexOf('喊着') !== -1) return false;
-          if (t.indexOf('骂道') !== -1) return false;
-          if (t.indexOf('叫道') !== -1) return false;
-          if (t.indexOf('吼道') !== -1) return false;
-          // Emotion + speech verb combo (e.g. 生气喊着, 着急的说)
-          if ((t.includes('生气') || t.includes('着急')) && (t.includes('喊') || t.includes('说') || t.includes('骂') || t.includes('叫'))) return false;
-          return true;
-        });
-      }
-      // Strip outer wrapping quotes only (when entire item is wrapped)
-      final = final.map(function(t) {
-        t = t.trim();
-        if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith('“') && t.endsWith('”')) || (t.startsWith('「') && t.endsWith('」'))) {
-          t = t.slice(1, -1).trim();
-        }
-        return t;
-      }).filter(function(t) { return t.length >= 3; });
-      result[k] = final;
-    });
-
-    return result;
-  }
-
   function generatePDF() {
     const w = window.open('', '_blank');
     const fwNames = {p1_opening:'P1 开头策略',p2_scene:'P2 场景设置',p31_transition:'P3.1 过渡段',p32_flashback:'P3.2 插叙',p4_trigger:'P4 高潮前',p56_climax:'P5–6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
@@ -673,16 +104,13 @@ export default function Home() {
       </div>`;
     }).join('');
 
-    // CHANGED: Use shared dedup function for PDF EASI
-    const pdfEasiExtracted = buildEasiExtractions(essay, results.annotations);
-
     const easiCards = ['E','A','S','I'].map(k => {
       const it = results.easi?.[k]||{};
       const isExcellent = it.rating==='excellent', isGood = it.rating==='good', isOk = it.rating==='ok';
       const bg = isExcellent?'#eaf2fb':isGood?'#edf7f1':isOk?'#fdf6e3':'#fff0ee';
       const border = isExcellent?'#1a4a70':isGood?'#1a6e40':isOk?'#a07820':'#b83222';
       const color = isExcellent?'#0d2d44':isGood?'#154d2e':isOk?'#5a3e10':'#6a1810';
-      const extractedArr = pdfEasiExtracted[k] || [];
+      const extractedArr = (it.extracted && it.extracted.length>0) ? it.extracted : [];
       const extractedHtml = !extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
         : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:'Noto Serif SC',serif;font-size:11px">${ex}</span></div>`).join('');
@@ -714,19 +142,7 @@ export default function Home() {
 
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
 
-    // CHANGED: Use shared dedup for PDF annotated essay annotations
-    const pdfEasiBuilt = buildEasiExtractions(essay, results.annotations);
-    const pdfAiAnns = results.annotations || [];
-    const pdfAiTexts = new Set(pdfAiAnns.map(function(a){return a.text;}));
-    const pdfExtraAnns = [];
-    ['E','A','S','I'].forEach(function(tech) {
-      (pdfEasiBuilt[tech]||[]).forEach(function(text) {
-        if (text && !pdfAiTexts.has(text) && essay.includes(text)) {
-          pdfExtraAnns.push({text:text, type:'good', technique:tech, comment:''});
-        }
-      });
-    });
-    const pdfMergedAnns = [...pdfAiAnns, ...pdfExtraAnns];
+    const pdfMergedAnns = results.annotations || [];
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
       const annotatedPara = (function() {
@@ -1038,7 +454,7 @@ export default function Home() {
     );
   }
 
-  function AnnotatedEssayWithFramework({essay, annotations, framework}) {
+  function AnnotatedEssayWithFramework({essay, annotations, framework, rewrites}) {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
 
     return (
@@ -1050,7 +466,7 @@ export default function Home() {
                 style={{fontFamily:"'Noto Serif SC',serif", fontSize:'.95rem', color:'#3d3020',
                   lineHeight:2.2, background:'#fffef8', padding:'10px 14px',
                   borderRadius:'8px', border:'1px solid #e0d5c0'}}
-                dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations)}}
+                dangerouslySetInnerHTML={{__html: annotateEssay(para, annotations, rewrites)}}
               />
             </div>
           );
@@ -1059,15 +475,17 @@ export default function Home() {
     );
   }
 
-  function annotateEssay(text, annotations) {
+  function annotateEssay(text, annotations, rewrites) {
     if (!annotations || annotations.length === 0) return text.replace(/\n/g, '<br/>');
+    // Build rewrite lookup: original sentence → rewrite suggestion
+    const rewriteMap = {};
+    (rewrites||[]).forEach(function(r){ if(r.original&&r.rewrite) rewriteMap[r.original]=r.rewrite; });
     const sorted = [...annotations].sort((a,b) => (b.text||'').length - (a.text||'').length);
-    // Build set of texts that have error annotations — red takes priority over green
+    // Red takes priority over green/yellow on same text
     const errorTexts = new Set(sorted.filter(function(a){return a.type==='error';}).map(function(a){return a.text;}));
     let result = text;
     sorted.forEach((ann) => {
       if (!ann.text || !result.includes(ann.text)) return;
-      // If this is a good/improve annotation but the same text is also flagged as error, skip it
       if ((ann.type==='good'||ann.type==='improve') && errorTexts.has(ann.text)) return;
       const colors = {
         error: { bg:'#fff0ee', underline:'#b83222', dot:'🔴' },
@@ -1076,7 +494,12 @@ export default function Home() {
       };
       const c = colors[ann.type] || colors.good;
       const techLabel = ann.technique ? ` [${ann.technique}]` : '';
-      const tooltip = (ann.comment||'') + techLabel;
+      // For improve: show rewrite suggestion in tooltip if available
+      var tooltipBase = (ann.comment||'') + techLabel;
+      if (ann.type==='improve' && rewriteMap[ann.text]) {
+        tooltipBase = '改写：' + rewriteMap[ann.text];
+      }
+      const tooltip = tooltipBase;
       const highlighted = `<span class="ann-mark ann-${ann.type}" style="background:${c.bg};border-bottom:2px solid ${c.underline};border-radius:3px;padding:1px 2px;cursor:pointer;position:relative" title="${tooltip}" data-comment="${tooltip}">${ann.text}<sup style="font-size:9px;color:${c.underline};margin-left:1px">${c.dot}</sup></span>`;
       result = result.replace(ann.text, highlighted);
     });
@@ -1106,7 +529,7 @@ export default function Home() {
         </div>
         <p style={{fontSize:'.86rem',color:'#3d3020',lineHeight:1.7,marginBottom:16}}>{desc}</p>
         {stateVal==='idle'&&<button className="btn-gold" style={{background:color}} onClick={()=>generateSample(mode)}>{isStretch?('📈 生成进阶范文 ('+tGrade+')'):'⭐ 生成示范范文 (A1/A2)'}</button>}
-        {stateVal==='loading'&&<div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 0',color:'#8a7a60',fontStyle:'italic',fontSize:'.87rem'}}><div className="dots"><span/><span/><span/></div>生成中，约需 20–30 秒……</div>}
+        {stateVal==='loading'&&<div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 0',color:'#8a7a60',fontStyle:'italic',fontSize:'.87rem'}}><div className="dots"><span/><span/><span/></div>生成中，约需 40–60 秒……</div>}
         {stateVal==='error'&&<div><p style={{color:'#b83222',fontSize:'.84rem',marginBottom:10}}>生成时出现错误，请重试。</p><button className="btn-gold" style={{background:color}} onClick={()=>generateSample(mode)}>重试</button></div>}
         {stateVal==='done'&&essayVal&&(
           <div>
@@ -1221,7 +644,7 @@ export default function Home() {
 
         {state==='loading'&&(<div className="card fade"><div className="loading-wrap">
           <div className="loading-char">批改中…</div>
-          <div className="loading-msg">Marking your essay · 正在批改，约需 20–30 秒… (20–30 seconds)</div>
+          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (20–30 seconds)</div>
           <div className="loading-steps">{['检查框架结构','评估内容层次','分析语文结构','EASI手法评估','撰写考官评语'].map((s,i)=><span key={i} className="lstep">{s}</span>)}</div>
         </div></div>)}
 
@@ -1245,22 +668,7 @@ export default function Home() {
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#fdf0ee',color:'#b83222',border:'1px solid #b83222'}}>🔴 错误</span>
               <span style={{fontSize:'.75rem',padding:'3px 10px',borderRadius:99,background:'#fdf6e3',color:'#a07820',border:'1px solid #a07820'}}>🟡 可改善</span>
             </div>
-            {/* CHANGED: Use shared dedup for annotated essay annotations */}
-            {(function(){
-              const _easiBuilt = buildEasiExtractions(essay, results?.annotations || []);
-              const _aiAnns = results?.annotations || [];
-              const _aiTexts = new Set(_aiAnns.map(function(a){return a.text;}));
-              const _extra = [];
-              ['E','A','S','I'].forEach(function(tech) {
-                (_easiBuilt[tech]||[]).forEach(function(text) {
-                  if (text && !_aiTexts.has(text) && essay.includes(text)) {
-                    _extra.push({text:text, type:'good', technique:tech, comment:''});
-                  }
-                });
-              });
-              const _merged = [..._aiAnns, ..._extra];
-              return <AnnotatedEssayWithFramework essay={essay} annotations={_merged} framework={results?.framework||{}} />;
-            })()}
+            <AnnotatedEssayWithFramework essay={essay} annotations={results?.annotations||[]} framework={results?.framework||{}} rewrites={results?.rewrite_examples||[]} />
             <div style={{fontSize:'.78rem',color:'#8a7a60',marginTop:10,fontStyle:'italic'}}>
               悬停或点击高亮文字查看批注 · Hover over highlights to see comments
             </div>
@@ -1302,11 +710,10 @@ export default function Home() {
             <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>✍️</div><div><div className="sec-title">EASI 人物描写手法</div><div className="sec-sub">E = Expressions & Appearance &nbsp;·&nbsp; A = Actions &nbsp;·&nbsp; S = Speech &nbsp;·&nbsp; I = Inner Thoughts & Feelings</div></div></div>
             {/* CHANGED: Use shared dedup function */}
             <div className="easi-grid">{(function(){
-            const easiExtracted = buildEasiExtractions(essay, results.annotations);
             return easiItems.map(e=>{
             const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
             const c=easiColor(item.rating);
-            const extracted = easiExtracted[e.k] && easiExtracted[e.k].length>0 ? easiExtracted[e.k] : ['未发现相关描写'];
+            const extracted = (item.extracted && item.extracted.length>0) ? item.extracted : ['未发现相关描写'];
             return(<div key={e.k} className="easi-item" style={{background:c.bg,borderColor:c.border}}>
               <div className="easi-header"><div className="easi-letter" style={{color:c.border}}>{e.k}</div><div><div className="easi-name">{e.name}</div><div className="easi-en">{e.en}</div></div></div>
               <div className="easi-score" style={{color:c.border}}>{item.score_label}</div>
