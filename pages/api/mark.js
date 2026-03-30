@@ -269,21 +269,59 @@ For each: pattern (e.g. "E→A→E"), text (full combined text using 「」for q
 OUTPUT FORMAT
 ════════════════════════════════════════════════════════════
 
-For each annotation:
-- "text": EXACT clause from essay. Replace all " " with 「 」.
-- "type": "good" for EASI, "error" for language mistakes, "improve" for suggestions
-- "technique": "E", "A", "S", or "I" (only for type "good")
-- "comment": brief Chinese label, under 15 chars
+ANNOTATIONS — THREE TYPES ONLY:
 
-ANNOTATION COVERAGE — BE THOROUGH:
-Annotate EVERY instance of EASI in the essay, not just the best ones. For weak essays:
-- Even simple/clumsy descriptions count. 「我感到很丢脸」is still I. 「低着头惭愧的说」has both A (低着头) and S (惭愧的说 + quoted content).
-- Annotate ALL dialogue as S, even poorly punctuated ones. Every line of speech with a speech verb (说/道/问/喊/骂/回答/叫) MUST include the full quoted content. Never return just the verb.
-- If the speech verb is followed by a comma then a quote (说，"..."), still include everything from verb to closing quote as one S unit.
-- Any DESCRIBED physical action = A. 「把食物从手里抢出」= A. 「我跑到门口」= A. 「把门打开」= A. But plain narration (我们到了, 就去吃) is NOT A.
-- Any facial expression or appearance detail = E, BUT if the same clause contains a speech verb, it is S not E. 「生气喊着」= S (not E). 「微笑着」alone without speech verb = E.
-- Any first-person feeling/thought in P3-P7 = I. But feelings in the LAST paragraph (P8) are conclusions, NOT I.
-The goal: the EASI cards should contain ALL instances from the essay. Missing items = marking failure.
+TYPE 1 — "good" (🟢 Green highlights in essay)
+Select genuinely impressive phrases from this essay. These are phrases that stand out as well-written for the student's level — vivid imagery, strong EASI technique, effective expression.
+- Show ALL genuinely good phrases found. No upper limit.
+- If the essay is weak, find the best moments relative to its level — even a Band 3 essay has some better moments than others.
+- If nothing is genuinely impressive, return no "good" annotations — do NOT force it.
+- Do NOT annotate every EASI clause as "good" — only the ones that actually impress.
+- "technique": "E", "A", "S", or "I" to indicate which technique makes it good
+- "comment": brief Chinese explanation of why it is good (under 15 chars)
+
+TYPE 2 — "improve" (🟡 Yellow highlights in essay)
+Mark sentences that have structural or grammatical problems — the same sentences you include in rewrite_examples.
+CRITICAL: EVERY sentence in rewrite_examples MUST also appear as a "improve" annotation, and EVERY "improve" annotation MUST appear in rewrite_examples. They must match exactly.
+- "text": exact sentence from essay (same as rewrite_examples "original" field)
+- "comment": brief label of the problem (under 15 chars)
+
+TYPE 3 — "error" (🔴 Red highlights in essay)
+One annotation per language error in language_errors.
+- "text": exact wrong word/phrase from essay (same as language_errors "original" field, without 「」)
+- "comment": the correct version
+
+════════════════════════════════════════════════════════════
+EASI EXTRACTION FOR CARDS
+════════════════════════════════════════════════════════════
+
+The easi[k].extracted arrays are used to populate the EASI cards — they must be COMPREHENSIVE.
+Extract ALL instances of each technique from the entire essay.
+
+E (外貌描写): How someone LOOKS — face, eyes, skin, posture, clothing, gaze. Each clause separately.
+NOT E: any clause with a speech verb → that is S, not E.
+
+A (行动描写): Physical movement — body DOING something. Each clause separately.
+NOT A: plain narration (我们到了, 就去吃), passive (把我骂了).
+
+S (语言描写): Speech verb + quoted content as ONE complete unit.
+CRITICAL — extract ALL speech regardless of punctuation pattern:
+✓ verb："quote"  e.g. 妈妈说："你好。"
+✓ verb，"quote"  e.g. 妈妈说，"你好。"
+✓ verb"quote"   e.g. 妈妈说"你好。"
+✓ "quote"verb   e.g. "你好。"妈妈说
+✓ "quote"，verb  e.g. "你好，"妈妈说
+✓ "quote"，verb， e.g. "你好，"妈妈着急地说，
+RULE: Always include BOTH the speech manner/verb AND the full quoted content as one unit.
+NEVER return a speech verb alone without the quote. NEVER return a quote alone without the verb.
+If punctuation is missing or wrong, still extract the complete unit by context.
+
+I (心理描写): First-person mental state in P3-P7 only (NOT P8 conclusions).
+CRITICAL — extract ALL inner thought patterns:
+✓ 心想：XXX — extend to full sentence end (。？！), not just to next comma
+✓ 我感到XXX, 我觉得XXX, 我不知XXX, 我开始XXX
+✓ 心里想XXX, 内心XXX, 心头XXX
+NOT I: P8 reflections (经历过这件事, 这也让我意识到), narration (听了奶奶的话), bridging text
 
 LANGUAGE ERRORS: Only flag GENUINE errors — wrong characters (错别字), clearly wrong grammar (语法错误), wrong word usage (用词不当).
 Each error MUST have these exact fields: "label" (error type), "original" (exact wrong text from essay, use 「」), "correction" (correct version), "reason" (brief explanation).
@@ -321,7 +359,7 @@ Types to flag:
 - 人称错误: sudden pronoun switch mid-sentence (你 → 他)
 - 句子残缺: incomplete sentence missing key component
 Each entry: {"original": "exact full sentence from essay", "rewrite": "corrected full sentence", "note": "brief fix description under 20 chars"}
-LIMIT: At most 3 entries. For A1/A2 essays with no structural errors, return rewrite_examples: [].
+LIMIT: No fixed limit — include ALL genuine structural/grammar issues found. For A1/A2 essays with no structural errors, return rewrite_examples: [].
 IMPORTANT: Only flag GENUINE structural problems. If a sentence is grammatically valid even if simple, do NOT flag it.
 
 STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
