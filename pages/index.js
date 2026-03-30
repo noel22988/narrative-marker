@@ -59,16 +59,27 @@ export default function Home() {
       // ── Post-process EASI: fix misclassifications and supplement gaps ──
       if (data.easi) {
         var speechVerbs = ['说','道','回答','恳求','念叨','喊','骂','叫','问','嚷','吼'];
+        var quoteChars = ['“','”','‘','’','「','」','"'];
         function hasSV(t) { return speechVerbs.some(function(v){return t.includes(v);}); }
+        // hasCompleteSpeech: has speech verb AND at least one quote character — genuine speech unit
+        function hasCompleteSpeech(t) {
+          return hasSV(t) && quoteChars.some(function(q){return t.includes(q);});
+        }
         var eArr = (data.easi.E && data.easi.E.extracted) ? data.easi.E.extracted.slice() : [];
         var aArr = (data.easi.A && data.easi.A.extracted) ? data.easi.A.extracted.slice() : [];
         var sArr = (data.easi.S && data.easi.S.extracted) ? data.easi.S.extracted.slice() : [];
         var iArr = (data.easi.I && data.easi.I.extracted) ? data.easi.I.extracted.slice() : [];
 
         // Fix 3: E/A entries with speech verb → move to S
-        var eToS = eArr.filter(hasSV); eArr = eArr.filter(function(t){return !hasSV(t);});
-        var aToS = aArr.filter(hasSV); aArr = aArr.filter(function(t){return !hasSV(t);});
+        // Move to S only if has BOTH speech verb AND quote — pure verb-only fragments stay in A or get dropped
+        var eToS = eArr.filter(hasCompleteSpeech); eArr = eArr.filter(function(t){return !hasSV(t);});
+        var aToS = aArr.filter(hasCompleteSpeech); aArr = aArr.filter(function(t){return !hasCompleteSpeech(t);});
+        // Drop verb-only A entries (has speech verb but no quote — e.g. 把我骂了起来 stays in A as action)
         eToS.concat(aToS).forEach(function(t){ if (!sArr.includes(t)) sArr.push(t); });
+        // Remove from S any entry with no quote at all (verb-only fragment like 低着头惭愧的说)
+        sArr = sArr.filter(function(t){
+          return quoteChars.some(function(q){return t.includes(q);});
+        });
 
         // Fix 4: I entries from last paragraph → remove
         var paras = essay.split(/\n+/).filter(function(p){return p.trim().length>0;});
@@ -105,6 +116,17 @@ export default function Home() {
             if (cl2.length>=4 && !hasSV(cl2) && !eArr.some(function(e){return e.includes(cl2)||cl2.includes(e);})) eArr.push(cl2);
           });
         });
+
+        // Fix 3: I entries — truncate at first opening quote to strip embedded speech
+        var iQuoteOpens = ['“','‘','「','"'];
+        iArr = iArr.map(function(t) {
+          var firstQ = -1;
+          iQuoteOpens.forEach(function(q){ var p=t.indexOf(q); if(p!==-1&&(firstQ===-1||p<firstQ)) firstQ=p; });
+          if (firstQ > 2) return t.slice(0, firstQ).trim().replace(/[，、]$/, '');
+          return t;
+        }).filter(function(t){ return t.length >= 4; });
+        // Also remove I entries that are pure narration (contain 所以我问 — means it's bridging to speech)
+        iArr = iArr.filter(function(t){ return !t.includes('所以我问'); });
 
         if (data.easi.E) data.easi.E.extracted = eArr;
         if (data.easi.A) data.easi.A.extracted = aArr;
@@ -700,7 +722,7 @@ export default function Home() {
 
         {state==='loading'&&(<div className="card fade"><div className="loading-wrap">
           <div className="loading-char">批改中…</div>
-          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (20–30 seconds)</div>
+          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (40–60 seconds)</div>
           <div className="loading-steps">{['检查框架结构','评估内容层次','分析语文结构','EASI手法评估','撰写考官评语'].map((s,i)=><span key={i} className="lstep">{s}</span>)}</div>
         </div></div>)}
 
