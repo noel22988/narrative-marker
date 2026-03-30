@@ -48,26 +48,40 @@ Band 3 (9-12): Adequate, some errors, simple sentences
 Band 4 (5-8): Not fluent, many errors, limited vocabulary
 Band 5 (1-4): Not fluent, very many errors, poor vocabulary
 
-CONTENT SCORING ANCHORS (out of 20):
-CRITICAL: Be GENEROUS. When in doubt, award the HIGHER band.
-- ALL 8 stages + rich EASI + vivid detail + clear moral → Band 1 (17-18)
-- 7-8 stages + EASI present but inconsistent → Band 2 (15-16)
-- Complete story with basic EASI → Band 2 (13-14)
-- Incomplete structure OR very thin → Band 3 (9-12)
-- Essay: ${charCount} chars. Over 400 chars with complete structure → Band 2 minimum.
+CALIBRATED SCORING ANCHORS — use these real marked essays to calibrate your scores:
 
-LANGUAGE SCORING ANCHORS (out of 20):
-- 0-1 minor errors, varied sentences, rich vocab → Band 1 (17-18)
-- 2-3 minor errors, varied vocab → Band 2 (15-16)
-- 4-8 errors → Band 3 (11-13)
-- 9-14 errors → Band 4 (8-10)
-- 15+ errors → Band 5 (5-7)
-IMPORTANT: Count ALL 错别字, grammar errors, and wrong word usage. Each distinct error counts as 1. Be STRICT on language scoring — do not inflate.
-If content is Band 2 but language has 5+ errors, language score MUST be lower than content score.
-- DO NOT penalise stylistic choices or minor punctuation variations
-- DO NOT flag ASCII vs fullwidth punctuation differences (e.g. : vs ：, " vs ", . vs 。) — these are typing/input method issues, not language errors
+════ ANCHOR 1: PERFECT BAND 1 — 18+18 = 36/40 (A1) ════
+Content 18/20: All 8 framework stages fully present and well-executed. Rich EASI across ALL paragraphs — E (满头白发,佝偻着腰,眼眶渐渐泛红,嘴唇微微发抖), A (颤巍巍地掏出,小心翼翼地摆在,慌忙翻遍), S (full dialogue with manner tags throughout), I (心像被什么东西狠狠揪了一下,心想：不过是三块五). 结尾 has all 4 parts (感受+为什么+启示+社会). Vivid sensory detail. Clear moral.
+Language 18/20: Completely fluent. Rich varied vocabulary. Zero significant errors. 成语 and 四字词语 used naturally. Sentence structures varied and sophisticated.
 
-Content and language scores should be within 2-3 marks of each other.
+════ ANCHOR 2: LOW BAND 1 / A2 — 17+16 = 33/40 (A2) ════
+Content 17/20: All 8 stages present and well-executed. Rich EASI in climax paragraphs, good throughout. Minor weakness: one framework stage slightly thin, OR 结尾 society application brief but present. Still clearly Band 1.
+Language 16/20: Fluent and natural. Good 成语 usage. Varied sentences. Only 1-3 minor isolated errors (single wrong character, minor punctuation) that do not affect reading flow. No broken sentences or systematic error patterns.
+KEY DIFFERENCE from Band 2: EASI is rich and consistent across ALL paragraphs, not just the climax. Language errors are isolated slips, not recurring problems.
+
+════ ANCHOR 3: BAND 2 — 14+12 = 26/40 (B3) ════
+Content 14/20: Complete 8-stage structure. EASI attempted across paragraphs but inconsistent — good action chains (慌慌张张,精疲力竭,吞吞吐吐) but E and I thin in several sections. 结尾 missing full 4-part formula (society application absent or very brief). Climax has momentum but EASI coverage uneven.
+Language 12/20: Above-average vocabulary range (精疲力竭,七嘴八舌,异口同声,喜笑颜开,濡沫涸辙) showing effort. But 10+ errors including recurring character mistakes (说到→说道,喊到→喊道,让后→然后,走经→走进,百般→白板,瞪这→瞪着) and some broken sentence structures (深深地他吸一口气). Errors are systematic, not isolated.
+KEY DIFFERENCE from Band 1: EASI present but inconsistent across paragraphs. Language errors are frequent and recurring, not isolated slips.
+
+════ ANCHOR 4: BAND 3 — 13+9 = 22/40 (C5) ════
+Content 13/20: Basic story structure present with most framework stages. EASI thin — some dialogue and actions but minimal E or I. Climax has conflict and dialogue but lacks descriptive depth. Characters are flat. 结尾 has basic feeling and moral but no societal application.
+Language 9/20: 15+ errors including multiple 错别字 (说到,真么→怎么,下了一跳→吓了一跳,驾到,转被,可也,发证,待→到), multiple grammar errors (broken sentences, wrong sentence structure). Vocabulary simple and repetitive. Sentences short and formulaic.
+KEY DIFFERENCE from Band 2: Vocabulary noticeably limited, errors are numerous and affect readability. EASI barely present outside of dialogue.
+
+SCORING RULES:
+- Match the essay being marked against these anchors. Award the score that best fits.
+- Be GENEROUS: when between two anchors, lean toward the higher one.
+- Essay: ${charCount} chars. Under 200 chars → Band 3 or below regardless of quality.
+- Content and language scores should be within 3 marks of each other unless there is a clear reason (e.g. excellent story, very poor language).
+- total_score MUST equal content_score + language_score.
+
+LANGUAGE ERROR COUNTING:
+- Count ALL 错别字, grammar errors, wrong word usage. Each distinct error = 1.
+- DO NOT penalise: ASCII vs fullwidth punctuation (: vs ：, " vs "), stylistic choices.
+- 0-1 errors → Band 1 language. 2-5 errors → high Band 2. 6-10 → Band 2/3. 11-15 → Band 3/4. 16+ → Band 4/5.
+
+GRADE BOUNDARIES: A1:30-40, A2:28-29, B3:26-27, B4:24-25, C5:22-23, C6:20-21, D7:18-19, E8:16-17, F9:≤15
 
 GRADE BOUNDARIES: A1:30-40, A2:28-29, B3:26-27, B4:24-25, C5:22-23, C6:20-21, D7:18-19, E8:16-17, F9:≤15
 total_score MUST equal content_score + language_score.
@@ -295,17 +309,20 @@ These are input method differences, NOT language errors. If you flag any punctua
 Return language_errors: [] if no genuine errors exist.
 
 GRAMMAR SENTENCE ERRORS (改写示范):
-Beyond word-level errors, also identify sentences with structural/grammatical problems — missing subject, wrong sentence structure, illogical grammar, awkward phrasing that affects meaning.
-For each such sentence, provide a rewrite_example entry.
-Each entry: {"original": "exact full sentence from essay", "rewrite": "corrected full sentence", "note": "brief explanation of structural fix, under 20 chars"}
+Identify sentences with STRUCTURAL or GRAMMATICAL problems that go beyond single-word errors.
+CRITICAL RULE: Do NOT include a sentence in rewrite_examples if its problem is ALREADY captured in language_errors as a word-level fix (e.g. if 说到→说道 is already in language_errors, do not rewrite that sentence here).
+Only include sentences where the problem is the STRUCTURE or COLLOCATION, not a single wrong character.
+
 Types to flag:
 - 缺主语: sentence missing its subject (e.g. 「站在礼堂前面警告。」→ missing who is warning)
-- 语序错误: wrong word order that confuses meaning
-- 搭配不当: word combinations that don't work in Chinese (e.g. 考试很统一)
-- 逻辑不通: sentence where the logic breaks (e.g. comparing two things incorrectly)
-- 人称错误: sudden pronoun switch (你 → 他 etc.)
-LIMIT: Flag at most 3 of the WORST sentences. For A1/A2 essays with no structural errors, return rewrite_examples: [].
-IMPORTANT: Only flag sentences with GENUINE structural problems, not stylistic preferences. If the sentence is grammatically valid even if simple, do NOT flag it.
+- 语序错误: wrong word order that changes or obscures meaning (e.g. 「强了大大」→「大大增强了」)
+- 搭配不当: collocations that don't work in Chinese (e.g. 「考试很统一」「友情强了」)
+- 逻辑不通: illogical sentence structure (e.g. double negatives, broken comparisons)
+- 人称错误: sudden pronoun switch mid-sentence (你 → 他)
+- 句子残缺: incomplete sentence missing key component
+Each entry: {"original": "exact full sentence from essay", "rewrite": "corrected full sentence", "note": "brief fix description under 20 chars"}
+LIMIT: At most 3 entries. For A1/A2 essays with no structural errors, return rewrite_examples: [].
+IMPORTANT: Only flag GENUINE structural problems. If a sentence is grammatically valid even if simple, do NOT flag it.
 
 STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
 - {"label":"完整八段结构","text":"八段式记叙文结构完整，层次分明，过渡自然"}
