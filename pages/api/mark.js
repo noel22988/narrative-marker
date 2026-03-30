@@ -79,7 +79,17 @@ SCORING RULES:
 LANGUAGE ERROR COUNTING:
 - Count ALL 错别字, grammar errors, wrong word usage. Each distinct error = 1.
 - DO NOT penalise: ASCII vs fullwidth punctuation (: vs ：, " vs "), stylistic choices.
-- 0-1 errors → Band 1 language. 2-5 errors → high Band 2. 6-10 → Band 2/3. 11-15 → Band 3/4. 16+ → Band 4/5.
+- Use these EXACT score bands — do not deviate:
+  0-1 errors  → language score 17-18 (Band 1)
+  2-3 errors  → language score 15-16 (Band 1/2 boundary)
+  4-5 errors  → language score 13-14 (Band 2)
+  6-8 errors  → language score 11-12 (Band 2/3 boundary)
+  9-11 errors → language score 9-10  (Band 3)
+  12-14 errors→ language score 7-8   (Band 3/4 boundary)
+  15+ errors  → language score 5-6   (Band 4/5)
+- IMPORTANT: Count the errors you actually found in language_errors. Match the count to the band above.
+- If the essay has rich vocabulary and varied sentence structures, award the higher end of the band.
+- If vocabulary is simple and repetitive, award the lower end.
 
 GRADE BOUNDARIES: A1:30-40, A2:28-29, B3:26-27, B4:24-25, C5:22-23, C6:20-21, D7:18-19, E8:16-17, F9:≤15
 
@@ -579,6 +589,30 @@ if (result.rewrite_examples && Array.isArray(result.rewrite_examples)) {
     if (r.rewrite) r.rewrite = rq(r.rewrite);
     if (r.note) r.note = rq(r.note);
     return r;
+  });
+  // Dedup: remove rewrite entries whose ONLY problem is already captured as a word-level error
+  // i.e. if every wrong word in the original is already in language_errors, skip the rewrite
+  var langErrorOriginals = (result.language_errors || []).map(function(e) {
+    return (e.original || '').replace(/[「」“”]/g, '').trim();
+  });
+  result.rewrite_examples = result.rewrite_examples.filter(function(r) {
+    if (!r.original) return false;
+    var orig = r.original;
+    // Check if this sentence has a STRUCTURAL problem beyond single word errors
+    // A rewrite is kept if its note mentions structural issues (not just 错别字)
+    var note = (r.note || '').toLowerCase();
+    var isStructural = note.includes('句') || note.includes('语序') ||
+      note.includes('结构') || note.includes('表达') ||
+      note.includes('逻辑') || note.includes('重复') ||
+      note.includes('搞混') || note.includes('残缺') ||
+      note.includes('连词') || note.includes('清晰') ||
+      note.includes('struct') || note.includes('repeat') || note.includes('logic');
+    if (isStructural) return true;
+    // If note only mentions 错别字 or word fixes, check if already in language_errors
+    var alreadyCovered = langErrorOriginals.some(function(le) {
+      return le && orig.includes(le);
+    });
+    return !alreadyCovered;
   });
 }
 
