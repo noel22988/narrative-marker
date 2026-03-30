@@ -56,6 +56,20 @@ export default function Home() {
         const debugInfo = data.debug_snippet ? `\n\nDebug snippet: ${data.debug_snippet}\nError: ${data.debug_error}` : '';
         throw new Error((data.error || '批改失败') + debugInfo);
       }
+      // ── Rebuild annotations deterministically from language_errors + rewrite_examples ──
+      // Error annotations: one per language_error, text = original (stripped of brackets)
+      // Improve annotations: one per rewrite_example, text = original sentence
+      // Good annotations: keep from AI (subjective, AI-selected)
+      var goodAnns = (data.annotations||[]).filter(function(a){return a.type==='good';});
+      var errorAnns = (data.language_errors||[]).map(function(e){
+        var orig = (e.original||'').replace(/[「」“”]/g,'').trim();
+        return {text:orig, type:'error', comment:e.correction||''};
+      }).filter(function(a){return a.text.length>0;});
+      var improveAnns = (data.rewrite_examples||[]).map(function(r){
+        return {text:r.original||'', type:'improve', comment:r.note||''};
+      }).filter(function(a){return a.text.length>0;});
+      data.annotations = [...goodAnns, ...errorAnns, ...improveAnns];
+
       // ── Post-process EASI: fix misclassifications and supplement gaps ──
       if (data.easi) {
         var speechVerbs = ['说','道','回答','恳求','念叨','喊','骂','叫','问','嚷','吼'];
@@ -76,11 +90,17 @@ export default function Home() {
         var aToS = aArr.filter(hasCompleteSpeech);
         // Remove from A: entries with speech verb but no quote (e.g. 低着头惭愧的说 — verb-only manner tag)
         // Keep in A: entries with 骂/叫 used as action verbs WITH action context (把我骂了起来 = being scolded = action)
+        // Known speech manner tag patterns — always remove from A
+        var speechMannerSuffixes = ['的说','着说','地说','的道','着道','地道','的回答','着回答','地回答','的问','着问','地问','的喊','着喊','地喊'];
         aArr = aArr.filter(function(t){
           if (!hasSV(t)) return true; // no speech verb → keep in A
           // Has speech verb — check if it's a genuine action (被 passive or 了起来 pattern = action, not speech)
           if (t.includes('了起来') || t.includes('被')) return true; // 了起来 or 被 = passive action
-          return false; // verb-only manner tag like 低着头惭愧的说 — drop from A
+          // Check for speech manner tag suffixes (e.g. 低着头惭愧的说, 笑着说)
+          if (speechMannerSuffixes.some(function(s){return t.endsWith(s);})) return false;
+          // Check if entry ends with speech verb directly (verb-only fragment)
+          if (speechVerbs.some(function(v){return t.endsWith(v);})) return false;
+          return false; // has speech verb but not a passive/action context — drop
         });
         eToS.concat(aToS).forEach(function(t){ if (!sArr.includes(t)) sArr.push(t); });
         // Remove from S any entry with no quote at all (verb-only fragment like 低着头惭愧的说)
@@ -561,35 +581,47 @@ export default function Home() {
 
   function annotateEssay(text, annotations, rewrites) {
     if (!annotations || annotations.length === 0) return text.replace(/\n/g, '<br/>');
-    // Build rewrite lookup: original sentence → rewrite suggestion
     const rewriteMap = {};
     (rewrites||[]).forEach(function(r){ if(r.original&&r.rewrite) rewriteMap[r.original]=r.rewrite; });
     const sorted = [...annotations].sort((a,b) => (b.text||'').length - (a.text||'').length);
-    // Red takes priority over green/yellow on same text
     const errorTexts = new Set(sorted.filter(function(a){return a.type==='error';}).map(function(a){return a.text;}));
-    let result = text;
-    sorted.forEach((ann) => {
-      if (!ann.text || !result.includes(ann.text)) return;
+    function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    // Placeholder approach: avoids double-replacing already-highlighted text
+    // and handles repeating error words (e.g. 真么 appearing 3 times)
+    var replacements = [];
+    var usedTexts = new Set();
+    var pidx = 0;
+    sorted.forEach(function(ann) {
+      if (!ann.text) return;
       if ((ann.type==='good'||ann.type==='improve') && errorTexts.has(ann.text)) return;
-      const colors = {
-        error: { bg:'#fff0ee', underline:'#b83222', dot:'🔴' },
-        good:  { bg:'#edfaf3', underline:'#1a6e40', dot:'🟢' },
-        improve: { bg:'#fffbe6', underline:'#a07820', dot:'🟡' }
+      if (usedTexts.has(ann.text)) return;
+      if (!text.includes(ann.text)) return;
+      usedTexts.add(ann.text);
+      var colors = {
+        error:   {bg:'#fff0ee',ul:'#b83222',dot:'🔴'},
+        good:    {bg:'#edfaf3',ul:'#1a6e40',dot:'🟢'},
+        improve: {bg:'#fffbe6',ul:'#a07820',dot:'🟡'}
       };
-      const c = colors[ann.type] || colors.good;
-      const techLabel = ann.technique ? ` [${ann.technique}]` : '';
-      // For improve: show rewrite suggestion in tooltip if available
-      var tooltipBase = (ann.comment||'') + techLabel;
-      if (ann.type==='improve' && rewriteMap[ann.text]) {
-        tooltipBase = '改写：' + rewriteMap[ann.text];
+      var c = colors[ann.type] || colors.good;
+      var techLabel = ann.technique ? ' ['+ann.technique+']' : '';
+      var tipBase = (ann.comment||'')+techLabel;
+      if (ann.type==='improve' && rewriteMap[ann.text]) tipBase = '\u6539\u5199\uff1a'+rewriteMap[ann.text];
+      var tip = escAttr(tipBase);
+      var ph = '\u0002P'+pidx+'\u0003'; pidx++;
+      var html = '<span class="ann-mark ann-'+ann.type+'" style="background:'+c.bg+';border-bottom:2px solid '+c.ul+';border-radius:3px;padding:1px 2px;cursor:pointer" title="'+tip+'" data-comment="'+tip+'">'+ann.text+'<sup style="font-size:9px;color:'+c.ul+';margin-left:1px">'+c.dot+'</sup></span>';
+      replacements.push({s:ann.text, p:ph, h:html});
+    });
+    // Step 1: replace all occurrences with placeholders
+    var result = text;
+    replacements.forEach(function(r) {
+      while (result.includes(r.s)) {
+        var i = result.indexOf(r.s);
+        result = result.slice(0,i)+r.p+result.slice(i+r.s.length);
       }
-      const tooltip = tooltipBase;
-      // Escape HTML special chars to prevent broken attributes or invisible text
-      function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-      const safeTooltip = escAttr(tooltip);
-      const highlighted = `<span class="ann-mark ann-${ann.type}" style="background:${c.bg};border-bottom:2px solid ${c.underline};border-radius:3px;padding:1px 2px;cursor:pointer;position:relative" title="${safeTooltip}" data-comment="${safeTooltip}">${ann.text}<sup style="font-size:9px;color:${c.underline};margin-left:1px">${c.dot}</sup></span>`;
-      var idx0 = result.indexOf(ann.text);
-      if (idx0 !== -1) { result = result.slice(0,idx0) + highlighted + result.slice(idx0+ann.text.length); }
+    });
+    // Step 2: swap placeholders for HTML
+    replacements.forEach(function(r) {
+      while (result.includes(r.p)) result = result.replace(r.p, r.h);
     });
     return result.replace(/\n/g, '<br/>');
   }
