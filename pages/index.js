@@ -84,7 +84,7 @@ export default function Home() {
               var found = para.indexOf(kw, pos); if (found===-1) break;
               var end = found+kw.length;
               for (var ci=end; ci<Math.min(para.length,found+80); ci++) {
-                if ('。？！'.includes(para[ci])) { end=ci+1; break; } end=ci+1;
+                if ('\u3002\uff1f\uff01'.includes(para[ci])) { end=ci+1; break; } end=ci+1;
               }
               var cl = para.slice(found, end).trim();
               if (cl.length>=4 && !iArr.some(function(e){return e.includes(cl)||cl.includes(e);})) iArr.push(cl);
@@ -99,9 +99,8 @@ export default function Home() {
           eKW.forEach(function(kw) {
             if (!para.includes(kw)) return;
             var pos2 = para.indexOf(kw);
-            var st=0; for (var i=pos2-1;i>=Math.max(0,pos2-30);i--) { if ('。？！，
-'.includes(para[i])){st=i+1;break;} }
-            var en=para.length; for (var j=pos2+kw.length;j<Math.min(para.length,pos2+50);j++) { if ('。？！，'.includes(para[j])){en=j+1;break;} }
+            var st=0; for (var i=pos2-1;i>=Math.max(0,pos2-30);i--) { if ('\u3002\uff1f\uff01\uff0c\n'.includes(para[i])){st=i+1;break;} }
+            var en=para.length; for (var j=pos2+kw.length;j<Math.min(para.length,pos2+50);j++) { if ('\u3002\uff1f\uff01\uff0c'.includes(para[j])){en=j+1;break;} }
             var cl2 = para.slice(st, en).trim();
             if (cl2.length>=4 && !hasSV(cl2) && !eArr.some(function(e){return e.includes(cl2)||cl2.includes(e);})) eArr.push(cl2);
           });
@@ -701,7 +700,7 @@ export default function Home() {
 
         {state==='loading'&&(<div className="card fade"><div className="loading-wrap">
           <div className="loading-char">批改中…</div>
-          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (40–60 seconds)</div>
+          <div className="loading-msg">Marking your essay · 正在批改，约需 40–60 秒… (20–30 seconds)</div>
           <div className="loading-steps">{['检查框架结构','评估内容层次','分析语文结构','EASI手法评估','撰写考官评语'].map((s,i)=><span key={i} className="lstep">{s}</span>)}</div>
         </div></div>)}
 
