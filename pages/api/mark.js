@@ -152,6 +152,11 @@ NOT A: Plain narration or story-linking is NOT A. Examples:
 × 就去吃我们叫的食物 → basic narration, NOT A
 × 我们到了爷爷奶奶家 → scene transition, NOT A
 A must describe HOW a physical action was performed, not just that something happened.
+CRITICAL — ACTION + SPEECH VERB: If a clause contains BOTH a physical action AND a speech verb, the ENTIRE unit belongs to S, not A.
+× 低着头惭愧的说："对不起..." → S (has speech verb 说), NOT A. Do NOT extract 低着头 as a separate A.
+× 点了点头说："好的。" → S (has speech verb 说), NOT A.
+× 皱了皱眉，语气冷淡地回答："..." → S (has speech verb 回答), NOT A.
+RULE: If speech verb is present in the clause, the whole unit is S. The action component does NOT get a separate A entry.
 
 S (语言描写 Speech):
 Speech verb/manner + FULL quoted dialogue as ONE unit. NEVER split speech.
@@ -351,16 +356,20 @@ Identify sentences with STRUCTURAL or GRAMMATICAL problems that go beyond single
 CRITICAL RULE: Do NOT include a sentence in rewrite_examples if its problem is ALREADY captured in language_errors as a word-level fix (e.g. if 说到→说道 is already in language_errors, do not rewrite that sentence here).
 Only include sentences where the problem is the STRUCTURE or COLLOCATION, not a single wrong character.
 
-Types to flag:
+Types to flag — flag ALL of the following when found:
 - 缺主语: sentence missing its subject (e.g. 「站在礼堂前面警告。」→ missing who is warning)
 - 语序错误: wrong word order that changes or obscures meaning (e.g. 「强了大大」→「大大增强了」)
 - 搭配不当: collocations that don't work in Chinese (e.g. 「考试很统一」「友情强了」)
 - 逻辑不通: illogical sentence structure (e.g. double negatives, broken comparisons)
 - 人称错误: sudden pronoun switch mid-sentence (你 → 他)
 - 句子残缺: incomplete sentence missing key component
+- 句式杂糅: two sentence structures incorrectly merged (e.g. 「因为...所以...」fused with another pattern, run-on sentences with multiple clauses missing connectives)
+- 连词误用: wrong connective used (e.g. 「以为」used where 「因为」is needed, 「应为」where 「因为」needed)
+- 重复累赘: unnecessary repetition of subject or phrase in same sentence (e.g. 「我一听到她喊的声音我下了一跳」— 我 repeated)
+- 表达不清楚: meaning is unclear or ambiguous due to poor sentence construction, even if individual words are correct (e.g. missing transition words, unclear cause-effect, vague reference)
 Each entry: {"original": "exact full sentence from essay", "rewrite": "corrected full sentence", "note": "brief fix description under 20 chars"}
 LIMIT: No fixed limit — include ALL genuine structural/grammar issues found. For A1/A2 essays with no structural errors, return rewrite_examples: [].
-IMPORTANT: Only flag GENUINE structural problems. If a sentence is grammatically valid even if simple, do NOT flag it.
+IMPORTANT: Be thorough — a typical Band 3 essay should have 3-6 rewrite examples. Do not stop at 1 or 2 unless the essay is genuinely clean. Flag every sentence where structure or expression is a problem.
 
 STRUCTURE_NOTES FORMAT: Each note should have a SHORT label (2-4 Chinese words like 完整八段结构, 详略得当, 情节发展自然) and a brief text explanation (1 sentence, under 25 chars). Do NOT quote full sentences from the essay. Good examples:
 - {"label":"完整八段结构","text":"八段式记叙文结构完整，层次分明，过渡自然"}
