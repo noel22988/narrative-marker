@@ -205,50 +205,63 @@ export default function Home() {
     text.split('\n').forEach(function(line) {
       var ln = line.trim();
       if (!ln) return;
-      // Must have at least one speech verb
       var hasVerb = sVerbList.some(function(v) { return ln.includes(v); });
       if (!hasVerb) return;
-      // Must have a complete quote pair on this line
-      var openIdx = -1, closeIdx = -1, pairQi = -1;
+
+      // Find ALL complete quote pairs on this line
+      var pairs = [];
       for (var qi = 0; qi < sQuoteStarts.length; qi++) {
-        var oi = ln.indexOf(sQuoteStarts[qi]);
-        if (oi === -1) continue;
-        var ci = ln.indexOf(sQuoteEnds[qi], oi + 1);
-        if (ci === -1) continue;
-        if (openIdx === -1 || oi < openIdx) { openIdx = oi; closeIdx = ci; pairQi = qi; }
-      }
-      if (openIdx === -1) return; // no complete pair
-
-      var clause = '';
-      // Check for verb before opening quote (verb→quote)
-      var verbBeforeOpen = -1;
-      sVerbList.forEach(function(v) {
-        var vp = ln.lastIndexOf(v, openIdx);
-        if (vp !== -1 && (verbBeforeOpen === -1 || vp > verbBeforeOpen)) verbBeforeOpen = vp;
-      });
-
-      if (verbBeforeOpen !== -1) {
-        // verb→quote: extract from sentence start to closing quote
-        var cs = 0;
-        for (var i = verbBeforeOpen - 1; i >= 0; i--) {
-          if ('。？！'.includes(ln[i])) { cs = i + 1; break; }
+        var searchFrom = 0;
+        while (true) {
+          var oi = ln.indexOf(sQuoteStarts[qi], searchFrom);
+          if (oi === -1) break;
+          var ci = ln.indexOf(sQuoteEnds[qi], oi + 1);
+          if (ci === -1) break;
+          pairs.push({open: oi, close: ci, qi: qi});
+          searchFrom = ci + 1;
         }
-        clause = ln.slice(cs, closeIdx + 1).trim();
-      } else {
-        // quote→verb: extract from opening quote through verb phrase
-        var afterClose = ln.slice(closeIdx + 1);
-        var hasVerbAfter = sVerbList.some(function(v) { return afterClose.includes(v); });
-        if (hasVerbAfter) {
-          var verbEnd = closeIdx + 1;
-          for (var j = closeIdx + 1; j < Math.min(ln.length, closeIdx + 25); j++) {
-            if ('。？！，'.includes(ln[j])) { verbEnd = j; break; }
-            verbEnd = j + 1;
+      }
+      if (pairs.length === 0) return;
+      pairs.sort(function(a,b){return a.open-b.open;});
+
+      pairs.forEach(function(pair) {
+        var openIdx = pair.open, closeIdx = pair.close;
+        var clause = '';
+
+        // Check for verb BEFORE opening quote (verb-then-quote)
+        var verbBeforeOpen = -1;
+        sVerbList.forEach(function(v) {
+          var searchPos = 0;
+          while (true) {
+            var found = ln.indexOf(v, searchPos);
+            if (found === -1 || found >= openIdx) break;
+            verbBeforeOpen = found;
+            searchPos = found + 1;
           }
-          clause = ln.slice(openIdx, verbEnd).trim();
-        }
-      }
+        });
 
-      if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
+        if (verbBeforeOpen !== -1) {
+          var cs = 0;
+          for (var i = verbBeforeOpen - 1; i >= 0; i--) {
+            if ('\u3002\uff1f\uff01'.includes(ln[i])) { cs = i + 1; break; }
+          }
+          clause = ln.slice(cs, closeIdx + 1).trim();
+        } else {
+          // quote-first: look for verb after closing quote (up to 35 chars)
+          var afterClose = ln.slice(closeIdx + 1, Math.min(ln.length, closeIdx + 36));
+          var hasVerbAfter = sVerbList.some(function(v) { return afterClose.includes(v); });
+          if (hasVerbAfter) {
+            var verbEnd = closeIdx + 1;
+            for (var j = closeIdx + 1; j < Math.min(ln.length, closeIdx + 36); j++) {
+              if ('\u3002\uff1f\uff01'.includes(ln[j])) { verbEnd = j; break; }
+              verbEnd = j + 1;
+            }
+            clause = ln.slice(openIdx, verbEnd).trim();
+          }
+        }
+
+        if (clause && clause.length >= 6 && !S.includes(clause)) S.push(clause);
+      });
     });
 
     // Catch 反复念叨着"..." across lines
@@ -495,13 +508,18 @@ export default function Home() {
       // Near-match dedup: normalize punctuation before comparing
       // Catches: 反复念叨着："好孩子" vs 反复念叨着"好孩子"
       function normalize(t) {
-        // Strip all quote styles, colons, whitespace so that
-        // 「quote」 and "quote" and "quote" all collapse to the same key
-        return t
-          .replace(/[：:：]/g, '')
-          .replace(/[""“”「」‘’]/g, '')
+        var stripped = t
+          .replace(/[：:]/g, '')
+          .replace(/[“”‘’「」"]/g, '')
           .replace(/\s+/g, '')
-          .replace(/…/g, '...'); // normalize ellipsis too
+          .replace(/…/g, '...');
+        // For S: deduplicate by quoted content only
+        // so verb-first and quote-first versions collapse to same key
+        if (k === 'S') {
+          var qm = t.match(/[“「"]([\s\S]+?)[”」"]/);
+          if (qm) return qm[1].replace(/\s+/g, '').replace(/…/g, '...');
+        }
+        return stripped;
       }
       var seenNormalized = new Set();
       deduped = deduped.filter(function(t) {
