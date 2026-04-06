@@ -57,12 +57,9 @@ export default function Home() {
         throw new Error((data.error || '批改失败') + debugInfo);
       }
       // ── Rebuild annotations deterministically from language_errors + rewrite_examples ──
-      // Error annotations: one per language_error, text = original (stripped of brackets)
-      // Improve annotations: one per rewrite_example, text = original sentence
-      // Good annotations: keep from AI (subjective, AI-selected)
       var goodAnns = (data.annotations||[]).filter(function(a){return a.type==='good';});
       var errorAnns = (data.language_errors||[]).map(function(e){
-        var orig = (e.original||'').replace(/[「」“”]/g,'').trim();
+        var orig = (e.original||'').replace(/[「」""]/g,'').trim();
         return {text:orig, type:'error', comment:e.correction||''};
       }).filter(function(a){return a.text.length>0;});
       var improveAnns = (data.rewrite_examples||[]).map(function(r){
@@ -70,51 +67,119 @@ export default function Home() {
       }).filter(function(a){return a.text.length>0;});
       data.annotations = [...goodAnns, ...errorAnns, ...improveAnns];
 
-      // ── Post-process EASI: fix misclassifications and supplement gaps ──
+      // ── Post-process EASI ──
       if (data.easi) {
         var speechVerbs = ['说','道','回答','恳求','念叨','喊','骂','叫','问','嚷','吼'];
-        var quoteChars = ['“','”','‘','’','「','」','"'];
+        // FIX: include ALL quote character variants — curly double quotes \u201c\u201d are the main ones the AI uses
+        var quoteChars = ['\u201c','\u201d','\u2018','\u2019','\u300c','\u300d','"'];
+
         function hasSV(t) { return speechVerbs.some(function(v){return t.includes(v);}); }
-        // hasCompleteSpeech: has speech verb AND at least one quote character — genuine speech unit
-        function hasCompleteSpeech(t) {
-          return hasSV(t) && quoteChars.some(function(q){return t.includes(q);});
+        // hasCompleteSpeech: has speech verb BEFORE the first quote AND has a quote
+        function firstQuotePos(t) {
+          var fq = -1;
+          quoteChars.forEach(function(q){ var p = t.indexOf(q); if (p !== -1 && (fq === -1 || p < fq)) fq = p; });
+          return fq;
         }
+        function hasCompleteSpeech(t) {
+          var fq = firstQuotePos(t);
+          if (fq === -1) return false; // no quote at all → not a complete speech unit
+          var beforeQuote = t.slice(0, fq);
+          return speechVerbs.some(function(v){ return beforeQuote.includes(v); });
+        }
+        // hasSpeechTagBeforeQuote: same as hasCompleteSpeech — speech verb must precede the quote
+        function hasSpeechTagBeforeQuote(t) {
+          return hasCompleteSpeech(t);
+        }
+
         var eArr = (data.easi.E && data.easi.E.extracted) ? data.easi.E.extracted.slice() : [];
         var aArr = (data.easi.A && data.easi.A.extracted) ? data.easi.A.extracted.slice() : [];
         var sArr = (data.easi.S && data.easi.S.extracted) ? data.easi.S.extracted.slice() : [];
         var iArr = (data.easi.I && data.easi.I.extracted) ? data.easi.I.extracted.slice() : [];
 
-        // Fix 3: E/A entries with speech verb → move to S
-        // Move to S only if has BOTH speech verb AND quote — pure verb-only fragments stay in A or get dropped
+        // FIX 1: Remove E entries that are adverb-only fragments immediately followed by a speech verb
+        // e.g. 面无表情地 → followed by 说 → belongs in S not E, and as a fragment is useless
+        eArr = eArr.filter(function(t) {
+          if (!t.endsWith('\u5730') && !t.endsWith('\u7740')) return true; // no 地/着 suffix → keep
+          var posInEssay = dedupEssay.indexOf(t);
+          if (posInEssay === -1) return true;
+          var after = dedupEssay.slice(posInEssay + t.length, posInEssay + t.length + 3);
+          return !speechVerbs.some(function(v){ return after.startsWith(v); });
+        });
+
+        // Move E/A entries that are complete speech units → S
         var eToS = eArr.filter(hasCompleteSpeech); eArr = eArr.filter(function(t){return !hasSV(t);});
         var aToS = aArr.filter(hasCompleteSpeech);
-        // Remove from A: entries with speech verb but no quote (e.g. 低着头惭愧的说 — verb-only manner tag)
-        // Keep in A: entries with 骂/叫 used as action verbs WITH action context (把我骂了起来 = being scolded = action)
-        // Known speech manner tag patterns — always remove from A
         var speechMannerSuffixes = ['的说','着说','地说','的道','着道','地道','的回答','着回答','地回答','的问','着问','地问','的喊','着喊','地喊'];
+
+        // FIX 2: Filter narration from A — entries without 地/着 that use bare narrative verbs
+        var narrationVerbs = ['\u62ff\u4e86','\u8d70\u53bb','\u8d70\u6765','\u51fa\u95e8','\u8fdb\u5165','\u6765\u5230','\u56de\u5230','\u8dd1\u53bb','\u8dd1\u6765','\u6253\u5f00','\u5173\u4e0a'];
         aArr = aArr.filter(function(t){
-          if (!hasSV(t)) return true; // no speech verb → keep in A
-          // Has speech verb — check if it's a genuine action (被 passive or 了起来 pattern = action, not speech)
-          if (t.includes('了起来') || t.includes('被')) return true; // 了起来 or 被 = passive action
-          // Check for speech manner tag suffixes (e.g. 低着头惭愧的说, 笑着说)
+          if (!hasSV(t)) {
+            // Check for pure narration: no 地 or 着, and uses a plain narrative verb
+            if (!t.includes('\u5730') && !t.includes('\u7740') && narrationVerbs.some(function(v){return t.includes(v);})) return false;
+            return true;
+          }
+          if (t.includes('\u4e86\u8d77\u6765') || t.includes('\u88ab')) return true;
           if (speechMannerSuffixes.some(function(s){return t.endsWith(s);})) return false;
-          // Check if entry ends with speech verb directly (verb-only fragment)
           if (speechVerbs.some(function(v){return t.endsWith(v);})) return false;
-          return false; // has speech verb but not a passive/action context — drop
+          return false;
         });
         eToS.concat(aToS).forEach(function(t){ if (!sArr.includes(t)) sArr.push(t); });
-        // Remove from S any entry with no quote at all (verb-only fragment like 低着头惭愧的说)
+
+        // FIX 3: Supplement S with 念叨/喊 clauses that have NO quote chars
+        // e.g. 反复念叨着好孩子、好孩子 — essay uses no formal quotes around spoken content
+        var noQuoteSVKeywords = ['\u5ff5\u53e8','\u5598\u5440\u5440']; // 念叨, (placeholder for others)
+        // Simple targeted approach: find 念叨 in essay and extract the full clause
+        (function() {
+          var niandaoPos = dedupEssay.indexOf('\u5ff5\u53e8'); // 念叨
+          if (niandaoPos === -1) return;
+          if (sArr.some(function(s){ return s.includes('\u5ff5\u53e8'); })) return; // already captured
+          var ndStart = 0;
+          for (var ni = niandaoPos - 1; ni >= Math.max(0, niandaoPos - 40); ni--) {
+            if ('\u3002\uff1f\uff01\n'.includes(dedupEssay[ni])) { ndStart = ni + 1; break; }
+          }
+          var ndEnd = dedupEssay.length;
+          for (var nj = niandaoPos + 2; nj < Math.min(dedupEssay.length, niandaoPos + 30); nj++) {
+            if ('\u3002\uff1f\uff01'.includes(dedupEssay[nj])) { ndEnd = nj + 1; break; }
+          }
+          var ndClause = dedupEssay.slice(ndStart, ndEnd).trim();
+          if (ndClause.length > 3) sArr.push(ndClause);
+        })();
+
+        // S filter: keep only entries with a speech verb BEFORE the quote
+        // Also: for entries with a quote but no speech verb before it, prepend from essay (full sentence)
+        sArr = sArr.map(function(t) {
+          if (hasSpeechTagBeforeQuote(t)) return t; // already correct
+          var hasQ = quoteChars.some(function(q){return t.includes(q);});
+          if (!hasQ) return t; // no quote — let final filter decide
+          // Has quote but no speech verb before it — prepend full sentence from essay
+          var pos = dedupEssay.indexOf(t);
+          if (pos > 0) {
+            var start = 0;
+            for (var i = pos - 1; i >= 0; i--) {
+              if ('\u3002\uff1f\uff01\n'.includes(dedupEssay[i])) { start = i + 1; break; }
+            }
+            var prefix = dedupEssay.slice(start, pos).trim();
+            if (prefix.length > 0 && speechVerbs.some(function(v){ return prefix.includes(v); })) {
+              return prefix + t;
+            }
+          }
+          return t;
+        });
+        // Final S filter: must have quote char OR be a 念叨-type clause (spoken content without quotes)
         sArr = sArr.filter(function(t){
-          return quoteChars.some(function(q){return t.includes(q);});
+          if (quoteChars.some(function(q){return t.includes(q);})) return true;
+          return t.includes('\u5ff5\u53e8'); // 念叨 — spoken content even without quotes
         });
 
-        // Fix 4: I entries from last paragraph → remove
-        var paras = essay.split(/\n+/).filter(function(p){return p.trim().length>0;});
+        // I entries — strip embedded speech (truncate at first opening quote)
+        var iQuoteOpens = ['\u201c','\u2018','\u300c','"'];
+        // I keyword supplement — runs before cross-category dedup
+        // Note: 犹豫 removed from iKW — it's an A entry (hesitation is action, not inner monologue)
+        var iKW = ['我感到','我觉得','心想：','我心想','我不知','我开始感到','我很好奇','心里想','内心','我不禁','我感觉','心中想'];
+        var paras = dedupEssay.split(/\n+/).filter(function(p){return p.trim().length>0;});
         var lastPara = paras.length>0 ? paras[paras.length-1] : '';
         iArr = iArr.filter(function(t){ return !lastPara.includes(t); });
-
-        // Fix 5: I keyword supplement
-        var iKW = ['我感到','我觉得','心想：','我心想','我不知','我开始感到','我很好奇','心里想','内心','我不禁','我感觉','心中想','犹豫'];
         paras.slice(0, paras.length-1).forEach(function(para) {
           iKW.forEach(function(kw) {
             var pos = 0;
@@ -130,8 +195,15 @@ export default function Home() {
             }
           });
         });
+        iArr = iArr.map(function(t) {
+          var firstQ = -1;
+          iQuoteOpens.forEach(function(q){ var p=t.indexOf(q); if(p!==-1&&(firstQ===-1||p<firstQ)) firstQ=p; });
+          if (firstQ > 2) return t.slice(0, firstQ).trim().replace(/[，、]$/, '');
+          return t;
+        }).filter(function(t){ return t.length >= 4; });
+        iArr = iArr.filter(function(t){ return !t.includes('所以我问'); });
 
-        // Fix 6: E keyword supplement
+        // E keyword supplement
         var eKW = ['面无表情','脸色苍白','眼眶','嘴唇','佝偻着腰','面色变得','眼神','脸上','面容','眼角','脸红','满脸','眉头紧皱','目光','嘴角','脸色','额头'];
         paras.forEach(function(para) {
           eKW.forEach(function(kw) {
@@ -144,16 +216,28 @@ export default function Home() {
           });
         });
 
-        // Fix 3: I entries — truncate at first opening quote to strip embedded speech
-        var iQuoteOpens = ['“','‘','「','"'];
-        iArr = iArr.map(function(t) {
-          var firstQ = -1;
-          iQuoteOpens.forEach(function(q){ var p=t.indexOf(q); if(p!==-1&&(firstQ===-1||p<firstQ)) firstQ=p; });
-          if (firstQ > 2) return t.slice(0, firstQ).trim().replace(/[，、]$/, '');
-          return t;
-        }).filter(function(t){ return t.length >= 4; });
-        // Also remove I entries that are pure narration (contain 所以我问 — means it's bridging to speech)
-        iArr = iArr.filter(function(t){ return !t.includes('所以我问'); });
+        // Dedup: within each category, remove substrings of longer entries
+        function dedupSubstrings(arr) {
+          var sorted = arr.slice().sort(function(a,b){return b.length-a.length;});
+          var kept = [];
+          sorted.forEach(function(item) {
+            if (!kept.some(function(k){ return k.includes(item); })) kept.push(item);
+          });
+          return kept;
+        }
+        // Cross-category dedup: A→S→E→I priority
+        var seen = new Set();
+        function deduped(arr) {
+          var out = [];
+          dedupSubstrings(arr).forEach(function(t){
+            if (!seen.has(t)) { seen.add(t); out.push(t); }
+          });
+          return out;
+        }
+        aArr = deduped(aArr);
+        sArr = deduped(sArr);
+        eArr = deduped(eArr);
+        iArr = deduped(iArr);
 
         if (data.easi.E) data.easi.E.extracted = eArr;
         if (data.easi.A) data.easi.A.extracted = aArr;
@@ -199,13 +283,13 @@ export default function Home() {
 
     const fwCards = Object.entries(results.framework||{}).map(([k,v]) => {
       const st = fwStatusStyle[v.status]||fwStatusStyle.pass;
-      return `<div style="background:${st.bg};border:1px solid ${st.border};border-left:4px solid ${st.border};border-radius:8px;padding:12px 14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-weight:700;font-size:11px;color:${st.color}">${fwNames[k]||k}</span>
-          <span style="font-size:10px;color:${st.color};background:white;padding:1px 7px;border-radius:99px;border:1px solid ${st.border}">${st.icon} ${st.label}</span>
-        </div>
-        <div style="font-size:12px;color:#3d3020;line-height:1.65">${v.comment||''}</div>
-      </div>`;
+      return '<div style="background:'+st.bg+';border:1px solid '+st.border+';border-left:4px solid '+st.border+';border-radius:8px;padding:12px 14px;">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+          '<span style="font-weight:700;font-size:11px;color:'+st.color+'">'+(fwNames[k]||k)+'</span>'+
+          '<span style="font-size:10px;color:'+st.color+';background:white;padding:1px 7px;border-radius:99px;border:1px solid '+st.border+'">'+st.icon+' '+st.label+'</span>'+
+        '</div>'+
+        '<div style="font-size:12px;color:#3d3020;line-height:1.65">'+(v.comment||'')+'</div>'+
+      '</div>';
     }).join('');
 
     const easiCards = ['E','A','S','I'].map(k => {
@@ -217,35 +301,31 @@ export default function Home() {
       const extractedArr = (it.extracted && it.extracted.length>0) ? it.extracted : [];
       const extractedHtml = !extractedArr.length
         ? '<span style="color:#999;font-style:italic">未发现相关描写</span>'
-        : extractedArr.map(ex=>`<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:${border};font-weight:700;flex-shrink:0">·</span><span style="font-family:'Noto Serif SC',serif;font-size:11px">${ex}</span></div>`).join('');
-      return `<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:14px 16px;">
-        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">
-          <span style="font-family:'Noto Serif SC',serif;font-size:1.6rem;font-weight:900;color:${border};line-height:1">${k}</span>
-          <div><div style="font-weight:700;font-size:12px;color:${color}">${easiNames[k].zh}</div><div style="font-size:10px;color:${color};opacity:.7">${easiNames[k].en}</div></div>
-          <span style="margin-left:auto;font-size:10px;color:${color};background:white;padding:1px 7px;border-radius:99px;border:1px solid ${border}">${it.score_label||''}</span>
-        </div>
-        <div style="font-size:11px;color:#3d3020;margin-bottom:8px">${it.comment||''}</div>
-        <div style="background:rgba(255,255,255,.6);border-radius:6px;padding:8px 10px;border-left:3px solid ${border}">
-          <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;margin-bottom:4px;font-family:monospace">学生原文摘录 · STUDENT'S WRITING</div>
-          ${extractedHtml}
-        </div>
-      </div>`;
+        : extractedArr.map(ex=>'<div style="display:flex;gap:6px;margin-bottom:4px"><span style="color:'+border+';font-weight:700;flex-shrink:0">·</span><span style="font-family:\'Noto Serif SC\',serif;font-size:11px">'+ex+'</span></div>').join('');
+      return '<div style="background:'+bg+';border:1px solid '+border+';border-radius:10px;padding:14px 16px;">'+
+        '<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px">'+
+          '<span style="font-family:\'Noto Serif SC\',serif;font-size:1.6rem;font-weight:900;color:'+border+';line-height:1">'+k+'</span>'+
+          '<div><div style="font-weight:700;font-size:12px;color:'+color+'">'+(easiNames[k].zh)+'</div><div style="font-size:10px;color:'+color+';opacity:.7">'+(easiNames[k].en)+'</div></div>'+
+          '<span style="margin-left:auto;font-size:10px;color:'+color+';background:white;padding:1px 7px;border-radius:99px;border:1px solid '+border+'">'+(it.score_label||'')+'</span>'+
+        '</div>'+
+        '<div style="font-size:11px;color:#3d3020;margin-bottom:8px">'+(it.comment||'')+'</div>'+
+        '<div style="background:rgba(255,255,255,.6);border-radius:6px;padding:8px 10px;border-left:3px solid '+border+'">'+
+          '<div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;margin-bottom:4px;font-family:monospace">学生原文摘录 · STUDENT\'S WRITING</div>'+
+          extractedHtml+
+        '</div>'+
+      '</div>';
     }).join('');
 
     const errSection = (results.language_errors||[]).length
-      ? (results.language_errors||[]).map(e=>`<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #b83222;background:#fdf0ee;margin-bottom:8px;font-size:12px">
-          <div style="font-weight:700;font-size:10px;color:#b83222;margin-bottom:4px">${e.label}</div>
-          <div style="color:#b83222;font-family:'Noto Serif SC',serif">原文：${e.original}</div>
-          <div style="color:#1a6e40;font-family:'Noto Serif SC',serif">改正：${e.correction}</div>
-          ${e.reason?`<div style="color:#666;margin-top:2px">${e.reason}</div>`:''}
-        </div>`).join('')
+      ? (results.language_errors||[]).map(e=>'<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #b83222;background:#fdf0ee;margin-bottom:8px;font-size:12px">'+
+          '<div style="font-weight:700;font-size:10px;color:#b83222;margin-bottom:4px">'+e.label+'</div>'+
+          '<div style="color:#b83222;font-family:\'Noto Serif SC\',serif">原文：'+e.original+'</div>'+
+          '<div style="color:#1a6e40;font-family:\'Noto Serif SC\',serif">改正：'+e.correction+'</div>'+
+          (e.reason?'<div style="color:#666;margin-top:2px">'+e.reason+'</div>':'')+
+        '</div>').join('')
       : '<p style="color:#1a6e40;font-style:italic;font-size:12px">语言运用良好，未发现明显错误。✓</p>';
 
-    const pdfFwKeys = ['p1_opening','p2_scene','p31_transition','p32_flashback','p4_trigger','p56_climax','p7_resolution','p8_conclusion'].filter(function(k){return !!(results.framework||{})[k];});
-    const pdfFwLabels = {p1_opening:'P1 开头',p2_scene:'P2 场景',p31_transition:'P3.1 过渡',p32_flashback:'P3.2 插叙',p4_trigger:'P4 高潮前',p56_climax:'P5-6 高潮中',p7_resolution:'P7 高潮后',p8_conclusion:'P8 结尾'};
-
     const pdfParas = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
-
     const pdfMergedAnns = results.annotations || [];
 
     const pdfAnnotatedEssayWithFw = pdfParas.map(function(para, pIdx) {
@@ -264,156 +344,126 @@ export default function Home() {
         });
         return text;
       })();
-      return (
-        '<div style="margin-bottom:6px">'+
+      return '<div style="margin-bottom:6px">'+
           '<div style="font-family:Noto Serif SC,serif;font-size:12px;color:#3d3020;line-height:2;background:#fffef8;padding:10px 14px;border-radius:8px;border:1px solid #e0d5c0">'+annotatedPara+'</div>'+
-        '</div>'
-      );
+        '</div>';
     }).join('');
 
     const cPct = Math.round((results.content_score/20)*100);
     const lPct = Math.round((results.language_score/20)*100);
     const barC = p => p>=80?'#1a6e40':p>=65?'#1a4a70':p>=50?'#a07820':'#b83222';
 
-    // NEW: 动作流程 section for PDF
-    const seqSection = (results.action_sequences||[]).length ? `<div class="sec"><h2>🔗 动作流程<span class="sec-sub-label">ACTION SEQUENCES · 3+ CONSECUTIVE EASI TECHNIQUES</span></h2>
-      <div style="font-size:10px;color:#8a7a60;margin-bottom:12px">连续3个或以上的EASI描写手法，形成流畅的描写链——这是Band 1与Band 2的关键差别。</div>
-      ${(results.action_sequences||[]).map(s=>`<div style="padding:10px 14px;border-radius:8px;border-left:3px solid #6b4c9a;background:#f5f0ff;margin-bottom:8px">
-        <div style="font-family:monospace;font-size:11px;font-weight:600;color:#6b4c9a;margin-bottom:4px;letter-spacing:.05em">${s.pattern}</div>
-        <div style="font-family:'Noto Serif SC',serif;font-size:12px;color:#3d3020;line-height:1.8;margin-bottom:4px">${s.text}</div>
-        <div style="font-size:11px;color:#5a4a80;font-style:italic">${s.comment}</div>
-      </div>`).join('')}</div>` : '';
+    const seqSection = (results.action_sequences||[]).length ? '<div class="sec"><h2>🔗 动作流程<span class="sec-sub-label">ACTION SEQUENCES · 3+ CONSECUTIVE EASI TECHNIQUES</span></h2>'+
+      '<div style="font-size:10px;color:#8a7a60;margin-bottom:12px">连续3个或以上的EASI描写手法，形成流畅的描写链——这是Band 1与Band 2的关键差别。</div>'+
+      (results.action_sequences||[]).map(s=>'<div style="padding:10px 14px;border-radius:8px;border-left:3px solid #6b4c9a;background:#f5f0ff;margin-bottom:8px">'+
+        '<div style="font-family:monospace;font-size:11px;font-weight:600;color:#6b4c9a;margin-bottom:4px;letter-spacing:.05em">'+s.pattern+'</div>'+
+        '<div style="font-family:\'Noto Serif SC\',serif;font-size:12px;color:#3d3020;line-height:1.8;margin-bottom:4px">'+s.text+'</div>'+
+        '<div style="font-size:11px;color:#5a4a80;font-style:italic">'+s.comment+'</div>'+
+      '</div>').join('')+'</div>' : '';
 
-    const sampleSection = sampleEssay ? `<div class="sec"><h2>⭐ 示范范文 (A1/A2 水平)</h2><div style="font-size:10px;color:#8a7a60;margin-bottom:10px">根据你的故事内容，生成一篇 A1/A2 水平的示范作文。保留你的故事，全面提升语言表达与 EASI 手法至最高水平。</div><div class="et">${fmt(sampleEssay)}</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。以此为范例理解写法，再用自己的语言重写。</p></div>` : '';
-    const stretchSection = stretchEssay ? `<div class="sec"><h2>📈 进阶范文 (${stretchGrade} 水平)</h2><div class="et">${fmt(stretchEssay)}</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。</p></div>` : '';
+    const sampleSection = sampleEssay ? '<div class="sec"><h2>⭐ 示范范文 (A1/A2 水平)</h2><div style="font-size:10px;color:#8a7a60;margin-bottom:10px">根据你的故事内容，生成一篇 A1/A2 水平的示范作文。保留你的故事，全面提升语言表达与 EASI 手法至最高水平。</div><div class="et">'+fmt(sampleEssay)+'</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。以此为范例理解写法，再用自己的语言重写。</p></div>' : '';
+    const stretchSection = stretchEssay ? '<div class="sec"><h2>📈 进阶范文 ('+stretchGrade+' 水平)</h2><div class="et">'+fmt(stretchEssay)+'</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。</p></div>' : '';
 
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>批改报告</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
-    <style>
-      *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:'Noto Sans SC',sans-serif;font-size:13px;color:#1c1710;padding:36px;max-width:960px;margin:0 auto;line-height:1.8;background:#f9f6f1}
-      .hdr{text-align:center;padding-bottom:18px;margin-bottom:24px;border-bottom:2px solid #1c1710}
-      .hdr-eye{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#8a7a60;margin-bottom:8px}
-      .hdr h1{font-family:'Noto Serif SC',serif;font-size:1.5rem;font-weight:700;margin-bottom:4px}
-      .hdr-sub{font-size:11px;color:#8a7a60}
-      .grade-banner{display:flex;align-items:center;gap:20px;background:#1c1710;color:#e8d090;padding:18px 24px;border-radius:12px;margin-bottom:20px}
-      .grade-letter{font-family:'Playfair Display',serif;font-size:3rem;font-weight:900;line-height:1}
-      .grade-label{font-family:'Noto Serif SC',serif;font-size:1.1rem;font-weight:600}
-      .grade-sub{font-size:11px;color:rgba(232,208,144,.6);margin-top:4px}
-      .bars{display:flex;flex-direction:column;gap:6px;flex:1;margin-left:10px}
-      .bar-row{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(232,208,144,.7)}
-      .bar-track{flex:1;height:6px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden}
-      .bar-fill{height:100%;border-radius:3px}
-      .sec{background:white;border-radius:12px;border:1px solid #e0d5c0;padding:18px 22px;margin-bottom:16px}
-      .sec h2{font-family:'Noto Serif SC',serif;font-size:.9rem;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e8dfc8;display:flex;align-items:center;gap:8px}
-      .sec-sub-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8a7a60;font-family:'Noto Sans SC',sans-serif;font-weight:400}
-      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}
-      .se{background:#fffef8;padding:16px;border-radius:8px;font-family:'Noto Serif SC',serif;line-height:2.1;white-space:pre-wrap;font-size:13px;color:#3d3020;border:1px solid #e0d5c0}
-      .et{font-family:'Noto Serif SC',serif;line-height:2.1;white-space:pre-wrap;color:#3d3020;font-size:13px}
-      .examiner-box{background:#fffef8;border-left:3px solid #c8943a;padding:16px 20px;border-radius:0 8px 8px 0;font-family:'Noto Serif SC',serif;font-style:italic;line-height:1.9;font-size:13px}
-      .marketing{background:#1a1a2e;border-radius:12px;padding:22px 24px;margin-bottom:16px;border:1px solid rgba(26,154,173,.3)}
-      .mkt-title{font-weight:700;font-size:13px;color:white;margin-bottom:4px}
-      .mkt-cred{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px}
-      .mkt-body{font-size:12px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:14px}
-      .mkt-wa{display:inline-block;background:#25D366;color:white;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none}
-      .pb{position:fixed;top:16px;right:16px;background:#1c1710;color:#e8d090;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans SC',sans-serif}
-      @media print{.pb{display:none}body{background:white;padding:20px}.grade-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}.marketing{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-    </style></head><body>
-    <button class="pb" onclick="window.print()">🖨 Print / Save PDF</button>
-    <div class="hdr">
-      <div class="hdr-eye">TEACHER LEON'S BILINGUAL ACADEMY · 专属批改工具</div>
-      <h1>记叙文智能批改</h1>
-      <div class="hdr-sub">Narrative Composition Marker · 依据 SEAB 1160 评分指引 · 结合林老师记叙文框架</div>
-      ${title?'<div style="margin-top:10px;font-size:13px;font-family:\'Noto Serif SC\',serif;color:#3d3020">题目：'+title+'</div>':''}
-    </div>
-    <div class="grade-banner">
-      <div class="grade-letter">${results.grade}</div>
-      <div>
-        <div class="grade-label">${results.grade_label} · ${results.total_score}/40</div>
-        <div class="grade-sub">内容 ${results.content_score}/20（第${results.content_band}级）　语文与结构 ${results.language_score}/20（第${results.language_band}级）</div>
-      </div>
-      <div class="bars">
-        <div class="bar-row"><span style="width:80px">内容 ${results.content_score}/20</span><div class="bar-track"><div class="bar-fill" style="width:${cPct}%;background:${barC(cPct)}"></div></div></div>
-        <div class="bar-row"><span style="width:80px">语文 ${results.language_score}/20</span><div class="bar-track"><div class="bar-fill" style="width:${lPct}%;background:${barC(lPct)}"></div></div></div>
-      </div>
-    </div>
-    <div class="sec">
-      <h2>📝 学生原文（批注版）<span class="sec-sub-label">ANNOTATED STUDENT ESSAY · FRAMEWORK NOTES ALONGSIDE EACH PARAGRAPH</span></h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#edf7f1;color:#1a6e40;border:1px solid #1a6e40">🟢 优点</span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fdf0ee;color:#b83222;border:1px solid #b83222">🔴 错误</span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fdf6e3;color:#a07820;border:1px solid #a07820">🟡 可改善</span>
-      </div>
-      ${pdfAnnotatedEssayWithFw}
-    </div>
-    <div class="sec">
-      <h2>📊 分项得分<span class="sec-sub-label">SCORE BREAKDOWN</span></h2>
-      <p style="margin-bottom:8px"><b>内容：</b>${results.content_feedback}</p>
-      <p><b>语文：</b>${results.language_feedback}</p>
-    </div>
-    <div class="sec">
-      <h2>🗂 林老师框架检查<span class="sec-sub-label">NARRATIVE FRAMEWORK</span></h2>
-      <div class="grid2">${fwCards}</div>
-    </div>
-    <div class="sec">
-      <h2>✍️ EASI 人物描写手法<span class="sec-sub-label">E = Expressions & Appearance · A = Actions · S = Speech · I = Inner Thoughts & Feelings</span></h2>
-      <div class="grid2">${easiCards}</div>
-    </div>
-    ${seqSection}
-    <div class="sec">
-      <h2>🔍 语文错误（全部）<span class="sec-sub-label">ALL LANGUAGE ERRORS</span></h2>
-      ${errSection}
-    </div>
-    <div class="grid2" style="margin-bottom:16px">
-      <div class="sec" style="margin-bottom:0">
-        <h2>🏗 结构与表达<span class="sec-sub-label">STRUCTURE & STYLE</span></h2>
-        ${(results.structure_notes||[]).length
-          ? (results.structure_notes||[]).map(e=>'<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #1a4a70;background:#eaf2fb;margin-bottom:8px;font-size:12px"><div style="font-weight:700;font-size:10px;color:#1a4a70;margin-bottom:3px">'+(e.label||'结构优点')+'</div>'+e.text+'</div>').join('')
-          : '<p style="color:#1a6e40;font-style:italic;font-size:12px">结构整体良好。✓</p>'}
-      </div>
-      <div class="sec" style="margin-bottom:0">
-        <h2>🌱 改进建议<span class="sec-sub-label">HOW TO IMPROVE</span></h2>
-        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">${(results.improvements||[]).map(i=>'<li style="display:flex;gap:8px;align-items:flex-start;font-size:12px"><span style="color:#1a6e40;flex-shrink:0;font-weight:700">✦</span><span>'+i+'</span></li>').join('')}</ul>
-      </div>
-    </div>
-    <div class="sec">
-      <h2>📋 老师总评<span class="sec-sub-label">TEACHER LEON'S COMMENT</span></h2>
-      <div class="examiner-box">${results.examiner_comment}</div>
-      <p style="text-align:right;font-size:11px;color:#8a7a60;margin-top:10px">— 林纯隆老师 · 林老师双语学堂 · O Level 1160 考官</p>
-    </div>
-    ${results.rewrite_examples && results.rewrite_examples.length ? `<div class="sec"><h2>✏️ 改写示范<span class="sec-sub-label">SENTENCE REWRITES</span></h2><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f5f5f5"><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:35%">原句</th><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:40%">改写后</th><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:25%">改写要点</th></tr></thead><tbody>${results.rewrite_examples.map(r=>'<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#c0392b;vertical-align:top;font-family:Noto Serif SC,serif">'+r.original+'</td><td style="padding:8px 10px;color:#1a6e40;vertical-align:top;font-weight:500;font-family:Noto Serif SC,serif">'+r.rewrite+'</td><td style="padding:8px 10px;color:#555;vertical-align:top;font-size:11px">'+r.note+'</td></tr>').join('')}</tbody></table></div>` : ''}
-    ${sampleSection}
-    ${stretchSection}
-    ${revisedResults ? `<div class="sec"><h2>🔄 修改版对比<span class="sec-sub-label">REVISION COMPARISON</span></h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px;border:1px solid #e0e0e0;text-align:center">
-          <div style="font-size:11px;color:#888;margin-bottom:4px">第一稿 First Draft</div>
-          <div style="font-size:2rem;font-weight:900;color:#1a4a70">${results.grade}</div>
-          <div style="font-size:12px;color:#555">${results.total_score}/40 · 内容${results.content_score} 语文${results.language_score}</div>
-        </div>
-        <div style="background:#f8f8f8;border-radius:8px;padding:14px;border:1px solid #e0e0e0;text-align:center">
-          <div style="font-size:11px;color:#888;margin-bottom:4px">修改版 Revised</div>
-          <div style="font-size:2rem;font-weight:900;color:${revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#1a4a70'}">${revisedResults.grade}</div>
-          <div style="font-size:12px;color:#555">${revisedResults.total_score}/40 · 内容${revisedResults.content_score} 语文${revisedResults.language_score}</div>
-        </div>
-      </div>
-      <div style="padding:10px 14px;border-radius:8px;background:${revisedResults.total_score>results.total_score?'#edf7f1':revisedResults.total_score<results.total_score?'#fdf0ee':'#f5f5f5'};border:1px solid ${revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#ddd'};font-size:12px;color:${revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#555'}">
-        ${revisedResults.total_score>results.total_score?'✅ 提升了 '+(revisedResults.total_score-results.total_score)+' 分！从 '+results.grade+' 进步到 '+revisedResults.grade:revisedResults.total_score<results.total_score?'⚠️ 分数下降了 '+(results.total_score-revisedResults.total_score)+' 分':'✔️ 分数持平'}
-      </div>
-    </div>` : ''}
-    ${chatMessages.length>0?`<div class="sec"><h2>💬 问答记录<span class="sec-sub-label">Q&A TRANSCRIPT</span></h2>
-      ${chatMessages.map(function(m){return '<div style="margin-bottom:10px;display:flex;flex-direction:column;align-items:'+(m.role==='user'?'flex-end':'flex-start')+'"><div style="max-width:85%;background:'+(m.role==='user'?'#1c1710':'#f5f5f5')+';color:'+(m.role==='user'?'#e8d090':'#1c1710')+';padding:8px 12px;border-radius:'+(m.role==='user'?'12px 12px 4px 12px':'12px 12px 12px 4px')+';font-size:12px;line-height:1.6">'+m.content+'</div></div>';}).join('')}
-    </div>`:''}
-    <div class="marketing">
-      <div class="mkt-title">👨‍🏫 Found this useful? Learn directly with Teacher Leon.</div>
-      <div class="mkt-cred">BA (Hons) Chinese Studies, NTU · PGDE, NIE · 17 years teaching · 10 years O-Level marker</div>
-      <div class="mkt-body">This tool reflects how Leon teaches — structured, strategic, examiner-informed. If your child would benefit from that approach 1-to-1, a trial lesson is the best way to find out.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <a class="mkt-wa" href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank">WhatsApp for a Trial →</a>
-        <a href="/about.html" target="_blank" style="display:inline-block;color:rgba(255,255,255,0.6);font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);text-decoration:none;">Learn more →</a>
-      </div>
-    </div>
-    </body></html>`);
+    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>批改报告</title>'+
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">'+
+    '<style>'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:\'Noto Sans SC\',sans-serif;font-size:13px;color:#1c1710;padding:36px;max-width:960px;margin:0 auto;line-height:1.8;background:#f9f6f1}'+
+    '.hdr{text-align:center;padding-bottom:18px;margin-bottom:24px;border-bottom:2px solid #1c1710}'+
+    '.hdr-eye{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:#8a7a60;margin-bottom:8px}'+
+    '.hdr h1{font-family:\'Noto Serif SC\',serif;font-size:1.5rem;font-weight:700;margin-bottom:4px}'+
+    '.hdr-sub{font-size:11px;color:#8a7a60}'+
+    '.grade-banner{display:flex;align-items:center;gap:20px;background:#1c1710;color:#e8d090;padding:18px 24px;border-radius:12px;margin-bottom:20px}'+
+    '.grade-letter{font-family:\'Playfair Display\',serif;font-size:3rem;font-weight:900;line-height:1}'+
+    '.grade-label{font-family:\'Noto Serif SC\',serif;font-size:1.1rem;font-weight:600}'+
+    '.grade-sub{font-size:11px;color:rgba(232,208,144,.6);margin-top:4px}'+
+    '.bars{display:flex;flex-direction:column;gap:6px;flex:1;margin-left:10px}'+
+    '.bar-row{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(232,208,144,.7)}'+
+    '.bar-track{flex:1;height:6px;background:rgba(255,255,255,.15);border-radius:3px;overflow:hidden}'+
+    '.bar-fill{height:100%;border-radius:3px}'+
+    '.sec{background:white;border-radius:12px;border:1px solid #e0d5c0;padding:18px 22px;margin-bottom:16px}'+
+    '.sec h2{font-family:\'Noto Serif SC\',serif;font-size:.9rem;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e8dfc8;display:flex;align-items:center;gap:8px}'+
+    '.sec-sub-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8a7a60;font-family:\'Noto Sans SC\',sans-serif;font-weight:400}'+
+    '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0}'+
+    '.se{background:#fffef8;padding:16px;border-radius:8px;font-family:\'Noto Serif SC\',serif;line-height:2.1;white-space:pre-wrap;font-size:13px;color:#3d3020;border:1px solid #e0d5c0}'+
+    '.et{font-family:\'Noto Serif SC\',serif;line-height:2.1;white-space:pre-wrap;color:#3d3020;font-size:13px}'+
+    '.examiner-box{background:#fffef8;border-left:3px solid #c8943a;padding:16px 20px;border-radius:0 8px 8px 0;font-family:\'Noto Serif SC\',serif;font-style:italic;line-height:1.9;font-size:13px}'+
+    '.marketing{background:#1a1a2e;border-radius:12px;padding:22px 24px;margin-bottom:16px;border:1px solid rgba(26,154,173,.3)}'+
+    '.mkt-title{font-weight:700;font-size:13px;color:white;margin-bottom:4px}'+
+    '.mkt-cred{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:10px}'+
+    '.mkt-body{font-size:12px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:14px}'+
+    '.mkt-wa{display:inline-block;background:#25D366;color:white;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none}'+
+    '.pb{position:fixed;top:16px;right:16px;background:#1c1710;color:#e8d090;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-family:\'Noto Sans SC\',sans-serif}'+
+    '@media print{.pb{display:none}body{background:white;padding:20px}.grade-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}.marketing{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'+
+    '</style></head><body>'+
+    '<button class="pb" onclick="window.print()">🖨 Print / Save PDF</button>'+
+    '<div class="hdr">'+
+    '<div class="hdr-eye">TEACHER LEON\'S BILINGUAL ACADEMY · 专属批改工具</div>'+
+    '<h1>记叙文智能批改</h1>'+
+    '<div class="hdr-sub">Narrative Composition Marker · 依据 SEAB 1160 评分指引 · 结合林老师记叙文框架</div>'+
+    (title?'<div style="margin-top:10px;font-size:13px;font-family:\'Noto Serif SC\',serif;color:#3d3020">题目：'+title+'</div>':'')+
+    '</div>'+
+    '<div class="grade-banner">'+
+    '<div class="grade-letter">'+results.grade+'</div>'+
+    '<div>'+
+    '<div class="grade-label">'+results.grade_label+' · '+results.total_score+'/40</div>'+
+    '<div class="grade-sub">内容 '+results.content_score+'/20（第'+results.content_band+'级）　语文与结构 '+results.language_score+'/20（第'+results.language_band+'级）</div>'+
+    '</div>'+
+    '<div class="bars">'+
+    '<div class="bar-row"><span style="width:80px">内容 '+results.content_score+'/20</span><div class="bar-track"><div class="bar-fill" style="width:'+cPct+'%;background:'+barC(cPct)+'"></div></div></div>'+
+    '<div class="bar-row"><span style="width:80px">语文 '+results.language_score+'/20</span><div class="bar-track"><div class="bar-fill" style="width:'+lPct+'%;background:'+barC(lPct)+'"></div></div></div>'+
+    '</div>'+
+    '</div>'+
+    '<div class="sec">'+
+    '<h2>📝 学生原文（批注版）<span class="sec-sub-label">ANNOTATED STUDENT ESSAY</span></h2>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'+
+    '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#edf7f1;color:#1a6e40;border:1px solid #1a6e40">🟢 优点</span>'+
+    '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fdf0ee;color:#b83222;border:1px solid #b83222">🔴 错误</span>'+
+    '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fdf6e3;color:#a07820;border:1px solid #a07820">🟡 可改善</span>'+
+    '</div>'+
+    pdfAnnotatedEssayWithFw+
+    '</div>'+
+    '<div class="sec"><h2>📊 分项得分<span class="sec-sub-label">SCORE BREAKDOWN</span></h2>'+
+    '<p style="margin-bottom:8px"><b>内容：</b>'+results.content_feedback+'</p>'+
+    '<p><b>语文：</b>'+results.language_feedback+'</p></div>'+
+    '<div class="sec"><h2>🗂 林老师框架检查<span class="sec-sub-label">NARRATIVE FRAMEWORK</span></h2>'+
+    '<div class="grid2">'+fwCards+'</div></div>'+
+    '<div class="sec"><h2>✍️ EASI 人物描写手法<span class="sec-sub-label">E = Expressions & Appearance · A = Actions · S = Speech · I = Inner Thoughts & Feelings</span></h2>'+
+    '<div class="grid2">'+easiCards+'</div></div>'+
+    seqSection+
+    '<div class="sec"><h2>🔍 语文错误（全部）<span class="sec-sub-label">ALL LANGUAGE ERRORS</span></h2>'+errSection+'</div>'+
+    '<div class="grid2" style="margin-bottom:16px">'+
+    '<div class="sec" style="margin-bottom:0"><h2>🏗 结构与表达<span class="sec-sub-label">STRUCTURE & STYLE</span></h2>'+
+    ((results.structure_notes||[]).length
+      ? (results.structure_notes||[]).map(e=>'<div style="padding:10px 13px;border-radius:8px;border-left:3px solid #1a4a70;background:#eaf2fb;margin-bottom:8px;font-size:12px"><div style="font-weight:700;font-size:10px;color:#1a4a70;margin-bottom:3px">'+(e.label||'结构优点')+'</div>'+e.text+'</div>').join('')
+      : '<p style="color:#1a6e40;font-style:italic;font-size:12px">结构整体良好。✓</p>')+
+    '</div>'+
+    '<div class="sec" style="margin-bottom:0"><h2>🌱 改进建议<span class="sec-sub-label">HOW TO IMPROVE</span></h2>'+
+    '<ul style="list-style:none;display:flex;flex-direction:column;gap:8px">'+
+    (results.improvements||[]).map(i=>'<li style="display:flex;gap:8px;align-items:flex-start;font-size:12px"><span style="color:#1a6e40;flex-shrink:0;font-weight:700">✦</span><span>'+i+'</span></li>').join('')+
+    '</ul></div></div>'+
+    '<div class="sec"><h2>📋 老师总评<span class="sec-sub-label">TEACHER LEON\'S COMMENT</span></h2>'+
+    '<div class="examiner-box">'+results.examiner_comment+'</div>'+
+    '<p style="text-align:right;font-size:11px;color:#8a7a60;margin-top:10px">— 林纯隆老师 · 林老师双语学堂 · O Level 1160 考官</p></div>'+
+    (results.rewrite_examples && results.rewrite_examples.length ? '<div class="sec"><h2>✏️ 改写示范<span class="sec-sub-label">SENTENCE REWRITES</span></h2><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#f5f5f5"><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:35%">原句</th><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:40%">改写后</th><th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e0e0e0;width:25%">改写要点</th></tr></thead><tbody>'+results.rewrite_examples.map(r=>'<tr style="border-bottom:1px solid #f0f0f0"><td style="padding:8px 10px;color:#c0392b;vertical-align:top;font-family:Noto Serif SC,serif">'+r.original+'</td><td style="padding:8px 10px;color:#1a6e40;vertical-align:top;font-weight:500;font-family:Noto Serif SC,serif">'+r.rewrite+'</td><td style="padding:8px 10px;color:#555;vertical-align:top;font-size:11px">'+r.note+'</td></tr>').join('')+'</tbody></table></div>' : '')+
+    sampleSection+stretchSection+
+    (revisedResults ? '<div class="sec"><h2>🔄 修改版对比<span class="sec-sub-label">REVISION COMPARISON</span></h2>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">'+
+    '<div style="background:#f8f8f8;border-radius:8px;padding:14px;border:1px solid #e0e0e0;text-align:center"><div style="font-size:11px;color:#888;margin-bottom:4px">第一稿 First Draft</div><div style="font-size:2rem;font-weight:900;color:#1a4a70">'+results.grade+'</div><div style="font-size:12px;color:#555">'+results.total_score+'/40 · 内容'+results.content_score+' 语文'+results.language_score+'</div></div>'+
+    '<div style="background:#f8f8f8;border-radius:8px;padding:14px;border:1px solid #e0e0e0;text-align:center"><div style="font-size:11px;color:#888;margin-bottom:4px">修改版 Revised</div><div style="font-size:2rem;font-weight:900;color:'+(revisedResults.total_score>results.total_score?'#1a6e40':revisedResults.total_score<results.total_score?'#b83222':'#1a4a70')+'">'+revisedResults.grade+'</div><div style="font-size:12px;color:#555">'+revisedResults.total_score+'/40 · 内容'+revisedResults.content_score+' 语文'+revisedResults.language_score+'</div></div>'+
+    '</div></div>' : '')+
+    (chatMessages.length>0?'<div class="sec"><h2>💬 问答记录<span class="sec-sub-label">Q&A TRANSCRIPT</span></h2>'+
+    chatMessages.map(function(m){return '<div style="margin-bottom:10px;display:flex;flex-direction:column;align-items:'+(m.role==='user'?'flex-end':'flex-start')+'"><div style="max-width:85%;background:'+(m.role==='user'?'#1c1710':'#f5f5f5')+';color:'+(m.role==='user'?'#e8d090':'#1c1710')+';padding:8px 12px;border-radius:'+(m.role==='user'?'12px 12px 4px 12px':'12px 12px 12px 4px')+';font-size:12px;line-height:1.6">'+m.content+'</div></div>';}).join('')+
+    '</div>':'')+
+    '<div class="marketing">'+
+    '<div class="mkt-title">👨‍🏫 Found this useful? Learn directly with Teacher Leon.</div>'+
+    '<div class="mkt-cred">BA (Hons) Chinese Studies, NTU · PGDE, NIE · 17 years teaching · 10 years O-Level marker</div>'+
+    '<div class="mkt-body">This tool reflects how Leon teaches — structured, strategic, examiner-informed. If your child would benefit from that approach 1-to-1, a trial lesson is the best way to find out.</div>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
+    '<a class="mkt-wa" href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank">WhatsApp for a Trial →</a>'+
+    '<a href="/about.html" target="_blank" style="display:inline-block;color:rgba(255,255,255,0.6);font-size:13px;padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);text-decoration:none;">Learn more →</a>'+
+    '</div></div>'+
+    '</body></html>');
     w.document.close();
   }
 
@@ -486,8 +536,8 @@ export default function Home() {
       '</style></head><body>',
       '<div class="cert">',
       '<div class="cert-top">',
-      '<div class="cert-eye">' + '林老师双语学堂' + ' &middot; Teacher Leon&#39;s Bilingual Academy</div>',
-      '<div class="cert-title">' + '记叙文批改成绩单' + '</div>',
+      '<div class="cert-eye">林老师双语学堂 &middot; Teacher Leon&#39;s Bilingual Academy</div>',
+      '<div class="cert-title">记叙文批改成绩单</div>',
       '<div class="cert-sub">O Level Chinese Narrative Composition &middot; SEAB 1160</div>',
       '</div>',
       '<div class="cert-body">',
@@ -496,13 +546,13 @@ export default function Home() {
       '<div class="cert-pts">' + r.grade_label + ' &middot; ' + r.total_score + '/40</div>',
       '</div>',
       '<div class="cert-scores">',
-      '<div class="score-box"><div class="score-val">' + r.content_score + '/20</div><div class="score-lbl">' + '内容' + ' Content</div></div>',
-      '<div class="score-box"><div class="score-val">' + r.language_score + '/20</div><div class="score-lbl">' + '语文' + ' Language</div></div>',
+      '<div class="score-box"><div class="score-val">' + r.content_score + '/20</div><div class="score-lbl">内容 Content</div></div>',
+      '<div class="score-box"><div class="score-val">' + r.language_score + '/20</div><div class="score-lbl">语文 Language</div></div>',
       '</div>',
       '<div class="cert-comment">' + safeComment + (r.examiner_comment&&r.examiner_comment.length>180?'&hellip;':'') + '</div>',
-      (safeTitle ? '<p style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">' + '题目：' + safeTitle + '</p>' : ''),
+      (safeTitle ? '<p style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">题目：' + safeTitle + '</p>' : ''),
       '<div class="cert-footer">',
-      '<div class="cert-teacher">' + '林纯隆老师' + ' &middot; Leon Lim</div>',
+      '<div class="cert-teacher">林纯隆老师 &middot; Leon Lim</div>',
       '<div style="margin-top:2px">BA Chinese Studies NTU &middot; PGDE NIE &middot; 17 years &middot; O Level Examiner</div>',
       '<div style="margin-top:4px;font-size:.72rem">' + new Date().toLocaleDateString('zh-CN') + ' &middot; narrative-marker.vercel.app</div>',
       '</div>',
@@ -516,7 +566,7 @@ export default function Home() {
 
   function reset() { setState('input'); setResults(null); setSampleState('idle'); setStretchState('idle'); setSampleEssay(''); setStretchEssay(''); setStretchGrade(''); setError(''); setRevisedEssay(''); setRevisedResults(null); setViewMode('first'); setRevisedState('idle'); setChatMessages([]); setChatInput(''); }
 
-    const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p31_transition',label:'P3.1 过渡段'},{key:'p32_flashback',label:'P3.2 插叙'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
+  const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p31_transition',label:'P3.1 过渡段'},{key:'p32_flashback',label:'P3.2 插叙'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
   const easiItems = [{k:'E',name:'外貌描写',en:'Expressions & Appearance'},{k:'A',name:'行动描写',en:'Actions'},{k:'S',name:'语言描写',en:'Speech'},{k:'I',name:'心理描写',en:'Inner Thoughts & Feelings'}];
   function fwColor(s){if(s==='pass')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e',icon:'✓'};if(s==='warn')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10',icon:'△'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810',icon:'✗'};}
   function easiColor(r){if(r==='excellent')return{bg:'#eaf2fb',border:'#1a4a70',text:'#0d2d44'};if(r==='good')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e'};if(r==='ok')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810'};}
@@ -560,7 +610,6 @@ export default function Home() {
 
   function AnnotatedEssayWithFramework({essay, annotations, framework, rewrites}) {
     const paragraphs = (essay||'').split('\n').filter(function(p){return p.trim().length>0;});
-
     return (
       <div>
         {paragraphs.map(function(para, pIdx) {
@@ -586,8 +635,6 @@ export default function Home() {
     const sorted = [...annotations].sort((a,b) => (b.text||'').length - (a.text||'').length);
     const errorTexts = new Set(sorted.filter(function(a){return a.type==='error';}).map(function(a){return a.text;}));
     function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    // Placeholder approach: avoids double-replacing already-highlighted text
-    // and handles repeating error words (e.g. 真么 appearing 3 times)
     var replacements = [];
     var usedTexts = new Set();
     var pidx = 0;
@@ -611,7 +658,6 @@ export default function Home() {
       var html = '<span class="ann-mark ann-'+ann.type+'" style="background:'+c.bg+';border-bottom:2px solid '+c.ul+';border-radius:3px;padding:1px 2px;cursor:pointer" title="'+tip+'" data-comment="'+tip+'">'+ann.text+'<sup style="font-size:9px;color:'+c.ul+';margin-left:1px">'+c.dot+'</sup></span>';
       replacements.push({s:ann.text, p:ph, h:html});
     });
-    // Step 1: replace all occurrences with placeholders
     var result = text;
     replacements.forEach(function(r) {
       while (result.includes(r.s)) {
@@ -619,7 +665,6 @@ export default function Home() {
         result = result.slice(0,i)+r.p+result.slice(i+r.s.length);
       }
     });
-    // Step 2: swap placeholders for HTML
     replacements.forEach(function(r) {
       while (result.includes(r.p)) result = result.replace(r.p, r.h);
     });
@@ -662,7 +707,6 @@ export default function Home() {
     );
   }
 
-  // NEW: 动作流程 Section Component
   function ActionSequences() {
     const seqs = results?.action_sequences;
     if (!seqs || seqs.length === 0) return null;
@@ -739,7 +783,6 @@ export default function Home() {
           </div>
           {error&&<div className="error">{error}</div>}
         </div>
-        {/* localStorage history */}
         {history.length > 0 && (
         <div className="card" style={{marginTop:14}}>
           <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>📜</div><div><div className="sec-title">批改记录</div><div className="sec-sub">Past Submissions · Saved on this device</div></div></div>
@@ -814,13 +857,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Framework Section - standalone */}
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#edf7f1'}}>🗂</div><div><div className="sec-title">林老师框架检查</div><div className="sec-sub">Narrative Framework</div></div></div>
             <div className="fw-grid">
               {FW_KEYS.filter(function(k){return !!(results.framework||{})[k];}).map(function(k){
                 const fw = results.framework[k];
-                const st = FW_STATUS[fw.status] || FW_STATUS.pass;
                 return (<FwCard key={k} fw={fw} fwKey={k} />);
               })}
             </div>
@@ -828,7 +869,6 @@ export default function Home() {
 
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>✍️</div><div><div className="sec-title">EASI 人物描写手法</div><div className="sec-sub">E = Expressions & Appearance &nbsp;·&nbsp; A = Actions &nbsp;·&nbsp; S = Speech &nbsp;·&nbsp; I = Inner Thoughts & Feelings</div></div></div>
-            {/* CHANGED: Use shared dedup function */}
             <div className="easi-grid">{(function(){
             return easiItems.map(e=>{
             const item=results.easi?.[e.k]||{rating:'ok',score_label:'',comment:''};
@@ -849,7 +889,6 @@ export default function Home() {
           });})()}</div>
           </div>
 
-          {/* NEW: 动作流程 section */}
           <ActionSequences />
 
           <div className="card">
@@ -873,7 +912,6 @@ export default function Home() {
             <div className="examiner-box"><div className="examiner-text">{results.examiner_comment}</div><div className="examiner-sig">— 林纯隆老师 · 林老师双语学堂 · O Level 1160 考官</div></div>
           </div>
 
-          {/* ── 改写示范 ── */}
           {results.rewrite_examples && results.rewrite_examples.length > 0 && (
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#fff3e0'}}>✏️</div><div><div className="sec-title">改写示范</div><div className="sec-sub">Sentence Rewrites · Grammar & Structure Fixed</div></div></div>
@@ -896,7 +934,6 @@ export default function Home() {
           </div>
           )}
 
-          {/* ── Disclaimer ── */}
           <div style={{background:'#f9f9f9',border:'1px solid #e5e5e5',borderRadius:10,padding:'10px 16px',marginBottom:8,fontSize:'.74rem',color:'#999',lineHeight:1.6,textAlign:'center'}}>
             本报告由 AI 生成，仅供学习参考，不代表正式考试结果。评分及反馈以教师最终判断为准。<br/>
             This report is AI-generated for learning purposes only and does not represent official exam results.
@@ -905,7 +942,6 @@ export default function Home() {
           <SampleBlock mode="standard" />
           <SampleBlock mode="stretch" />
 
-          {/* ── Resubmit & Compare ── */}
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#eaf2fb'}}>🔄</div><div><div className="sec-title">重新批改修改版</div><div className="sec-sub">Resubmit Revised Essay · Compare with Original</div></div></div>
             {revisedState !== 'done' && (
@@ -954,7 +990,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* ── Chatbot ── */}
           <div className="card">
             <div className="sec-head"><div className="sec-icon" style={{background:'#e8f5e9'}}>💬</div><div><div className="sec-title">有疑问？问林老师助手</div><div className="sec-sub">Ask about your feedback · Bilingual · Context-aware</div></div></div>
             <p style={{fontSize:'.82rem',color:'#666',marginBottom:12,lineHeight:1.6}}>对批改结果有任何疑问？助手了解你的作文和所有反馈，可以用中文或英文回答。</p>
@@ -1001,7 +1036,6 @@ export default function Home() {
           </div>
         </div>)}
       </div>
-      {/* Floating WhatsApp button */}
       <a href="https://wa.me/6592286725?text=Hi%20Leon%2C%20I%20used%20your%20composition%20marking%20tool%20and%20would%20like%20to%20find%20out%20more%20about%20trial%20lessons." target="_blank" rel="noopener noreferrer"
         style={{position:'fixed',bottom:24,right:24,zIndex:999,width:52,height:52,borderRadius:'50%',background:'#25D366',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 16px rgba(0,0,0,.25)',textDecoration:'none',transition:'transform .2s'}}
         title="WhatsApp Teacher Leon"
