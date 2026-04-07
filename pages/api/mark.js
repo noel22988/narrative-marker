@@ -242,6 +242,12 @@ EASI RATINGS: Use these exact values:
 - "ok" with score_label "△ 尚可" — attempted but weak
 - "weak" with score_label "✗ 不足" — absent or barely present
 
+I (心理描写) RATING RULES:
+- 3+ I extractions → minimum "ok" (△ 尚可). Never rate "weak" if 3+ instances exist.
+- If A or S are already rated "good" or "excellent" in the same essay → I should not exceed "ok" (△ 尚可), even if the I instances are well-written. Inner thoughts are the supporting technique, not the lead.
+- 1-2 I extractions → "weak" (✗ 不足) is appropriate.
+- 0 I extractions → always "weak".
+
 ════════════════════════════════════════════════════════════
 WORKED EXAMPLE 1 — SUPERMARKET ESSAY (Teacher Leon's marking)
 ════════════════════════════════════════════════════════════
