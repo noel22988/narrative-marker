@@ -278,7 +278,14 @@ Reference sequences from the worked examples (these are the COMPLETE lists, not 
 Supermarket essay: A→A→A(掏钱包→数零钱→摆柜台), A→A→A(愣住→翻口袋→翻出硬币), E→A→S(皱眉→交叉胸前→冷淡回答), E→A→E(嘴唇发抖→搓衣角→泛红), A→I→A(看零钱→犹豫→走上前), A→A→A(愣了→没说话→收下钱), E→E→E(阳光皱纹→泪珠→笑意)
 Camera essay: A→A→A→A(抢相机→举头顶→你推我搡→笑得前仰后合), E→E→A→E(瞪眼→凝固→僵在半空→惨白), A→A→A→A→E(蹲下→捡碎片→放掌心→眼眶泛红)
 
-For each: pattern (e.g. "E→A→E"), text (full combined text using 「」for quotes), comment (Chinese explanation of why this sequence is effective, 1 sentence).
+For each sequence, include:
+- pattern: e.g. "A→A→A"
+- text: full combined text using 「」for quotes
+- comment: Chinese explanation of why this sequence is effective, 1 sentence
+- quality: rate the sequence using ONE of these exact values:
+  "masterful" — 4+ consecutive clauses across MULTIPLE technique types (not all same), AND each clause has vivid manner adverbs (地/着) or rich sensory/emotional detail
+  "vivid" — 3+ consecutive clauses, AND at least ONE clause has a vivid manner adverb (地/着) or strong sensory detail
+  "plain" — 3+ consecutive clauses but ALL are simple/bare without manner adverbs or sensory detail
 
 ════════════════════════════════════════════════════════════
 OUTPUT FORMAT
@@ -401,7 +408,7 @@ JSON SAFETY RULES:
 5. No trailing commas before } or ].
 
 TEMPLATE:
-{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[{"label":"错别字","original":"说到","correction":"说道","reason":"到是方向词，道是说话的道"}],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"..."}],"rewrite_examples":[{"original":"...","rewrite":"...","note":"..."}]}`;
+{"content_score":16,"language_score":16,"total_score":32,"content_band":2,"language_band":2,"grade":"B3","grade_label":"良好","content_feedback":"...","language_feedback":"...","annotations":[{"text":"...","type":"good","technique":"A","comment":"..."}],"framework":{"p1_opening":{"status":"pass","comment":"...","para_index":[0]},"p2_scene":{"status":"pass","comment":"...","para_index":[1]},"p31_transition":{"status":"pass","comment":"...","para_index":[2]},"p32_flashback":{"status":"pass","comment":"...","para_index":[3]},"p4_trigger":{"status":"pass","comment":"...","para_index":[4]},"p56_climax":{"status":"warn","comment":"...","para_index":[5,6]},"p7_resolution":{"status":"pass","comment":"...","para_index":[7]},"p8_conclusion":{"status":"pass","comment":"...","para_index":[8]}},"easi":{"E":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"A":{"rating":"ok","score_label":"△ 尚可","comment":"...","extracted":["..."]},"S":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]},"I":{"rating":"good","score_label":"✓ 运用得当","comment":"...","extracted":["..."]}},"language_errors":[{"label":"错别字","original":"说到","correction":"说道","reason":"到是方向词，道是说话的道"}],"structure_notes":[{"type":"struct","label":"...","text":"..."}],"improvements":["...","...","..."],"examiner_comment":"...","action_sequences":[{"pattern":"E→A→E","text":"...","comment":"...","quality":"vivid"}],"rewrite_examples":[{"original":"...","rewrite":"...","note":"..."}]}`;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 290000);
