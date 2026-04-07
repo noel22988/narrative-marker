@@ -383,13 +383,24 @@ export default function Home() {
     const lPct = Math.round((results.language_score/20)*100);
     const barC = p => p>=80?'#1a6e40':p>=65?'#1a4a70':p>=50?'#a07820':'#b83222';
 
+    const seqQMap = {
+      masterful:{bg:'#edf7f1',border:'#1a6e40',pat:'#1a6e40',badge:'完美 ✦',badgeBg:'#1a6e40'},
+      vivid:    {bg:'#eaf2fb',border:'#1a4a70',pat:'#1a4a70',badge:'出色 ✓',badgeBg:'#1a4a70'},
+      plain:    {bg:'#fdf6e3',border:'#a07820',pat:'#a07820',badge:'尚可 △',badgeBg:'#a07820'},
+    };
     const seqSection = (results.action_sequences||[]).length ? '<div class="sec"><h2>🔗 动作流程<span class="sec-sub-label">ACTION SEQUENCES · 3+ CONSECUTIVE EASI TECHNIQUES</span></h2>'+
       '<div style="font-size:10px;color:#8a7a60;margin-bottom:12px">连续3个或以上的EASI描写手法，形成流畅的描写链——这是Band 1与Band 2的关键差别。</div>'+
-      (results.action_sequences||[]).map(s=>'<div style="padding:10px 14px;border-radius:8px;border-left:3px solid #6b4c9a;background:#f5f0ff;margin-bottom:8px">'+
-        '<div style="font-family:monospace;font-size:11px;font-weight:600;color:#6b4c9a;margin-bottom:4px;letter-spacing:.05em">'+s.pattern+'</div>'+
-        '<div style="font-family:\'Noto Serif SC\',serif;font-size:12px;color:#3d3020;line-height:1.8;margin-bottom:4px">'+s.text+'</div>'+
-        '<div style="font-size:11px;color:#5a4a80;font-style:italic">'+s.comment+'</div>'+
-      '</div>').join('')+'</div>' : '';
+      (results.action_sequences||[]).map(function(s){
+        const q = seqQMap[s.quality] || seqQMap.plain;
+        return '<div style="padding:10px 14px;border-radius:8px;border-left:3px solid '+q.border+';background:'+q.bg+';margin-bottom:8px">'+
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+            '<div style="font-family:monospace;font-size:11px;font-weight:700;color:'+q.pat+';letter-spacing:.05em">'+s.pattern+'</div>'+
+            '<span style="margin-left:auto;font-size:9px;font-weight:600;color:white;background:'+q.badgeBg+';padding:1px 7px;border-radius:99px">'+q.badge+'</span>'+
+          '</div>'+
+          '<div style="font-family:\'Noto Serif SC\',serif;font-size:12px;color:#3d3020;line-height:1.8;margin-bottom:4px">'+s.text+'</div>'+
+          '<div style="font-size:11px;color:'+q.pat+';font-style:italic;opacity:.85">'+s.comment+'</div>'+
+        '</div>';
+      }).join('')+'</div>' : '';
 
     const sampleSection = sampleEssay ? '<div class="sec"><h2>⭐ 示范范文 (A1/A2 水平)</h2><div style="font-size:10px;color:#8a7a60;margin-bottom:10px">根据你的故事内容，生成一篇 A1/A2 水平的示范作文。保留你的故事，全面提升语言表达与 EASI 手法至最高水平。</div><div class="et">'+fmt(sampleEssay)+'</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。以此为范例理解写法，再用自己的语言重写。</p></div>' : '';
     const stretchSection = stretchEssay ? '<div class="sec"><h2>📈 进阶范文 ('+stretchGrade+' 水平)</h2><div class="et">'+fmt(stretchEssay)+'</div><p style="font-size:10px;color:#8a7a60;font-style:italic;margin-top:10px">※ 此范文仅供参考，请勿直接抄写。</p></div>' : '';
@@ -790,13 +801,24 @@ export default function Home() {
         <p style={{fontSize:'.82rem',color:'#8a7a60',lineHeight:1.6,marginBottom:14}}>
           连续3个或以上的EASI描写手法，形成流畅的描写链——这是Band 1与Band 2的关键差别。
         </p>
-        {seqs.map((s,i) => (
-          <div key={i} style={{padding:'12px 14px',borderRadius:8,borderLeft:'3px solid #6b4c9a',background:'#f5f0ff',marginBottom:8}}>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.78rem',fontWeight:600,color:'#6b4c9a',marginBottom:4,letterSpacing:'.05em'}}>{s.pattern}</div>
-            <div style={{fontFamily:"'Noto Serif SC',serif",fontSize:'.9rem',color:'#3d3020',lineHeight:1.9,marginBottom:4}}>{s.text}</div>
-            <div style={{fontSize:'.78rem',color:'#5a4a80',fontStyle:'italic'}}>{s.comment}</div>
-          </div>
-        ))}
+        {seqs.map((s,i) => {
+          const qMap = {
+            masterful: {bg:'#edf7f1', border:'#1a6e40', labelColor:'#1a6e40', patColor:'#1a6e40', badge:'完美 ✦', badgeBg:'#1a6e40'},
+            vivid:     {bg:'#eaf2fb', border:'#1a4a70', labelColor:'#1a4a70', patColor:'#1a4a70', badge:'出色 ✓', badgeBg:'#1a4a70'},
+            plain:     {bg:'#fdf6e3', border:'#a07820', labelColor:'#a07820', patColor:'#a07820', badge:'尚可 △', badgeBg:'#a07820'},
+          };
+          const q = qMap[s.quality] || qMap.plain;
+          return (
+            <div key={i} style={{padding:'12px 14px',borderRadius:8,borderLeft:'3px solid '+q.border,background:q.bg,marginBottom:8}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:'.78rem',fontWeight:700,color:q.patColor,letterSpacing:'.05em'}}>{s.pattern}</div>
+                <span style={{marginLeft:'auto',fontSize:'.68rem',fontWeight:600,color:'white',background:q.badgeBg,padding:'1px 8px',borderRadius:99}}>{q.badge}</span>
+              </div>
+              <div style={{fontFamily:"'Noto Serif SC',serif",fontSize:'.9rem',color:'#3d3020',lineHeight:1.9,marginBottom:4}}>{s.text}</div>
+              <div style={{fontSize:'.78rem',color:q.labelColor,fontStyle:'italic',opacity:.85}}>{s.comment}</div>
+            </div>
+          );
+        })}
       </div>
     );
   }
