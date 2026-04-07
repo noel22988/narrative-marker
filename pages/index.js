@@ -21,6 +21,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState('first'); // 'first' | 'revised'
   const [revisedState, setRevisedState] = useState('idle'); // 'idle'|'loading'|'done'
   const [showCert, setShowCert] = useState(false);
+  const [historyId, setHistoryId] = useState(null); // tracks current session's history entry id
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('leon_history') || '[]'); } catch(e) { return []; }
   });
@@ -59,7 +60,7 @@ export default function Home() {
       // ── Rebuild annotations deterministically from language_errors + rewrite_examples ──
       var goodAnns = (data.annotations||[]).filter(function(a){return a.type==='good';});
       var errorAnns = (data.language_errors||[]).map(function(e){
-        var orig = (e.original||'').replace(/[「」""]/g,'').trim();
+        var orig = (e.original||'').replace(/[「」""“”]/g,'').trim();
         return {text:orig, type:'error', comment:e.correction||''};
       }).filter(function(a){return a.text.length>0;});
       var improveAnns = (data.rewrite_examples||[]).map(function(r){
@@ -245,13 +246,28 @@ export default function Home() {
         if (data.easi.I) data.easi.I.extracted = iArr;
       }
       setResults(data); setState('results');
-      // Save to localStorage history
+      // Save to localStorage history — full results for restore
       try {
-        const snap = {id:Date.now(),date:new Date().toLocaleDateString('zh-CN'),title:title||'（无题目）',grade:data.grade,total:data.total_score,content:data.content_score,language:data.language_score};
+        const snapId = Date.now();
+        const snap = {
+          id: snapId,
+          date: new Date().toLocaleDateString('zh-CN'),
+          title: title||'（无题目）',
+          grade: data.grade,
+          total: data.total_score,
+          content: data.content_score,
+          language: data.language_score,
+          essay: dedupEssay,
+          results: data,
+          sampleEssay: '',
+          stretchEssay: '',
+          stretchGrade: '',
+        };
         const prev = JSON.parse(localStorage.getItem('leon_history')||'[]');
         const updated = [snap,...prev].slice(0,20);
         localStorage.setItem('leon_history', JSON.stringify(updated));
         setHistory(updated);
+        setHistoryId(snapId);
       } catch(e){}
     } catch (e) { setError('批改时出现错误：' + e.message); setState('input'); }
   }
@@ -267,6 +283,20 @@ export default function Home() {
       essaySetter(data.essay);
       if (mode === 'stretch') setStretchGrade(data.targetGrade);
       setter('done');
+      // Persist sample essays back to the matching history entry
+      try {
+        const prev = JSON.parse(localStorage.getItem('leon_history') || '[]');
+        const updated = prev.map(function(h) {
+          if (!historyId || h.id !== historyId) return h;
+          return Object.assign({}, h,
+            mode === 'stretch'
+              ? { stretchEssay: data.essay, stretchGrade: data.targetGrade || '' }
+              : { sampleEssay: data.essay }
+          );
+        });
+        localStorage.setItem('leon_history', JSON.stringify(updated));
+        setHistory(updated);
+      } catch(e) {}
     } catch (e) { setter('error'); }
   }
 
@@ -566,6 +596,44 @@ export default function Home() {
 
   function reset() { setState('input'); setResults(null); setSampleState('idle'); setStretchState('idle'); setSampleEssay(''); setStretchEssay(''); setStretchGrade(''); setError(''); setRevisedEssay(''); setRevisedResults(null); setViewMode('first'); setRevisedState('idle'); setChatMessages([]); setChatInput(''); }
 
+  function restoreSession(h) {
+    if (!h.results) return; // old snapshot without full data — ignore
+    setEssay(h.essay || '');
+    setTitle(h.title === '（无题目）' ? '' : h.title);
+    setResults(h.results);
+    setSampleEssay(h.sampleEssay || '');
+    setStretchEssay(h.stretchEssay || '');
+    setStretchGrade(h.stretchGrade || '');
+    setSampleState(h.sampleEssay ? 'done' : 'idle');
+    setStretchState(h.stretchEssay ? 'done' : 'idle');
+    setRevisedEssay('');
+    setRevisedResults(null);
+    setViewMode('first');
+    setRevisedState('idle');
+    setChatMessages([]);
+    setChatInput('');
+    setError('');
+    setHistoryId(h.id);
+    setState('results');
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  function updateHistoryWithSamples(id, sampleEssay, stretchEssay, stretchGrade) {
+    try {
+      const prev = JSON.parse(localStorage.getItem('leon_history') || '[]');
+      const updated = prev.map(function(h) {
+        if (h.id !== id) return h;
+        return Object.assign({}, h, {
+          sampleEssay: sampleEssay || h.sampleEssay,
+          stretchEssay: stretchEssay || h.stretchEssay,
+          stretchGrade: stretchGrade || h.stretchGrade,
+        });
+      });
+      localStorage.setItem('leon_history', JSON.stringify(updated));
+      setHistory(updated);
+    } catch(e) {}
+  }
+
   const fwItems = [{key:'p1_opening',label:'P1 开头策略'},{key:'p2_scene',label:'P2 场景设置'},{key:'p31_transition',label:'P3.1 过渡段'},{key:'p32_flashback',label:'P3.2 插叙'},{key:'p4_trigger',label:'P4 高潮前'},{key:'p56_climax',label:'P5–6 高潮中'},{key:'p7_resolution',label:'P7 高潮后'},{key:'p8_conclusion',label:'P8 结尾'}];
   const easiItems = [{k:'E',name:'外貌描写',en:'Expressions & Appearance'},{k:'A',name:'行动描写',en:'Actions'},{k:'S',name:'语言描写',en:'Speech'},{k:'I',name:'心理描写',en:'Inner Thoughts & Feelings'}];
   function fwColor(s){if(s==='pass')return{bg:'#edf7f1',border:'#1a6e40',text:'#154d2e',icon:'✓'};if(s==='warn')return{bg:'#fdf6e3',border:'#a07820',text:'#5a3e10',icon:'△'};return{bg:'#fdf0ee',border:'#b83222',text:'#6a1810',icon:'✗'};}
@@ -789,6 +857,7 @@ export default function Home() {
           <div style={{display:'flex',flexDirection:'column',gap:8}}>
             {history.map(function(h){
               const gc = h.grade&&h.grade.startsWith('A')?'#1a6e40':h.grade&&h.grade.startsWith('B')?'#1a4a70':h.grade&&(h.grade.startsWith('C')||h.grade.startsWith('D'))?'#a07820':'#b83222';
+              const canRestore = !!h.results;
               return(
                 <div key={h.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'#f8f8f8',borderRadius:8,border:'1px solid #e8e8e8'}}>
                   <div style={{width:40,height:40,borderRadius:'50%',background:gc,color:'white',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:'.9rem',flexShrink:0}}>{h.grade}</div>
@@ -796,6 +865,10 @@ export default function Home() {
                     <div style={{fontFamily:"'Noto Serif SC',serif",fontSize:'.85rem',color:'#1c1710',fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{h.title}</div>
                     <div style={{fontSize:'.75rem',color:'#888',marginTop:1}}>{h.date} · {h.total}/40 · 内容 {h.content} 语文 {h.language}</div>
                   </div>
+                  {canRestore
+                    ? <button onClick={function(){restoreSession(h);}} style={{flexShrink:0,background:'#1c1710',color:'#e8d090',border:'none',borderRadius:6,padding:'5px 12px',fontSize:'.72rem',fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'}}>恢复 ↗</button>
+                    : <span style={{flexShrink:0,fontSize:'.68rem',color:'#bbb',whiteSpace:'nowrap'}}>旧记录</span>
+                  }
                 </div>
               );
             })}
